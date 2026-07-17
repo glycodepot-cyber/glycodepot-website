@@ -60,7 +60,9 @@ const nextConfig: NextConfig = {
               // clerk.glycodepot.com / accounts.glycodepot.com = Clerk's production
               // custom domain (frontend API + account portal) — required once the
               // instance is bound to our own domain instead of *.clerk.accounts.dev.
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.glycodepot.com https://accounts.glycodepot.com https://challenges.cloudflare.com",
+              // googletagmanager.com = GTM container + gtag.js (GA4 / Google Ads),
+              // required for the SOW §4 conversion tracking.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.glycodepot.com https://accounts.glycodepot.com https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com",
               // worker-src has no fallback to script-src's `blob:`-less list once
               // set elsewhere, but without an explicit entry browsers fall back to
               // script-src for workers — which lacks `blob:`. Cloudflare Turnstile
@@ -69,10 +71,13 @@ const nextConfig: NextConfig = {
               // completes ("failed security validations").
               "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https://glycodepot.com https://www.glycodepot.com https://placehold.co https://*.bysonhub.com https://api.bysonhub.com https://*.public.blob.vercel-storage.com https://*.r2.dev https://img.clerk.com https://*.supabase.co",
+              // Google marketing pixels: GTM, GA4, Google Ads / DoubleClick.
+              "img-src 'self' data: blob: https://glycodepot.com https://www.glycodepot.com https://placehold.co https://*.bysonhub.com https://api.bysonhub.com https://*.public.blob.vercel-storage.com https://*.r2.dev https://img.clerk.com https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.google.com https://*.g.doubleclick.net https://googleads.g.doubleclick.net",
               "font-src 'self' data:",
-              "connect-src 'self' https://api.bysonhub.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.glycodepot.com https://accounts.glycodepot.com https://challenges.cloudflare.com",
-              "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://clerk.glycodepot.com https://accounts.glycodepot.com https://challenges.cloudflare.com",
+              // GA4 / Google Ads beacons post to analytics + doubleclick endpoints.
+              "connect-src 'self' https://api.bysonhub.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.glycodepot.com https://accounts.glycodepot.com https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net https://www.google.com",
+              // googletagmanager.com frame = GTM Preview/debug mode.
+              "frame-src https://*.clerk.accounts.dev https://*.clerk.com https://clerk.glycodepot.com https://accounts.glycodepot.com https://challenges.cloudflare.com https://www.googletagmanager.com https://td.doubleclick.net",
               "frame-ancestors 'self'",
               "base-uri 'self'",
               "form-action 'self'",

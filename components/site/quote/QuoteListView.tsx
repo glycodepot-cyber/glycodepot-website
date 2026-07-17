@@ -18,6 +18,9 @@ import { QtyStepper } from "@/components/site/cart/QtyStepper";
 import { formatUSD } from "@/lib/format";
 import { submitQuote } from "@/lib/cart/actions";
 import type { QuoteLine } from "@/lib/cart";
+import { attributionForWebhook } from "@/lib/analytics/utm";
+import { trackRfqSubmit } from "@/lib/analytics/dataLayer";
+import { findGroupForCategory } from "@/lib/content/category-groups";
 import {
   useQuoteList,
   updateQuoteQuantity,
@@ -75,8 +78,23 @@ export function QuoteListView() {
       quantity: i.quantity,
       image: i.image,
     }));
+
+    // Map each cart item to its top-level category group (Glycochemistry /
+    // Glycobiology / Glyco-analysis) via the category slug embedded in its href
+    // (/products/{categorySlug}/{slug}), for SOW §3.2 "Product category interest".
+    const categoryNames = [
+      ...new Set(
+        items
+          .map((i) => i.href.split("/")[2])
+          .map((slug) => findGroupForCategory(slug)?.name)
+          .filter((n): n is string => Boolean(n)),
+      ),
+    ];
+
+    const attribution = attributionForWebhook();
+
     try {
-      await submitQuote({
+      const res = await submitQuote({
         lines,
         customer: {
           name: customer.name.trim(),
@@ -85,6 +103,19 @@ export function QuoteListView() {
           phone: customer.phone.trim() || undefined,
           notes: customer.notes.trim() || undefined,
         },
+        meta: {
+          productCategories: categoryNames,
+          leadSource: attribution.leadSource,
+          googleAdsCampaign: attribution.googleAdsCampaign,
+          googleAdsAdGroup: attribution.googleAdsAdGroup,
+          landingPageUrl: attribution.landingPageUrl,
+          gclid: attribution.gclid,
+        },
+      });
+      trackRfqSubmit({
+        itemCount: items.length,
+        categories: categoryNames,
+        bhQuoteId: res.bhQuotationId,
       });
       clearQuote();
       setStatus("done");

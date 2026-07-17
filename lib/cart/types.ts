@@ -105,11 +105,27 @@ export interface QuoteRequest {
     phone?: string;
     notes?: string;
   };
+  /**
+   * Marketing attribution + category context, resolved on the client (where
+   * localStorage attribution lives) and forwarded so the GHL webhook payload
+   * can populate the SOW §3.2 fields. All optional — the quote still submits
+   * without them.
+   */
+  meta?: {
+    productCategories?: string[]; // §3.2 "Product category interest" (group names)
+    leadSource?: string;
+    googleAdsCampaign?: string;
+    googleAdsAdGroup?: string;
+    landingPageUrl?: string;
+    gclid?: string;
+  };
 }
 
 export interface QuoteResponse {
   id: string;
   receivedAt: string;
+  /** BysonHub Quote Request / Quotation ID, when the RFQ reached BysonHub. */
+  bhQuotationId?: string;
 }
 
 export interface Customer {

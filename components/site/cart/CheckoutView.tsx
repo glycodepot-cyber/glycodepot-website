@@ -15,6 +15,7 @@ import {
   clearCart,
 } from "@/lib/cart/store";
 import { appendOrder } from "@/lib/orders/store";
+import { trackPurchase } from "@/lib/analytics/dataLayer";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -127,10 +128,21 @@ export function CheckoutView() {
       });
       clearCart();
       if (result.paymentLink) {
-        // Send the customer straight to Stripe Checkout to pay.
+        // Send the customer straight to Stripe Checkout to pay. Payment
+        // completes off our domain, so the Purchase conversion for these
+        // orders is attributed server-side via the SOW §4.3 offline
+        // conversion import, not this client-side pixel.
         window.location.href = result.paymentLink;
         return;
       }
+      // On-site order confirmation (no external redirect) → fire the §4.1
+      // Purchase conversion here. `items`/`subtotal` are the pre-clear values
+      // captured at render, so they're still valid after clearCart().
+      trackPurchase({
+        orderId: result.orderId,
+        value: subtotal,
+        itemCount: count,
+      });
       setOrderId(result.orderId);
       setStatus("done");
     } else {

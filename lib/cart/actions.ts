@@ -117,6 +117,10 @@ export async function submitOrder(
 export async function submitQuote(
   request: QuoteRequest,
 ): Promise<QuoteResponse> {
+  // BH Quotation ID captured from BysonHub's response so GHL can cross-reference
+  // the RFQ (SOW §3.2 "BH Quotation ID" — the primary key linking GHL ↔ BysonHub).
+  let bhQuotationId: string | undefined;
+
   // Primary: post to BysonHub so the RFQ appears in their Orders dashboard
   if (BYSON_CONFIGURED && request.lines.length) {
     const mappedItems: BysonOrderPayload["items"] = [];
@@ -143,28 +147,48 @@ export async function submitQuote(
         .digest("hex")
         .slice(0, 32);
 
-      await placeOrder(
-        {
-          customer_info: {
-            name: request.customer.name,
-            email: request.customer.email,
-            phone: request.customer.phone ?? "N/A",
-            address1: "N/A",
-            address2: "N/A",
-            postal_code: "N/A",
+      try {
+        const res = await placeOrder(
+          {
+            customer_info: {
+              name: request.customer.name,
+              email: request.customer.email,
+              phone: request.customer.phone ?? "N/A",
+              address1: "N/A",
+              address2: "N/A",
+              postal_code: "N/A",
+            },
+            items: mappedItems.map((i) => ({
+              product_id: i.product_id,
+              variant_id: i.variant_id ?? 0,
+              quantity: 1,
+            })),
           },
-          items: mappedItems.map((i) => ({
-            product_id: i.product_id,
-            variant_id: i.variant_id ?? 0,
-            quantity: 1,
-          })),
-        },
-        rfqKey,
-      );
+          rfqKey,
+        );
+        bhQuotationId = res.order_id != null ? String(res.order_id) : undefined;
+      } catch (err) {
+        // BysonHub failure must not lose the lead — still fire the GHL webhook
+        // below so sales sees the RFQ. Log and continue.
+        console.error("[quote] BysonHub placeOrder failed:", err);
+      }
     }
   }
 
-  // Secondary: fire GHL webhook if configured (CRM notification)
+  // Human-readable line summary for the GHL "Product details" long-text field
+  // (SOW §3.2 — product + qty for rep reference, not per-SKU custom fields).
+  const productDetails = request.lines
+    .map(
+      (l) =>
+        `${l.quantity}× ${l.name}${l.variantId ? ` (variant ${l.variantId})` : ""}`,
+    )
+    .join("\n");
+
+  const meta = request.meta ?? {};
+
+  // Secondary: fire GHL webhook if configured (CRM notification).
+  // `fields` map 1:1 to the SOW §3.2 GHL custom fields (flattened to the
+  // webhook body top level by sendToGHL). `message` stays as a readable summary.
   await ghlQuote({
     name: request.customer.name,
     email: request.customer.email,
@@ -175,18 +199,26 @@ export async function submitQuote(
       (request.customer.phone ? `Phone: ${request.customer.phone}\n` : "") +
       (request.customer.notes ? `Notes: ${request.customer.notes}\n` : "") +
       `\nLines:\n` +
-      request.lines
-        .map(
-          (l) =>
-            `  - ${l.quantity}× ${l.name}${l.variantId ? ` (variant ${l.variantId})` : ""}`,
-        )
-        .join("\n"),
+      productDetails,
+    fields: {
+      product_category_interest: meta.productCategories ?? [],
+      product_details: productDetails,
+      bh_quotation_id: bhQuotationId,
+      lead_source: meta.leadSource ?? "Website submission",
+      google_ads_campaign: meta.googleAdsCampaign,
+      google_ads_ad_group: meta.googleAdsAdGroup,
+      landing_page_url: meta.landingPageUrl,
+      gclid: meta.gclid,
+      company: request.customer.company,
+      phone: request.customer.phone,
+    },
     extra: { lines: request.lines, customer: request.customer },
   });
 
   return {
     id: `quote_${Date.now()}`,
     receivedAt: new Date().toISOString(),
+    bhQuotationId,
   };
 }
 

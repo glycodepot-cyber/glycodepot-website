@@ -6,6 +6,7 @@ import { Container, Section, SectionHeading } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
 import { ProductCard } from "@/components/site/home/ProductCard";
 import { ProductPurchasePanel } from "@/components/site/catalog/ProductPurchasePanel";
+import { ProductDwellTracker } from "@/components/analytics/PageEventTrackers";
 import { ProductJsonLd } from "@/components/site/catalog/ProductJsonLd";
 import { RecentlyViewedRail } from "@/components/site/catalog/RecentlyViewedRail";
 import { formatMoney } from "@/lib/format";
@@ -69,6 +70,7 @@ export default async function ProductPage({ params }: PageProps) {
 
   return (
     <>
+      <ProductDwellTracker productId={product.id} productName={product.name} />
       <PageHero
         title={product.name}
         description={product.shortDescription}

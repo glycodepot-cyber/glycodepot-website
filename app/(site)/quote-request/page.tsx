@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Container, Section } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
 import { QuoteListView } from "@/components/site/quote/QuoteListView";
+import { QuotePageViewTracker } from "@/components/analytics/PageEventTrackers";
 import { quoteCopy } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export default function QuoteRequestPage() {
   return (
     <>
+      <QuotePageViewTracker />
       <PageHero
         title={quoteCopy.heading}
         description={quoteCopy.intro}

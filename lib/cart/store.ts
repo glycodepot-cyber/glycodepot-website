@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { Product, ProductVariant } from "./types";
+import { trackAddToCart } from "@/lib/analytics/dataLayer";
 
 /**
  * Local cart store — localStorage-backed, hydration-safe.
@@ -130,6 +131,12 @@ export function addCartItem(
     });
   }
   writeToStorage(items);
+  trackAddToCart({
+    productId: product.id,
+    productName: product.name,
+    variantName: variant?.name,
+    value: (variant?.price ?? product.price)?.amount ?? undefined,
+  });
   return items;
 }
 

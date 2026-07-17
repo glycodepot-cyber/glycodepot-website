@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { Product, ProductVariant } from "@/lib/cart";
+import { trackAddToCart } from "@/lib/analytics/dataLayer";
 
 const STORAGE_KEY = "gd_quote_list_v1";
 const EVENT_NAME = "gd:quote-changed";
@@ -120,6 +121,12 @@ export function addToQuote(
     });
   }
   writeToStorage(items);
+  trackAddToCart({
+    productId: product.id,
+    productName: product.name,
+    variantName: variant?.name,
+    value: (variant?.price ?? product.price)?.amount ?? undefined,
+  });
   return items;
 }
 

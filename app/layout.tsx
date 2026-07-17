@@ -4,6 +4,11 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SITE_URL } from "@/lib/site-url";
+import {
+  GoogleTagManager,
+  GoogleTagManagerNoScript,
+} from "@/components/analytics/GoogleTagManager";
+import { AttributionCapture } from "@/components/analytics/AttributionCapture";
 import "./globals.css";
 
 const jost = Jost({
@@ -55,7 +60,10 @@ export default function RootLayout({
   return (
     <ClerkProvider afterSignOutUrl="/my-account">
       <html lang="en" className={`${jost.variable} h-full antialiased`}>
+        <GoogleTagManager />
         <body className="min-h-full flex flex-col font-sans">
+          <GoogleTagManagerNoScript />
+          <AttributionCapture />
           {children}
           <Analytics />
           <SpeedInsights />

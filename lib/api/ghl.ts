@@ -43,6 +43,13 @@ export interface GHLContactPayload {
   subject?: string;
   message: string;
   source: "contact" | "quote-request" | "newsletter";
+  /**
+   * Structured fields that map 1:1 to GHL custom fields (SOW §3.2). Flattened
+   * to the TOP LEVEL of the webhook body so GHL's inbound-webhook field mapper
+   * can pick them up by key without digging into a nested object. Keep keys in
+   * sync with the GHL field mapping documented in the SOP.
+   */
+  fields?: Record<string, unknown>;
   extra?: Record<string, unknown>;
 }
 
@@ -59,7 +66,13 @@ async function sendToGHL(
     return { ok: true };
   }
   try {
-    await postJson(url, { ...payload, receivedAt: new Date().toISOString() });
+    const { fields, ...rest } = payload;
+    // Flatten `fields` to the top level; keep the rest of the payload alongside.
+    await postJson(url, {
+      ...rest,
+      ...(fields ?? {}),
+      receivedAt: new Date().toISOString(),
+    });
     return { ok: true };
   } catch (err) {
     const message =
