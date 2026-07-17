@@ -29,12 +29,13 @@ Requires `.env.local` (never committed — see **Environment** below).
 BysonHub's price fields do **not** follow WooCommerce conventions:
 
 - `regular_price` → **what the customer actually pays**
-- `sale_price` → **"Compare at price"** — the higher, struck-through figure
+- `compare_price` → **"Compare at price"** — the higher, struck-through figure
+  (named `sale_price` until BysonHub renamed it on 2026-07-17; values unchanged)
 
-Verified across the full catalog: of the 54 variants with `sale_price` set, every
-one is *above* `regular_price`; none is a discount. The mappers guard on
-`sale > price` regardless and drop anything that isn't, so a genuine discount can
-never render as a struck-through price *below* the live price.
+Verified across the full catalog: of the 54 variants with `compare_price` set,
+every one is *above* `regular_price`; none is a discount. The mappers guard on
+`compare > price` regardless and drop anything that isn't, so a genuine discount
+can never render as a struck-through price *below* the live price.
 
 > ⚠️ **The pricing logic is duplicated** across `lib/api/bysonhub-map.ts`
 > (TypeScript, runtime) and `scripts/prebake-catalog.mjs` (plain `.mjs`, build

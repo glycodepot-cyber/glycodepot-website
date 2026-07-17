@@ -152,13 +152,14 @@ function flattenToSingleLine(text) {
  * is a standalone .mjs build script and cannot import the TS mapper, so the
  * pricing rules are duplicated here by necessity. Change both or neither.
  *
- * BysonHub's `sale_price` is their "Compare at price" (the higher struck-through
- * figure), NOT a discount — verified across the full catalog. `regular_price` is
- * what the customer actually pays.
+ * BysonHub's `compare_price` is their "Compare at price" (the higher
+ * struck-through figure), NOT a discount — verified across the full catalog.
+ * (Renamed from `sale_price` by BysonHub on 2026-07-17; values unchanged.)
+ * `regular_price` is what the customer actually pays.
  */
-function compareAtFrom(price, sale) {
-  if (sale === null || sale === undefined || !(sale > price)) return null;
-  return { amount: sale, currency: "USD" };
+function compareAtFrom(price, compare) {
+  if (compare === null || compare === undefined || !(compare > price)) return null;
+  return { amount: compare, currency: "USD" };
 }
 
 function variantFromByson(raw) {
@@ -168,7 +169,7 @@ function variantFromByson(raw) {
     sku: raw.sku,
     name: raw.name,
     price,
-    compareAtPrice: price ? compareAtFrom(raw.regular_price, raw.sale_price) : null,
+    compareAtPrice: price ? compareAtFrom(raw.regular_price, raw.compare_price) : null,
     inStock: raw.stock_status === "instock",
   };
 }
@@ -197,7 +198,7 @@ function productFromByson(raw) {
     : minVariantPrice !== null
       ? (cheapestVariant?.compareAtPrice ?? null)
       : raw.regular_price > 0
-        ? compareAtFrom(raw.regular_price, raw.sale_price)
+        ? compareAtFrom(raw.regular_price, raw.compare_price)
         : null;
 
   const primaryCategoryId = raw.category ? `bcat_${raw.category.id}` : undefined;

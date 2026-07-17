@@ -38,7 +38,10 @@ export interface BysonVariation {
   name: string;
   sku?: string;
   regular_price: number;
-  sale_price: number | null;
+  /** "Compare at price" — the higher, struck-through figure. Renamed from
+   * `sale_price` by BysonHub on 2026-07-17 to avoid confusion; it never was
+   * a discount. See lib/api/bysonhub-map.ts for the semantics. */
+  compare_price: number | null;
   stock_quantity: number;
   stock_status: "instock" | "outofstock";
   image?: string[];
@@ -53,7 +56,9 @@ export interface BysonProduct {
   description: string;
   published: boolean;
   regular_price: number;
-  sale_price: number | null;
+  /** "Compare at price" — higher, struck-through. Renamed from `sale_price`
+   * by BysonHub on 2026-07-17. Never a discount. */
+  compare_price: number | null;
   tax_status: "taxable" | "none";
   stock_status: "instock" | "outofstock";
   stock_quantity: number;

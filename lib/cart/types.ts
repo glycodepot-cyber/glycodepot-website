@@ -38,9 +38,9 @@ export interface ProductVariant {
   price: Money | null;    // null → quote-only
   /**
    * Higher "was" price, rendered struck-through next to `price`.
-   * Sourced from BysonHub's `sale_price`, which their admin UI uses as
-   * "Compare at price" — it is always ABOVE `regular_price`, never a
-   * discount. Only set when it genuinely exceeds `price`.
+   * Sourced from BysonHub's `compare_price` ("Compare at price") — always
+   * ABOVE `regular_price`, never a discount. Only set when it genuinely
+   * exceeds `price`.
    */
   compareAtPrice?: Money | null;
   inStock: boolean;

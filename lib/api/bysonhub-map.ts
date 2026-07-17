@@ -85,18 +85,20 @@ export function categoryFromByson(raw: BysonCategory): Category {
 }
 
 /**
- * BysonHub's `sale_price` is their admin UI's "Compare at price" — the higher
- * struck-through figure — NOT a WooCommerce-style discount. Verified across the
- * full catalog: of 54 variants with it set, every one is ABOVE `regular_price`
- * and none below. `regular_price` is what the customer actually pays.
+ * BysonHub's `compare_price` is the "Compare at price" — the higher,
+ * struck-through figure — NOT a WooCommerce-style discount. (The field was
+ * called `sale_price` until 2026-07-17, when BysonHub renamed it to
+ * `compare_price` to end that confusion; the values never changed.) Verified
+ * across the full catalog: of 54 variants with it set, every one is ABOVE
+ * `regular_price`. `regular_price` is what the customer actually pays.
  *
- * Guarded with `> price` anyway: if BysonHub ever sends a genuine discount
- * (sale < regular), we drop it rather than render a struck-through price that
- * is lower than the live price, which would misrepresent the offer.
+ * Guarded with `> price` anyway: if BysonHub ever sends a value below the
+ * live price, we drop it rather than render a struck-through price lower than
+ * what's charged, which would misrepresent the offer.
  */
-function compareAtFrom(price: number, sale: number | null): Money | null {
-  if (sale === null || !(sale > price)) return null;
-  return usd(sale);
+function compareAtFrom(price: number, compare: number | null): Money | null {
+  if (compare === null || !(compare > price)) return null;
+  return usd(compare);
 }
 
 function variantFromByson(raw: BysonVariation): ProductVariant {
@@ -107,7 +109,7 @@ function variantFromByson(raw: BysonVariation): ProductVariant {
     name: raw.name,
     price,
     compareAtPrice: price
-      ? compareAtFrom(raw.regular_price, raw.sale_price)
+      ? compareAtFrom(raw.regular_price, raw.compare_price)
       : null,
     inStock: raw.stock_status === "instock",
   };
@@ -146,7 +148,7 @@ export function productFromByson(raw: BysonProduct): Product {
     : minVariantPrice !== null
       ? (cheapestVariant?.compareAtPrice ?? null)
       : raw.regular_price > 0
-        ? compareAtFrom(raw.regular_price, raw.sale_price)
+        ? compareAtFrom(raw.regular_price, raw.compare_price)
         : null;
 
   const primaryCategoryId = raw.category ? `bcat_${raw.category.id}` : undefined;
