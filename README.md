@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GlycoDepot storefront
 
-## Getting Started
+Next.js 16 (App Router) storefront for [glycodepot.com](https://glycodepot.com).
+Catalog comes from **BysonHub**, payments from **Stripe** (created by BysonHub),
+auth from **Clerk**. Hosted on Vercel.
 
-First, run the development server:
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires `.env.local` (never committed — see **Environment** below).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Architecture
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Concern | Where | Notes |
+| --- | --- | --- |
+| Catalog source | `lib/api/bysonhub.ts` | BysonHub External Partner API. Server-only — the API key must never reach the browser. |
+| BysonHub → domain mapping | `lib/api/bysonhub-map.ts` | Raw API shapes → `lib/cart/types.ts`. |
+| Catalog data | `lib/data/catalog.json` | ~8.7 MB, **generated at build time** by `scripts/prebake-catalog.mjs` (runs on `prebuild`). Statically imported, so it must exist for the build to compile. |
+| Catalog reads | `lib/cart/client.ts` | Prefers the prebake; falls back to the live API, then to mocks. |
+| Checkout | `lib/cart/actions.ts` | Posts `product_id`/`variant_id`/`quantity` to BysonHub. **BysonHub computes the price** and returns a Stripe `payment_link`. |
+| Auth | Clerk hosted Account Portal | `/my-account` redirects to `accounts.glycodepot.com`. Deliberately not embedded — the Clerk dashboard is configured for Account Portal mode. |
 
-## Learn More
+## Pricing semantics (important)
 
-To learn more about Next.js, take a look at the following resources:
+BysonHub's price fields do **not** follow WooCommerce conventions:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `regular_price` → **what the customer actually pays**
+- `sale_price` → **"Compare at price"** — the higher, struck-through figure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Verified across the full catalog: of the 54 variants with `sale_price` set, every
+one is *above* `regular_price`; none is a discount. The mappers guard on
+`sale > price` regardless and drop anything that isn't, so a genuine discount can
+never render as a struck-through price *below* the live price.
 
-## Deploy on Vercel
+> ⚠️ **The pricing logic is duplicated** across `lib/api/bysonhub-map.ts`
+> (TypeScript, runtime) and `scripts/prebake-catalog.mjs` (plain `.mjs`, build
+> time — it cannot import the TS mapper). **Change both or neither.** They have
+> silently drifted before.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Catalog refresh
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The site serves the build-time prebake, so **catalog changes only appear when the
+site rebuilds**. Rebuilds happen on:
+
+1. Any push to `main` (Vercel auto-deploy), or
+2. The daily cron in `vercel.json` (`0 7 * * *`), which hits
+   `/api/refresh-catalog` → fires `VERCEL_DEPLOY_HOOK_URL` → new build.
+
+The cron is a **no-op unless `VERCEL_DEPLOY_HOOK_URL` is set**. On Vercel's Hobby
+plan crons run at most **once per day** with **±59 min** precision, so a price
+edit can take up to ~24 h to appear. Faster refresh requires the Pro plan.
+
+## Environment
+
+Set in Vercel project settings; locally in `.env.local` (gitignored).
+
+| Variable | Purpose |
+| --- | --- |
+| `BYSONHUB_API_URL` / `BYSONHUB_API_KEY` | Catalog + order API. Server-only. |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | Clerk auth. |
+| `NEXT_PUBLIC_SITE_URL` | Canonical URLs, OG tags, sitemap. |
+| `VERCEL_DEPLOY_HOOK_URL` | Required for the refresh cron to do anything. |
+| `CRON_SECRET` | Shared secret; `/api/refresh-catalog` rejects calls without it. |
+
+## Notes
+
+- `scripts/product-images/` is gitignored — ~98 MB of regenerable scratch output
+  from the one-off image-migration scripts.
+- CSP lives in `next.config.ts`. It must allow Clerk's custom domains and
+  `worker-src 'self' blob:` — Cloudflare Turnstile spawns its bot-check worker
+  from a `blob:` URL, and without it sign-up silently fails.
