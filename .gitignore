@@ -36,6 +36,15 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Scratch output of the one-off image-migration scripts: ~98 MB of downloaded
+# product images plus its resume-progress file. Nothing in the build reads
+# these (verified), and they are re-downloadable, so they stay out of Git.
+/scripts/product-images/
+/scripts/product-images-progress.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.vercel
+.env*
