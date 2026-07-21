@@ -98,6 +98,7 @@ export function CheckoutView() {
         phone: form.phone,
         address1: fullAddress,
         postal_code: form.postal || undefined,
+        country: form.country,
       },
       items: items.map((i) => ({
         productId: i.productId,

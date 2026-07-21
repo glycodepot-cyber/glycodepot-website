@@ -92,6 +92,14 @@ export interface BysonOrderPayload {
     address1?: string;
     address2?: string;
     postal_code?: string;
+    /** Shipping country as selected at checkout (free text, e.g. "United States"). */
+    country?: string;
+    /**
+     * true only when country === "United States". Sent alongside `country` so
+     * BysonHub's domestic/international shipping-fee logic doesn't have to
+     * string-match country names — see shipping fee coordination with Nihar.
+     */
+    is_domestic?: boolean;
   };
   items: Array<{
     product_id: number;

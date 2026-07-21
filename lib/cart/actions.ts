@@ -50,6 +50,7 @@ export interface SubmitOrderInput {
     address1: string;
     address2?: string;
     postal_code?: string;
+    country?: string;
   };
   items: Array<{
     productId: string;
@@ -94,7 +95,12 @@ export async function submitOrder(
   }
 
   const payload: BysonOrderPayload = {
-    customer_info: input.customer,
+    customer_info: {
+      ...input.customer,
+      is_domestic: input.customer.country
+        ? input.customer.country === "United States"
+        : undefined,
+    },
     items: mappedItems,
   };
 
