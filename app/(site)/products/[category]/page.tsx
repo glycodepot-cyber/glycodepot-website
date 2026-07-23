@@ -5,7 +5,6 @@ import { ArrowRight } from "lucide-react";
 import { Container, Section, SectionHeading } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
 import { ProductCard } from "@/components/site/home/ProductCard";
-import { CategoryRail } from "@/components/site/catalog/CategoryRail";
 import { ProductFilters } from "@/components/site/catalog/ProductFilters";
 import { Pagination } from "@/components/site/catalog/Pagination";
 import {
@@ -94,9 +93,7 @@ export default async function CategoryPage({
 
       <Section spacing="default">
         <Container>
-          <CategoryRail categories={categories} activeSlug={cat.slug} />
-
-          <div className="mt-8">
+          <div>
             <ProductFilters
               resultCount={result.items.length}
               totalCount={result.totalItems}
