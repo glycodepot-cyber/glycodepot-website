@@ -4,10 +4,6 @@
     {
       "path": "/api/refresh-catalog",
       "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/warm-images",
-      "schedule": "0 9 * * *"
     }
   ]
 }

@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
     "/**/*": ["./lib/data/catalog.json"],
   },
   images: {
+    // Vercel's Image Optimization quota (Hobby plan) is exhausted — every
+    // /_next/image request 402s with OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED,
+    // which is why product images went blank site-wide, not a caching issue.
+    // Serving originals unoptimized keeps the site working; re-enable
+    // optimization (remove this line) once on Vercel Pro or a higher quota.
+    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 2592000,
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
