@@ -92,14 +92,15 @@ export interface BysonOrderPayload {
     address1?: string;
     address2?: string;
     postal_code?: string;
-    /** Shipping country as selected at checkout (free text, e.g. "United States"). */
-    country?: string;
     /**
-     * true only when country === "United States". Sent alongside `country` so
-     * BysonHub's domestic/international shipping-fee logic doesn't have to
-     * string-match country names — see shipping fee coordination with Nihar.
+     * ISO 3166-1 alpha-2 country code ("US", "IN", "GB"...) — NOT a free-text
+     * country name. BysonHub's schema is additionalProperties: false, so any
+     * other shape (or extra fields on this object) gets the whole order
+     * rejected. Matched against the seller's configured shipping zones
+     * (country-list membership, not a fixed domestic/international binary)
+     * to pick shipping.zone/fee in the response below.
      */
-    is_domestic?: boolean;
+    country?: string;
   };
   items: Array<{
     product_id: number;
@@ -108,11 +109,21 @@ export interface BysonOrderPayload {
   }>;
 }
 
+export interface BysonShippingInfo {
+  /** null when no configured zone (incl. default) matches the country. */
+  zone: string | null;
+  fee: number | null;
+  dry_ice_surcharge_applied: boolean;
+}
+
 export interface BysonOrderResponse {
   success: boolean;
   message: string;
   order_id: number;
   payment_link: string | null;
+  shipping?: BysonShippingInfo;
+  subtotal?: number;
+  total?: number;
 }
 
 /* =========================================================================

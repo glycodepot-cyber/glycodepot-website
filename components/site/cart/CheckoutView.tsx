@@ -32,7 +32,15 @@ interface FormState {
   country: string;
 }
 
-const COUNTRIES = ["United States", "Canada", "United Kingdom", "Germany", "Other"];
+// value = ISO 3166-1 alpha-2, required by BysonHub's order API to resolve
+// a shipping zone. Label is what the customer sees.
+const COUNTRIES = [
+  { value: "US", label: "United States" },
+  { value: "CA", label: "Canada" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "DE", label: "Germany" },
+  { value: "IN", label: "India" },
+];
 
 export function CheckoutView() {
   const items = useCart();
@@ -49,14 +57,19 @@ export function CheckoutView() {
     city: "",
     state: "",
     postal: "",
-    country: "United States",
+    country: "US",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
-    "idle",
-  );
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "redirecting" | "done" | "error"
+  >("idle");
   const [orderId, setOrderId] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [shippingResult, setShippingResult] = useState<{
+    fee: number | null;
+    subtotal?: number;
+    total?: number;
+  } | null>(null);
 
   function update<K extends keyof FormState>(k: K, v: FormState[K]) {
     setForm((f) => ({ ...f, [k]: v }));
@@ -82,12 +95,9 @@ export function CheckoutView() {
     setStatus("loading");
     setSubmitError(null);
 
-    const fullAddress = [
-      form.address1,
-      form.city,
-      form.state,
-      form.country,
-    ]
+    const countryLabel =
+      COUNTRIES.find((c) => c.value === form.country)?.label ?? form.country;
+    const fullAddress = [form.address1, form.city, form.state, countryLabel]
       .filter(Boolean)
       .join(", ");
 
@@ -128,12 +138,23 @@ export function CheckoutView() {
         })),
       });
       clearCart();
+      setShippingResult({
+        fee: result.shipping?.fee ?? null,
+        subtotal: result.subtotal,
+        total: result.total,
+      });
       if (result.paymentLink) {
-        // Send the customer straight to Stripe Checkout to pay. Payment
-        // completes off our domain, so the Purchase conversion for these
-        // orders is attributed server-side via the SOW §4.3 offline
-        // conversion import, not this client-side pixel.
-        window.location.href = result.paymentLink;
+        // Briefly show the shipping fee/total BysonHub computed before
+        // handing off to Stripe — otherwise the customer never sees it on
+        // our site, only on Stripe's page a moment later. Payment completes
+        // off our domain, so the Purchase conversion for these orders is
+        // attributed server-side via the SOW §4.3 offline conversion
+        // import, not a client-side pixel here.
+        setOrderId(result.orderId);
+        setStatus("redirecting");
+        setTimeout(() => {
+          window.location.href = result.paymentLink!;
+        }, 1800);
         return;
       }
       // On-site order confirmation (no external redirect) → fire the §4.1
@@ -141,7 +162,7 @@ export function CheckoutView() {
       // captured at render, so they're still valid after clearCart().
       trackPurchase({
         orderId: result.orderId,
-        value: subtotal,
+        value: result.total ?? subtotal,
         itemCount: count,
       });
       setOrderId(result.orderId);
@@ -150,6 +171,48 @@ export function CheckoutView() {
       setSubmitError(result.error);
       setStatus("error");
     }
+  }
+
+  if (status === "redirecting") {
+    return (
+      <div className="mx-auto flex max-w-xl flex-col items-center gap-5 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-10 text-center">
+        <span className="grid size-14 place-items-center rounded-full bg-[var(--color-success)] text-white">
+          <Check className="size-6" />
+        </span>
+        <div className="space-y-1">
+          <h2 className="type-h2 text-[var(--color-foreground)]">
+            Order placed{orderId ? ` — #${orderId}` : ""}.
+          </h2>
+          <p className="text-[15px] text-[var(--color-muted-foreground)]">
+            Redirecting you to secure payment…
+          </p>
+        </div>
+        {shippingResult ? (
+          <div className="w-full max-w-xs space-y-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] p-4 text-left text-[14px]">
+            {typeof shippingResult.subtotal === "number" ? (
+              <div className="flex justify-between text-[var(--color-muted-foreground)]">
+                <span>Subtotal</span>
+                <span>{formatUSD(shippingResult.subtotal)}</span>
+              </div>
+            ) : null}
+            <div className="flex justify-between text-[var(--color-muted-foreground)]">
+              <span>Shipping</span>
+              <span>
+                {shippingResult.fee !== null
+                  ? formatUSD(shippingResult.fee)
+                  : "Calculated by BysonHub"}
+              </span>
+            </div>
+            {typeof shippingResult.total === "number" ? (
+              <div className="flex justify-between border-t border-[var(--color-border)] pt-2 font-semibold text-[var(--color-foreground)]">
+                <span>Total</span>
+                <span>{formatUSD(shippingResult.total)}</span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    );
   }
 
   if (status === "done") {
@@ -166,6 +229,14 @@ export function CheckoutView() {
             We&apos;ve received your order and will follow up by email with
             shipping confirmation and an invoice.
           </p>
+          {shippingResult?.total !== undefined ? (
+            <p className="text-[14px] font-semibold text-[var(--color-foreground)]">
+              Total: {formatUSD(shippingResult.total)}
+              {shippingResult.fee !== null
+                ? ` (incl. ${formatUSD(shippingResult.fee)} shipping)`
+                : ""}
+            </p>
+          ) : null}
         </div>
         <BrandButton href="/products">Continue browsing</BrandButton>
       </div>
@@ -305,7 +376,9 @@ export function CheckoutView() {
                 className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm focus:border-[var(--color-brand)] focus:outline-none"
               >
                 {COUNTRIES.map((c) => (
-                  <option key={c}>{c}</option>
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </Field>

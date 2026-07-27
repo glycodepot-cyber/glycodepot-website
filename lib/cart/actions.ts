@@ -60,7 +60,14 @@ export interface SubmitOrderInput {
 }
 
 export type SubmitOrderResult =
-  | { ok: true; orderId: string; paymentLink: string | null }
+  | {
+      ok: true;
+      orderId: string;
+      paymentLink: string | null;
+      shipping?: { zone: string | null; fee: number | null; dryIceSurchargeApplied: boolean };
+      subtotal?: number;
+      total?: number;
+    }
   | { ok: false; error: string };
 
 export async function submitOrder(
@@ -95,12 +102,7 @@ export async function submitOrder(
   }
 
   const payload: BysonOrderPayload = {
-    customer_info: {
-      ...input.customer,
-      is_domestic: input.customer.country
-        ? input.customer.country === "United States"
-        : undefined,
-    },
+    customer_info: input.customer,
     items: mappedItems,
   };
 
@@ -110,6 +112,15 @@ export async function submitOrder(
       ok: true,
       orderId: String(res.order_id),
       paymentLink: res.payment_link,
+      shipping: res.shipping
+        ? {
+            zone: res.shipping.zone,
+            fee: res.shipping.fee,
+            dryIceSurchargeApplied: res.shipping.dry_ice_surcharge_applied,
+          }
+        : undefined,
+      subtotal: res.subtotal,
+      total: res.total,
     };
   } catch (err) {
     const message =
