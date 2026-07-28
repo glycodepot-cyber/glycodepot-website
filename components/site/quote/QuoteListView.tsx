@@ -32,11 +32,27 @@ import { quoteCopy } from "@/lib/content";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// value = ISO 3166-1 alpha-2, same convention as checkout — required by
+// BysonHub's order API to resolve a shipping zone.
+const COUNTRIES = [
+  { value: "US", label: "United States" },
+  { value: "CA", label: "Canada" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "DE", label: "Germany" },
+  { value: "IN", label: "India" },
+];
+
 interface CustomerState {
-  name: string;
   email: string;
+  firstName: string;
+  lastName: string;
   company: string;
   phone: string;
+  address1: string;
+  city: string;
+  state: string;
+  postal: string;
+  country: string;
   notes: string;
 }
 
@@ -45,24 +61,37 @@ export function QuoteListView() {
   const count = getQuoteCount(items);
 
   const [customer, setCustomer] = useState<CustomerState>({
-    name: "",
     email: "",
+    firstName: "",
+    lastName: "",
     company: "",
     phone: "",
+    address1: "",
+    city: "",
+    state: "",
+    postal: "",
+    country: "US",
     notes: "",
   });
-  const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
 
   function update<K extends keyof CustomerState>(k: K, v: CustomerState[K]) {
     setCustomer((c) => ({ ...c, [k]: v }));
-    if (k in errors) setErrors((e) => ({ ...e, [k]: undefined }));
+    if (errors[k]) setErrors((e) => ({ ...e, [k]: "" }));
   }
 
   function validate(): boolean {
-    const next: typeof errors = {};
-    if (!customer.name.trim()) next.name = "Please tell us your name.";
-    if (!emailRegex.test(customer.email)) next.email = "Enter a valid email.";
+    const next: Record<string, string> = {};
+    if (!emailRegex.test(customer.email)) next.email = "Valid email required.";
+    if (!customer.firstName.trim()) next.firstName = "Required.";
+    if (!customer.lastName.trim()) next.lastName = "Required.";
+    if (!customer.company.trim()) next.company = "Required.";
+    if (!customer.phone.trim()) next.phone = "Required.";
+    if (!customer.address1.trim()) next.address1 = "Required.";
+    if (!customer.city.trim()) next.city = "Required.";
+    if (!customer.state.trim()) next.state = "Required.";
+    if (!customer.postal.trim()) next.postal = "Required.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -97,10 +126,15 @@ export function QuoteListView() {
       const res = await submitQuote({
         lines,
         customer: {
-          name: customer.name.trim(),
+          name: `${customer.firstName} ${customer.lastName}`.trim(),
           email: customer.email.trim(),
-          company: customer.company.trim() || undefined,
-          phone: customer.phone.trim() || undefined,
+          company: customer.company.trim(),
+          phone: customer.phone.trim(),
+          address1: customer.address1.trim(),
+          city: customer.city.trim(),
+          state: customer.state.trim(),
+          postal: customer.postal.trim(),
+          country: customer.country,
           notes: customer.notes.trim() || undefined,
         },
         meta: {
@@ -258,16 +292,7 @@ export function QuoteListView() {
             We&rsquo;ll reply with pricing, lead times, and bulk options.
           </p>
 
-          <Field id="q-name" label="Name *" error={errors.name}>
-            <Input
-              id="q-name"
-              autoComplete="name"
-              value={customer.name}
-              onChange={(e) => update("name", e.target.value)}
-              aria-invalid={!!errors.name}
-            />
-          </Field>
-          <Field id="q-email" label="Work email *" error={errors.email}>
+          <Field id="q-email" label="Email *" error={errors.email}>
             <Input
               id="q-email"
               type="email"
@@ -277,23 +302,99 @@ export function QuoteListView() {
               aria-invalid={!!errors.email}
             />
           </Field>
-          <Field id="q-company" label="Organization">
-            <Input
-              id="q-company"
-              autoComplete="organization"
-              value={customer.company}
-              onChange={(e) => update("company", e.target.value)}
-            />
-          </Field>
-          <Field id="q-phone" label="Phone (optional)">
+          <Field id="q-phone" label="Phone *" error={errors.phone}>
             <Input
               id="q-phone"
               type="tel"
               autoComplete="tel"
               value={customer.phone}
               onChange={(e) => update("phone", e.target.value)}
+              aria-invalid={!!errors.phone}
             />
           </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id="q-first" label="First name *" error={errors.firstName}>
+              <Input
+                id="q-first"
+                autoComplete="given-name"
+                value={customer.firstName}
+                onChange={(e) => update("firstName", e.target.value)}
+                aria-invalid={!!errors.firstName}
+              />
+            </Field>
+            <Field id="q-last" label="Last name *" error={errors.lastName}>
+              <Input
+                id="q-last"
+                autoComplete="family-name"
+                value={customer.lastName}
+                onChange={(e) => update("lastName", e.target.value)}
+                aria-invalid={!!errors.lastName}
+              />
+            </Field>
+          </div>
+          <Field id="q-company" label="Organization *" error={errors.company}>
+            <Input
+              id="q-company"
+              autoComplete="organization"
+              value={customer.company}
+              onChange={(e) => update("company", e.target.value)}
+              aria-invalid={!!errors.company}
+            />
+          </Field>
+          <Field id="q-address" label="Address *" error={errors.address1}>
+            <Input
+              id="q-address"
+              autoComplete="address-line1"
+              value={customer.address1}
+              onChange={(e) => update("address1", e.target.value)}
+              aria-invalid={!!errors.address1}
+            />
+          </Field>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id="q-city" label="City *" error={errors.city}>
+              <Input
+                id="q-city"
+                autoComplete="address-level2"
+                value={customer.city}
+                onChange={(e) => update("city", e.target.value)}
+                aria-invalid={!!errors.city}
+              />
+            </Field>
+            <Field id="q-state" label="State / Region *" error={errors.state}>
+              <Input
+                id="q-state"
+                autoComplete="address-level1"
+                value={customer.state}
+                onChange={(e) => update("state", e.target.value)}
+                aria-invalid={!!errors.state}
+              />
+            </Field>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id="q-postal" label="Postal code *" error={errors.postal}>
+              <Input
+                id="q-postal"
+                autoComplete="postal-code"
+                value={customer.postal}
+                onChange={(e) => update("postal", e.target.value)}
+                aria-invalid={!!errors.postal}
+              />
+            </Field>
+            <Field id="q-country" label="Country *">
+              <select
+                id="q-country"
+                value={customer.country}
+                onChange={(e) => update("country", e.target.value)}
+                className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm focus:border-[var(--color-brand)] focus:outline-none"
+              >
+                {COUNTRIES.map((c) => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
           <Field id="q-notes" label="Notes (optional)">
             <textarea
               id="q-notes"

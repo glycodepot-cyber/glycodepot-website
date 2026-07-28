@@ -170,10 +170,12 @@ export async function submitQuote(
             customer_info: {
               name: request.customer.name,
               email: request.customer.email,
-              phone: request.customer.phone ?? "N/A",
-              address1: "N/A",
-              address2: "N/A",
-              postal_code: "N/A",
+              phone: request.customer.phone,
+              address1: [request.customer.address1, request.customer.city, request.customer.state]
+                .filter(Boolean)
+                .join(", "),
+              postal_code: request.customer.postal,
+              country: request.customer.country,
             },
             items: mappedItems.map((i) => ({
               product_id: i.product_id,

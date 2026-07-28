@@ -82,8 +82,10 @@ export function CheckoutView() {
     if (!form.firstName.trim()) next.firstName = "Required.";
     if (!form.lastName.trim()) next.lastName = "Required.";
     if (!form.phone.trim()) next.phone = "Required.";
+    if (!form.company.trim()) next.company = "Required.";
     if (!form.address1.trim()) next.address1 = "Required.";
     if (!form.city.trim()) next.city = "Required.";
+    if (!form.state.trim()) next.state = "Required.";
     if (!form.postal.trim()) next.postal = "Required.";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -322,12 +324,13 @@ export function CheckoutView() {
               />
             </Field>
           </div>
-          <Field id="co-company" label="Organization (optional)">
+          <Field id="co-company" label="Organization *" error={errors.company}>
             <Input
               id="co-company"
               autoComplete="organization"
               value={form.company}
               onChange={(e) => update("company", e.target.value)}
+              aria-invalid={!!errors.company}
             />
           </Field>
           <Field id="co-address" label="Address *" error={errors.address1}>
@@ -349,12 +352,13 @@ export function CheckoutView() {
                 aria-invalid={!!errors.city}
               />
             </Field>
-            <Field id="co-state" label="State / Region">
+            <Field id="co-state" label="State / Region *" error={errors.state}>
               <Input
                 id="co-state"
                 autoComplete="address-level1"
                 value={form.state}
                 onChange={(e) => update("state", e.target.value)}
+                aria-invalid={!!errors.state}
               />
             </Field>
           </div>
@@ -368,7 +372,7 @@ export function CheckoutView() {
                 aria-invalid={!!errors.postal}
               />
             </Field>
-            <Field id="co-country" label="Country">
+            <Field id="co-country" label="Country *">
               <select
                 id="co-country"
                 value={form.country}

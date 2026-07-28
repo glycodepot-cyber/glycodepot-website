@@ -101,8 +101,14 @@ export interface QuoteRequest {
   customer: {
     name: string;
     email: string;
-    company?: string;
-    phone?: string;
+    company: string;
+    phone: string;
+    address1: string;
+    city: string;
+    state: string;
+    postal: string;
+    /** ISO 3166-1 alpha-2, e.g. "US" — same convention as checkout. */
+    country: string;
     notes?: string;
   };
   /**
