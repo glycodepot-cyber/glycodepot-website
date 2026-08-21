@@ -32,14 +32,93 @@ interface FormState {
   country: string;
 }
 
-// value = ISO 3166-1 alpha-2, required by BysonHub's order API to resolve
-// a shipping zone. Label is what the customer sees.
+// ISO 3166-1 alpha-2 — matches BysonHub's accepted country codes.
 const COUNTRIES = [
   { value: "US", label: "United States" },
+  { value: "AF", label: "Afghanistan" },
+  { value: "AL", label: "Albania" },
+  { value: "DZ", label: "Algeria" },
+  { value: "AR", label: "Argentina" },
+  { value: "AM", label: "Armenia" },
+  { value: "AU", label: "Australia" },
+  { value: "AT", label: "Austria" },
+  { value: "AZ", label: "Azerbaijan" },
+  { value: "BH", label: "Bahrain" },
+  { value: "BD", label: "Bangladesh" },
+  { value: "BE", label: "Belgium" },
+  { value: "BR", label: "Brazil" },
+  { value: "BG", label: "Bulgaria" },
   { value: "CA", label: "Canada" },
-  { value: "GB", label: "United Kingdom" },
+  { value: "CL", label: "Chile" },
+  { value: "CN", label: "China" },
+  { value: "CO", label: "Colombia" },
+  { value: "HR", label: "Croatia" },
+  { value: "CY", label: "Cyprus" },
+  { value: "CZ", label: "Czech Republic" },
+  { value: "DK", label: "Denmark" },
+  { value: "EG", label: "Egypt" },
+  { value: "EE", label: "Estonia" },
+  { value: "ET", label: "Ethiopia" },
+  { value: "FI", label: "Finland" },
+  { value: "FR", label: "France" },
+  { value: "GE", label: "Georgia" },
   { value: "DE", label: "Germany" },
+  { value: "GH", label: "Ghana" },
+  { value: "GR", label: "Greece" },
+  { value: "HK", label: "Hong Kong" },
+  { value: "HU", label: "Hungary" },
+  { value: "IS", label: "Iceland" },
   { value: "IN", label: "India" },
+  { value: "ID", label: "Indonesia" },
+  { value: "IR", label: "Iran" },
+  { value: "IQ", label: "Iraq" },
+  { value: "IE", label: "Ireland" },
+  { value: "IL", label: "Israel" },
+  { value: "IT", label: "Italy" },
+  { value: "JP", label: "Japan" },
+  { value: "JO", label: "Jordan" },
+  { value: "KZ", label: "Kazakhstan" },
+  { value: "KE", label: "Kenya" },
+  { value: "KW", label: "Kuwait" },
+  { value: "LV", label: "Latvia" },
+  { value: "LB", label: "Lebanon" },
+  { value: "LT", label: "Lithuania" },
+  { value: "LU", label: "Luxembourg" },
+  { value: "MY", label: "Malaysia" },
+  { value: "MX", label: "Mexico" },
+  { value: "MA", label: "Morocco" },
+  { value: "NL", label: "Netherlands" },
+  { value: "NZ", label: "New Zealand" },
+  { value: "NG", label: "Nigeria" },
+  { value: "NO", label: "Norway" },
+  { value: "OM", label: "Oman" },
+  { value: "PK", label: "Pakistan" },
+  { value: "PE", label: "Peru" },
+  { value: "PH", label: "Philippines" },
+  { value: "PL", label: "Poland" },
+  { value: "PT", label: "Portugal" },
+  { value: "QA", label: "Qatar" },
+  { value: "RO", label: "Romania" },
+  { value: "RU", label: "Russia" },
+  { value: "SA", label: "Saudi Arabia" },
+  { value: "SG", label: "Singapore" },
+  { value: "SK", label: "Slovakia" },
+  { value: "SI", label: "Slovenia" },
+  { value: "ZA", label: "South Africa" },
+  { value: "KR", label: "South Korea" },
+  { value: "ES", label: "Spain" },
+  { value: "LK", label: "Sri Lanka" },
+  { value: "SE", label: "Sweden" },
+  { value: "CH", label: "Switzerland" },
+  { value: "TW", label: "Taiwan" },
+  { value: "TZ", label: "Tanzania" },
+  { value: "TH", label: "Thailand" },
+  { value: "TR", label: "Turkey" },
+  { value: "UA", label: "Ukraine" },
+  { value: "AE", label: "United Arab Emirates" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "UG", label: "Uganda" },
+  { value: "VN", label: "Vietnam" },
 ];
 
 export function CheckoutView() {
@@ -81,12 +160,7 @@ export function CheckoutView() {
     if (!emailRegex.test(form.email)) next.email = "Valid email required.";
     if (!form.firstName.trim()) next.firstName = "Required.";
     if (!form.lastName.trim()) next.lastName = "Required.";
-    if (!form.phone.trim()) next.phone = "Required.";
     if (!form.company.trim()) next.company = "Required.";
-    if (!form.address1.trim()) next.address1 = "Required.";
-    if (!form.city.trim()) next.city = "Required.";
-    if (!form.state.trim()) next.state = "Required.";
-    if (!form.postal.trim()) next.postal = "Required.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -225,20 +299,29 @@ export function CheckoutView() {
         </span>
         <div className="space-y-2">
           <h2 className="type-h2 text-[var(--color-foreground)]">
-            Order placed{orderId ? ` — #${orderId}` : ""}.
+            Order received{orderId ? ` — #${orderId}` : ""}.
           </h2>
           <p className="text-[15px] text-[var(--color-muted-foreground)]">
-            We&apos;ve received your order and will follow up by email with
-            shipping confirmation and an invoice.
+            We&apos;ve received your order. Our team will send you a payment
+            link and invoice to your email within 1 business day.
           </p>
           {shippingResult?.total !== undefined ? (
             <p className="text-[14px] font-semibold text-[var(--color-foreground)]">
-              Total: {formatUSD(shippingResult.total)}
+              Order total: {formatUSD(shippingResult.total)}
               {shippingResult.fee !== null
                 ? ` (incl. ${formatUSD(shippingResult.fee)} shipping)`
                 : ""}
             </p>
           ) : null}
+          <p className="text-[13px] text-[var(--color-muted)]">
+            Questions? Email{" "}
+            <a
+              href="mailto:info@glycodepot.com"
+              className="underline hover:text-[var(--color-brand)]"
+            >
+              info@glycodepot.com
+            </a>
+          </p>
         </div>
         <BrandButton href="/products">Continue browsing</BrandButton>
       </div>
@@ -288,7 +371,7 @@ export function CheckoutView() {
               aria-invalid={!!errors.email}
             />
           </Field>
-          <Field id="co-phone" label="Phone *" error={errors.phone}>
+          <Field id="co-phone" label="Phone" error={errors.phone}>
             <Input
               id="co-phone"
               type="tel"
@@ -333,7 +416,7 @@ export function CheckoutView() {
               aria-invalid={!!errors.company}
             />
           </Field>
-          <Field id="co-address" label="Address *" error={errors.address1}>
+          <Field id="co-address" label="Address" error={errors.address1}>
             <Input
               id="co-address"
               autoComplete="address-line1"
@@ -343,7 +426,7 @@ export function CheckoutView() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="co-city" label="City *" error={errors.city}>
+            <Field id="co-city" label="City" error={errors.city}>
               <Input
                 id="co-city"
                 autoComplete="address-level2"
@@ -352,7 +435,7 @@ export function CheckoutView() {
                 aria-invalid={!!errors.city}
               />
             </Field>
-            <Field id="co-state" label="State / Region *" error={errors.state}>
+            <Field id="co-state" label="State / Region" error={errors.state}>
               <Input
                 id="co-state"
                 autoComplete="address-level1"
@@ -363,7 +446,7 @@ export function CheckoutView() {
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="co-postal" label="Postal code *" error={errors.postal}>
+            <Field id="co-postal" label="Postal code" error={errors.postal}>
               <Input
                 id="co-postal"
                 autoComplete="postal-code"
@@ -372,7 +455,7 @@ export function CheckoutView() {
                 aria-invalid={!!errors.postal}
               />
             </Field>
-            <Field id="co-country" label="Country *">
+            <Field id="co-country" label="Country">
               <select
                 id="co-country"
                 value={form.country}

@@ -32,14 +32,93 @@ import { quoteCopy } from "@/lib/content";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// value = ISO 3166-1 alpha-2, same convention as checkout — required by
-// BysonHub's order API to resolve a shipping zone.
+// ISO 3166-1 alpha-2 — matches BysonHub's accepted country codes.
 const COUNTRIES = [
   { value: "US", label: "United States" },
+  { value: "AF", label: "Afghanistan" },
+  { value: "AL", label: "Albania" },
+  { value: "DZ", label: "Algeria" },
+  { value: "AR", label: "Argentina" },
+  { value: "AM", label: "Armenia" },
+  { value: "AU", label: "Australia" },
+  { value: "AT", label: "Austria" },
+  { value: "AZ", label: "Azerbaijan" },
+  { value: "BH", label: "Bahrain" },
+  { value: "BD", label: "Bangladesh" },
+  { value: "BE", label: "Belgium" },
+  { value: "BR", label: "Brazil" },
+  { value: "BG", label: "Bulgaria" },
   { value: "CA", label: "Canada" },
-  { value: "GB", label: "United Kingdom" },
+  { value: "CL", label: "Chile" },
+  { value: "CN", label: "China" },
+  { value: "CO", label: "Colombia" },
+  { value: "HR", label: "Croatia" },
+  { value: "CY", label: "Cyprus" },
+  { value: "CZ", label: "Czech Republic" },
+  { value: "DK", label: "Denmark" },
+  { value: "EG", label: "Egypt" },
+  { value: "EE", label: "Estonia" },
+  { value: "ET", label: "Ethiopia" },
+  { value: "FI", label: "Finland" },
+  { value: "FR", label: "France" },
+  { value: "GE", label: "Georgia" },
   { value: "DE", label: "Germany" },
+  { value: "GH", label: "Ghana" },
+  { value: "GR", label: "Greece" },
+  { value: "HK", label: "Hong Kong" },
+  { value: "HU", label: "Hungary" },
+  { value: "IS", label: "Iceland" },
   { value: "IN", label: "India" },
+  { value: "ID", label: "Indonesia" },
+  { value: "IR", label: "Iran" },
+  { value: "IQ", label: "Iraq" },
+  { value: "IE", label: "Ireland" },
+  { value: "IL", label: "Israel" },
+  { value: "IT", label: "Italy" },
+  { value: "JP", label: "Japan" },
+  { value: "JO", label: "Jordan" },
+  { value: "KZ", label: "Kazakhstan" },
+  { value: "KE", label: "Kenya" },
+  { value: "KW", label: "Kuwait" },
+  { value: "LV", label: "Latvia" },
+  { value: "LB", label: "Lebanon" },
+  { value: "LT", label: "Lithuania" },
+  { value: "LU", label: "Luxembourg" },
+  { value: "MY", label: "Malaysia" },
+  { value: "MX", label: "Mexico" },
+  { value: "MA", label: "Morocco" },
+  { value: "NL", label: "Netherlands" },
+  { value: "NZ", label: "New Zealand" },
+  { value: "NG", label: "Nigeria" },
+  { value: "NO", label: "Norway" },
+  { value: "OM", label: "Oman" },
+  { value: "PK", label: "Pakistan" },
+  { value: "PE", label: "Peru" },
+  { value: "PH", label: "Philippines" },
+  { value: "PL", label: "Poland" },
+  { value: "PT", label: "Portugal" },
+  { value: "QA", label: "Qatar" },
+  { value: "RO", label: "Romania" },
+  { value: "RU", label: "Russia" },
+  { value: "SA", label: "Saudi Arabia" },
+  { value: "SG", label: "Singapore" },
+  { value: "SK", label: "Slovakia" },
+  { value: "SI", label: "Slovenia" },
+  { value: "ZA", label: "South Africa" },
+  { value: "KR", label: "South Korea" },
+  { value: "ES", label: "Spain" },
+  { value: "LK", label: "Sri Lanka" },
+  { value: "SE", label: "Sweden" },
+  { value: "CH", label: "Switzerland" },
+  { value: "TW", label: "Taiwan" },
+  { value: "TZ", label: "Tanzania" },
+  { value: "TH", label: "Thailand" },
+  { value: "TR", label: "Turkey" },
+  { value: "UA", label: "Ukraine" },
+  { value: "AE", label: "United Arab Emirates" },
+  { value: "GB", label: "United Kingdom" },
+  { value: "UG", label: "Uganda" },
+  { value: "VN", label: "Vietnam" },
 ];
 
 interface CustomerState {
@@ -87,11 +166,6 @@ export function QuoteListView() {
     if (!customer.firstName.trim()) next.firstName = "Required.";
     if (!customer.lastName.trim()) next.lastName = "Required.";
     if (!customer.company.trim()) next.company = "Required.";
-    if (!customer.phone.trim()) next.phone = "Required.";
-    if (!customer.address1.trim()) next.address1 = "Required.";
-    if (!customer.city.trim()) next.city = "Required.";
-    if (!customer.state.trim()) next.state = "Required.";
-    if (!customer.postal.trim()) next.postal = "Required.";
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -302,7 +376,7 @@ export function QuoteListView() {
               aria-invalid={!!errors.email}
             />
           </Field>
-          <Field id="q-phone" label="Phone *" error={errors.phone}>
+          <Field id="q-phone" label="Phone" error={errors.phone}>
             <Input
               id="q-phone"
               type="tel"
@@ -341,7 +415,7 @@ export function QuoteListView() {
               aria-invalid={!!errors.company}
             />
           </Field>
-          <Field id="q-address" label="Address *" error={errors.address1}>
+          <Field id="q-address" label="Address" error={errors.address1}>
             <Input
               id="q-address"
               autoComplete="address-line1"
@@ -351,7 +425,7 @@ export function QuoteListView() {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="q-city" label="City *" error={errors.city}>
+            <Field id="q-city" label="City" error={errors.city}>
               <Input
                 id="q-city"
                 autoComplete="address-level2"
@@ -360,7 +434,7 @@ export function QuoteListView() {
                 aria-invalid={!!errors.city}
               />
             </Field>
-            <Field id="q-state" label="State / Region *" error={errors.state}>
+            <Field id="q-state" label="State / Region" error={errors.state}>
               <Input
                 id="q-state"
                 autoComplete="address-level1"
@@ -371,7 +445,7 @@ export function QuoteListView() {
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="q-postal" label="Postal code *" error={errors.postal}>
+            <Field id="q-postal" label="Postal code" error={errors.postal}>
               <Input
                 id="q-postal"
                 autoComplete="postal-code"
@@ -380,7 +454,7 @@ export function QuoteListView() {
                 aria-invalid={!!errors.postal}
               />
             </Field>
-            <Field id="q-country" label="Country *">
+            <Field id="q-country" label="Country">
               <select
                 id="q-country"
                 value={customer.country}
