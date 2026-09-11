@@ -13,6 +13,7 @@ const HeroSlider = dynamic(
   },
 );
 import { ProductGridSection } from "@/components/site/home/ProductGridSection";
+import { CategoriesShowcase } from "@/components/site/home/CategoriesShowcase";
 import { HighlightedTabs } from "@/components/site/home/HighlightedTabs";
 import { GlycanSolutions } from "@/components/site/home/GlycanSolutions";
 import { Applications } from "@/components/site/home/Applications";
@@ -48,6 +49,9 @@ export default function HomePage() {
     <>
       {/* 1 — Hero slider */}
       <HeroSlider />
+
+      {/* 1b — Shop by category */}
+      <CategoriesShowcase />
 
       {/* 2 — Featured (Sugar Nucleotides) — flagship: 4+4 grid */}
       <ProductGridSection
