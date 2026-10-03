@@ -72,6 +72,9 @@ Set in Vercel project settings; locally in `.env.local` (gitignored).
 | `CRON_SECRET` | Shared secret; `/api/refresh-catalog` rejects calls without it. |
 | `DATABASE_URL` | Neon PostgreSQL connection string for the unified catalog. |
 | `ADMIN_EMAILS` | Comma-separated Clerk email addresses allowed into `/admin`. |
+| `CHECKOUT_PROVIDER` | `bysonhub` by default; set to `stripe` only in staging after Stripe is configured. |
+| `STRIPE_SECRET_KEY` | Server-only Stripe test/live secret. Add in Vercel, never in Git. |
+| `STRIPE_WEBHOOK_SECRET` | Signing secret for `/api/stripe/webhook`. Add in Vercel. |
 
 ## Unified catalog migration
 
@@ -87,6 +90,19 @@ Set in Vercel project settings; locally in `.env.local` (gitignored).
 The importer merges the latest spreadsheet stock/pricing with the descriptions,
 images and variants in `lib/data/catalog.json`. It deduplicates legacy cache
 rows by stable BysonHub product ID and records each import checksum.
+
+## Isolated staging rollout
+
+Create a separate Vercel project from the migration branch. Configure
+`NEXT_PUBLIC_SITE_URL=https://shukkoor.glycodepot.com`,
+`ADMIN_EMAILS=glycodepot@gmail.com`, and a staging-only Neon database. The
+production project and its BysonHub checkout remain unchanged.
+
+Stripe is fail-closed and opt-in: add test-mode `STRIPE_SECRET_KEY` and
+`STRIPE_WEBHOOK_SECRET`, register `/api/stripe/webhook`, and only then set
+`CHECKOUT_PROVIDER=stripe`. Product IDs and prices are resolved again from the
+database server-side before the Checkout Session is created; browser prices are
+never trusted. Leave `CHECKOUT_PROVIDER=bysonhub` until these values exist.
 
 ## Notes
 

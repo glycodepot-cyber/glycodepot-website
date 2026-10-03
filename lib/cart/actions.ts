@@ -13,6 +13,10 @@ import {
   type BysonOrderPayload,
 } from "@/lib/api/bysonhub";
 import { ghlContact, ghlNewsletter, ghlQuote } from "@/lib/api/ghl";
+import {
+  createInternalCheckout,
+  isInternalCheckoutEnabled,
+} from "@/lib/payments/checkout";
 
 /**
  * Stable idempotency key derived from cart contents + customer email.
@@ -73,6 +77,33 @@ export type SubmitOrderResult =
 export async function submitOrder(
   input: SubmitOrderInput,
 ): Promise<SubmitOrderResult> {
+  if (!input.items.length) {
+    return { ok: false, error: "Your cart is empty." };
+  }
+
+  if (isInternalCheckoutEnabled()) {
+    try {
+      const result = await createInternalCheckout(
+        input.customer,
+        input.items,
+        makeIdempotencyKey(input),
+      );
+      return {
+        ok: true,
+        orderId: result.orderId,
+        paymentLink: result.paymentLink,
+        subtotal: result.subtotal,
+        total: result.total,
+        shipping: { zone: null, fee: 0, dryIceSurchargeApplied: false },
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : "Unable to start secure checkout.",
+      };
+    }
+  }
+
   if (!BYSON_CONFIGURED) {
     return {
       ok: false,
@@ -80,10 +111,6 @@ export async function submitOrder(
         "Order backend not configured yet. We've captured your details — our team will follow up.",
     };
   }
-  if (!input.items.length) {
-    return { ok: false, error: "Your cart is empty." };
-  }
-
   const mappedItems: BysonOrderPayload["items"] = [];
   for (const i of input.items) {
     const productId = bysonProductIdFromDomain(i.productId);
