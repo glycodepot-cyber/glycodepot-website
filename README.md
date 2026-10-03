@@ -4,6 +4,10 @@ Next.js 16 (App Router) storefront for [glycodepot.com](https://glycodepot.com).
 Catalog comes from **BysonHub**, payments from **Stripe** (created by BysonHub),
 auth from **Clerk**. Hosted on Vercel.
 
+> Migration in progress: when `DATABASE_URL` is configured, the storefront now
+> reads the first-party GlycoDepot catalog database before using the legacy
+> prebaked/BysonHub fallback. `/admin` provides the initial product editor.
+
 ## Getting started
 
 ```bash
@@ -66,6 +70,23 @@ Set in Vercel project settings; locally in `.env.local` (gitignored).
 | `NEXT_PUBLIC_SITE_URL` | Canonical URLs, OG tags, sitemap. |
 | `VERCEL_DEPLOY_HOOK_URL` | Required for the refresh cron to do anything. |
 | `CRON_SECRET` | Shared secret; `/api/refresh-catalog` rejects calls without it. |
+| `DATABASE_URL` | Neon PostgreSQL connection string for the unified catalog. |
+| `ADMIN_EMAILS` | Comma-separated Clerk email addresses allowed into `/admin`. |
+
+## Unified catalog migration
+
+1. Provision Neon PostgreSQL in the Vercel Marketplace and set `DATABASE_URL`.
+2. Set `ADMIN_EMAILS` to the GlycoDepot administrator email address.
+3. Run a validation-only import:
+   `npm run import:products -- /path/to/products-export.xlsx`
+4. Apply the schema and import:
+   `npm run import:products -- /path/to/products-export.xlsx --apply`
+5. Verify `/admin`, product search, category pages and checkout before removing
+   the BysonHub environment variables.
+
+The importer merges the latest spreadsheet stock/pricing with the descriptions,
+images and variants in `lib/data/catalog.json`. It deduplicates legacy cache
+rows by stable BysonHub product ID and records each import checksum.
 
 ## Notes
 

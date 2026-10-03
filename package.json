@@ -8,11 +8,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prebake": "node scripts/prebake-catalog.mjs"
+    "prebake": "node scripts/prebake-catalog.mjs",
+    "import:products": "dotenv -e .env.local -- node scripts/import-products.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "@clerk/nextjs": "^7.5.19",
+    "@neondatabase/serverless": "^1.2.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.4.1",
     "@vercel/speed-insights": "^2.0.0",
@@ -36,8 +38,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "exceljs": "^4.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
