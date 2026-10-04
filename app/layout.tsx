@@ -57,18 +57,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clerkConfigured = Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
+  );
+
+  const document = (
+    <html lang="en" className={`${jost.variable} h-full antialiased`}>
+      <GoogleTagManager />
+      <body className="min-h-full flex flex-col font-sans">
+        <GoogleTagManagerNoScript />
+        <AttributionCapture />
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
+    </html>
+  );
+
+  if (!clerkConfigured) return document;
+
   return (
     <ClerkProvider afterSignOutUrl="/my-account">
-      <html lang="en" className={`${jost.variable} h-full antialiased`}>
-        <GoogleTagManager />
-        <body className="min-h-full flex flex-col font-sans">
-          <GoogleTagManagerNoScript />
-          <AttributionCapture />
-          {children}
-          <Analytics />
-          <SpeedInsights />
-        </body>
-      </html>
+      {document}
     </ClerkProvider>
   );
 }
