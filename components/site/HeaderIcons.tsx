@@ -14,7 +14,26 @@ import { QuoteButton } from "./QuoteButton";
 import { utilityNav } from "@/lib/content";
 
 export function HeaderIcons() {
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return <HeaderIconContents isLoaded={false} isSignedIn={false} />;
+  }
+
+  return <ClerkHeaderIcons />;
+}
+
+function ClerkHeaderIcons() {
   const { isSignedIn, isLoaded } = useAuth();
+
+  return <HeaderIconContents isLoaded={isLoaded} isSignedIn={isSignedIn} />;
+}
+
+function HeaderIconContents({
+  isLoaded,
+  isSignedIn,
+}: {
+  isLoaded: boolean;
+  isSignedIn: boolean | undefined;
+}) {
 
   return (
     <TooltipProvider delay={300}>
