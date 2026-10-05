@@ -1,34 +1,17 @@
 import Link from "next/link";
-import { listAdminProducts } from "@/lib/admin/catalog";
+import { bulkUpdateProducts } from "../actions";
+import { listAdminCategories,listAdminProducts } from "@/lib/admin/catalog";
 import { importProducts } from "./import-action";
 
-export default async function AdminProductsPage({ searchParams }: { searchParams: Promise<{ q?: string; imported?: string; skipped?: string; error?: string }> }) {
-  const params = await searchParams;
-  const q = params.q?.trim() ?? "";
-  const products = await listAdminProducts(q);
-  return (
-    <div>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><h1 className="text-3xl font-bold">Products</h1><p className="mt-1 text-sm text-[var(--color-muted)]">Showing up to 100 products.</p></div>
-        <form className="flex gap-2"><input name="q" defaultValue={q} placeholder="Name or SKU" className="h-11 rounded-lg border border-[var(--color-border)] bg-white px-4"/><button className="rounded-lg bg-[var(--color-brand)] px-5 font-semibold text-white">Search</button></form>
-      </div>
-      <section className="mt-6 rounded-xl border border-[var(--color-border)] bg-white p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div><h2 className="font-bold">Bulk edit products</h2><p className="mt-1 text-sm text-[var(--color-muted)]">Export XLSX, edit the rows, then import it back. Product ID is the stable match key.</p></div>
-          <Link href="/admin/products/export" className="rounded-lg border border-[var(--color-brand)] px-4 py-2 font-semibold text-[var(--color-brand)]">Export XLSX</Link>
-        </div>
-        <form action={importProducts} className="mt-4 flex flex-wrap items-center gap-3">
-          <input required type="file" name="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="max-w-full text-sm" />
-          <button className="rounded-lg bg-[var(--color-brand)] px-4 py-2 font-semibold text-white">Import updates</button>
-        </form>
-        {params.imported && <p className="mt-3 text-sm text-[var(--color-success)]">Updated {params.imported} products; skipped {params.skipped ?? "0"} unmatched rows.</p>}
-        {params.error && <p className="mt-3 text-sm text-red-700">{params.error}</p>}
-      </section>
-      <div className="mt-6 overflow-x-auto rounded-xl border border-[var(--color-border)] bg-white">
-        <table className="w-full text-left text-sm"><thead className="bg-[var(--color-surface)]"><tr>{["Product", "SKU", "Price", "Stock", "Status", ""].map(h=><th key={h} className="px-4 py-3 font-semibold">{h}</th>)}</tr></thead>
-          <tbody>{products.map((product) => <tr key={String(product.id)} className="border-t border-[var(--color-border)]"><td className="px-4 py-3 font-medium">{String(product.name)}</td><td className="px-4 py-3">{String(product.sku ?? "—")}</td><td className="px-4 py-3">{product.is_rfq ? "Quote" : product.price_cents == null ? "—" : `$${(Number(product.price_cents)/100).toFixed(2)}`}</td><td className="px-4 py-3">{String(product.stock_quantity)}</td><td className="px-4 py-3">{product.is_active ? "Active" : "Hidden"}</td><td className="px-4 py-3 text-right"><Link className="font-semibold text-[var(--color-brand)]" href={`/admin/products/${product.id}`}>Edit</Link></td></tr>)}</tbody>
-        </table>
-      </div>
-    </div>
-  );
+type Search={q?:string;category?:string;status?:string;page?:string;updated?:string;imported?:string;skipped?:string;error?:string};
+export default async function AdminProductsPage({searchParams}:{searchParams:Promise<Search>}){
+ const p=await searchParams;const filters={search:p.q??"",category:p.category??"",status:p.status??"",page:Number(p.page??1)};
+ const [{rows:products,total,page,totalPages},categories]=await Promise.all([listAdminProducts(filters),listAdminCategories()]);
+ const href=(n:number)=>"?"+new URLSearchParams({...filters.search&&{q:filters.search},...filters.category&&{category:filters.category},...filters.status&&{status:filters.status},page:String(n)}).toString();
+ return <div><h1 className="text-3xl font-bold">Products</h1><p className="mt-1 text-sm text-[var(--color-muted)]">{total.toLocaleString()} products · WooCommerce-style catalog management.</p>
+ {p.updated==="1"&&<p className="mt-4 rounded-lg bg-green-50 px-4 py-3 text-green-800">Bulk update completed.</p>}
+ <section className="mt-6 rounded-xl border bg-white p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-bold">Spreadsheet import / export</h2><p className="text-sm text-[var(--color-muted)]">Export XLSX, edit rows, then import updates.</p></div><Link href="/admin/products/export" className="rounded-lg border border-[var(--color-brand)] px-4 py-2 font-semibold text-[var(--color-brand)]">Export XLSX</Link></div><form action={importProducts} className="mt-4 flex flex-wrap gap-3"><input required type="file" name="file" accept=".xlsx"/><button className="rounded-lg bg-[var(--color-brand)] px-4 py-2 font-semibold text-white">Import updates</button></form>{p.imported&&<p className="mt-3 text-sm text-green-700">Updated {p.imported}; skipped {p.skipped??"0"}.</p>}{p.error&&<p className="mt-3 text-sm text-red-700">{p.error}</p>}</section>
+ <form className="mt-4 grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-[1fr_220px_180px_auto]"><input name="q" defaultValue={filters.search} placeholder="Search name or SKU" className="h-11 rounded-lg border px-4"/><select name="category" defaultValue={filters.category} className="h-11 rounded-lg border px-3"><option value="">All categories</option>{categories.map(c=><option key={String(c.id)} value={String(c.id)}>{String(c.name)}</option>)}</select><select name="status" defaultValue={filters.status} className="h-11 rounded-lg border px-3"><option value="">All statuses</option><option value="active">Active</option><option value="hidden">Hidden</option><option value="featured">Featured</option><option value="hot">Hot</option><option value="sale">On sale</option><option value="rfq">Quote only</option></select><button className="rounded-lg bg-[var(--color-brand)] px-5 font-semibold text-white">Filter</button></form>
+ <form action={bulkUpdateProducts} className="mt-4"><div className="mb-3 flex gap-2"><select name="bulkAction" required className="h-10 rounded-lg border bg-white px-3"><option value="">Bulk actions</option><option value="activate">Set active</option><option value="hide">Hide</option><option value="feature">Mark featured</option><option value="unfeature">Remove featured</option><option value="hot">Mark hot</option><option value="unhot">Remove hot</option></select><button className="rounded-lg border bg-white px-4 font-semibold">Apply</button></div><div className="overflow-x-auto rounded-xl border bg-white"><table className="w-full text-left text-sm"><thead className="bg-[var(--color-surface)]"><tr>{["","Product","SKU","Category","Price","Stock","Flags",""].map((h,i)=><th key={i} className="px-4 py-3">{h}</th>)}</tr></thead><tbody>{products.map(x=><tr key={String(x.id)} className="border-t"><td className="px-4 py-3"><input type="checkbox" name="productIds" value={String(x.id)}/></td><td className="max-w-sm px-4 py-3 font-medium">{String(x.name)}{!x.is_active&&<span className="ml-2 rounded bg-gray-100 px-2 text-xs">Hidden</span>}</td><td className="px-4 py-3">{String(x.sku??"—")}</td><td className="px-4 py-3">{String(x.category_name??"Uncategorized")}</td><td className="px-4 py-3">{x.is_rfq?"Quote":x.price_cents==null?"—":`$${(Number(x.price_cents)/100).toFixed(2)}`}</td><td className="px-4 py-3">{String(x.stock_quantity)}</td><td className="px-4 py-3">{x.is_featured?"★ ":""}{x.is_hot?"🔥 ":""}{x.compare_at_price_cents>x.price_cents?"Sale":""}</td><td className="px-4 py-3"><Link className="font-semibold text-[var(--color-brand)]" href={`/admin/products/${x.id}`}>Edit</Link></td></tr>)}</tbody></table></div></form>
+ <div className="mt-5 flex justify-between text-sm"><span>Page {page} of {totalPages}</span><div className="flex gap-2">{page>1&&<Link className="rounded-lg border bg-white px-4 py-2" href={href(page-1)}>Previous</Link>}{page<totalPages&&<Link className="rounded-lg border bg-white px-4 py-2" href={href(page+1)}>Next</Link>}</div></div></div>;
 }
