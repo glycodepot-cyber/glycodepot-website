@@ -9,12 +9,14 @@ const badgeStyles = {
   sale: "bg-[var(--color-accent)] text-white",
   new: "bg-[var(--color-brand)] text-white",
   popular: "bg-[var(--color-brand-soft)] text-[var(--color-brand)]",
+  hot: "bg-orange-100 text-orange-800",
 } as const;
 
 const badgeLabel: Record<NonNullable<Product["badge"]>, string> = {
   sale: "Sale",
   new: "New",
   popular: "Popular",
+  hot: "Hot",
 };
 
 interface ProductCardProps {
