@@ -65,7 +65,13 @@ export interface Product {
   compareAtPrice?: Money | null;
   /** True when BysonHub marks this product as RFQ-only (is_rfq = true). Price will always be null. */
   isRfq?: boolean;
-  badge?: "sale" | "new" | "popular" | null;
+  badge?: "sale" | "new" | "popular" | "hot" | null;
+  isFeatured?: boolean;
+  isHot?: boolean;
+  seoTitle?: string;
+  seoDescription?: string;
+  focusKeyword?: string;
+  canonicalUrl?: string;
   attributes?: Record<string, string>;
 }
 
