@@ -11,6 +11,9 @@ type ProductRow = {
   primary_category_id: string | null; price_cents: number | null;
   compare_at_price_cents: number | null; currency: "USD";
   stock_quantity: number; is_rfq: boolean; attributes: Record<string, string> | null;
+  badge: "sale" | "new" | "popular" | "hot" | null;
+  is_featured: boolean; is_hot: boolean; seo_title: string | null;
+  seo_description: string | null; focus_keyword: string | null; canonical_url: string | null;
 };
 type VariantRow = {
   id: string; product_id: string; sku: string | null; name: string | null;
@@ -32,7 +35,8 @@ export const loadDatabaseCatalog = cache(async (): Promise<{
     sql`SELECT id, slug, name, description FROM categories ORDER BY name`,
     sql`SELECT id, slug, sku, name, short_description, description,
                primary_category_id, price_cents, compare_at_price_cents,
-               currency, stock_quantity, is_rfq, attributes
+               currency, stock_quantity, is_rfq, attributes, badge, is_featured, is_hot,
+               seo_title, seo_description, focus_keyword, canonical_url
         FROM products WHERE is_active = true ORDER BY name`,
     sql`SELECT id, product_id, sku, name, price_cents, compare_at_price_cents,
                stock_quantity, is_active
@@ -96,7 +100,13 @@ export const loadDatabaseCatalog = cache(async (): Promise<{
     price: row.is_rfq ? null : money(row.price_cents),
     compareAtPrice: row.is_rfq ? null : money(row.compare_at_price_cents),
     isRfq: row.is_rfq || undefined,
-    badge: null,
+    badge: row.badge,
+    isFeatured: row.is_featured,
+    isHot: row.is_hot,
+    seoTitle: row.seo_title ?? undefined,
+    seoDescription: row.seo_description ?? undefined,
+    focusKeyword: row.focus_keyword ?? undefined,
+    canonicalUrl: row.canonical_url ?? undefined,
     attributes: row.attributes ?? (row.sku ? { SKU: row.sku } : undefined),
   }));
 
