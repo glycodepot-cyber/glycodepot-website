@@ -25,6 +25,7 @@ export interface LocalOrderLine {
 
 export interface LocalOrder {
   orderId: string;
+  internalOrderId?: string;
   placedAt: string;
   customerEmail: string;
   customerName: string;

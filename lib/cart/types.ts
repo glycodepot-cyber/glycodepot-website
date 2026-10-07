@@ -68,6 +68,8 @@ export interface Product {
   badge?: "sale" | "new" | "popular" | "hot" | null;
   isFeatured?: boolean;
   isHot?: boolean;
+  /** Product must ship with dry ice; managed with the `dry-ice` catalog tag. */
+  requiresDryIce?: boolean;
   seoTitle?: string;
   seoDescription?: string;
   focusKeyword?: string;
@@ -115,6 +117,16 @@ export interface QuoteRequest {
     postal: string;
     /** ISO 3166-1 alpha-2, e.g. "US" — same convention as checkout. */
     country: string;
+    billingAddress?: {
+      firstName: string;
+      lastName: string;
+      company: string;
+      address1: string;
+      city: string;
+      state: string;
+      postal: string;
+      country: string;
+    };
     notes?: string;
   };
   /**

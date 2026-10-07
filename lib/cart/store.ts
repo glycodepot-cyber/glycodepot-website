@@ -24,6 +24,7 @@ export interface CartItemLocal {
   quantity: number;
   image?: { src: string; alt: string };
   href: string;
+  requiresDryIce?: boolean;
 }
 
 /* ----------------- persistence ----------------- */
@@ -128,6 +129,7 @@ export function addCartItem(
       quantity,
       image: product.images[0],
       href: hrefFor(product),
+      requiresDryIce: product.requiresDryIce,
     });
   }
   writeToStorage(items);

@@ -58,6 +58,8 @@ export interface SubmitOrderInput {
     address2?: string;
     postal_code?: string;
     country?: string;
+    shippingAddress?: {firstName:string;lastName:string;company?:string;address1:string;city:string;state:string;postal:string;country:string};
+    billingAddress?: {firstName:string;lastName:string;company?:string;address1:string;city:string;state:string;postal:string;country:string};
   };
   items: Array<{
     productId: string;
@@ -67,7 +69,7 @@ export interface SubmitOrderInput {
 }
 
 export type PreparePaymentResult =
-  | { ok: true; orderId: string; clientSecret: string; subtotal: number; total: number }
+  | { ok: true; orderId: string; orderNumber:string; clientSecret: string; subtotal: number; shipping:number; total: number; requiresDryIce:boolean }
   | { ok: false; error: string };
 
 export async function preparePayment(
@@ -300,6 +302,7 @@ export async function submitQuote(
       `Email: ${request.customer.email}\n` +
       `Phone: ${request.customer.phone || "—"}\n` +
       `Address: ${[request.customer.address1, request.customer.city, request.customer.state, request.customer.postal, request.customer.country].filter(Boolean).join(", ")}\n` +
+      (request.customer.billingAddress ? `Billing: ${[request.customer.billingAddress.address1, request.customer.billingAddress.city, request.customer.billingAddress.state, request.customer.billingAddress.postal, request.customer.billingAddress.country].filter(Boolean).join(", ")}\n` : "") +
       (request.customer.notes ? `Notes: ${request.customer.notes}\n` : "") +
       (bhQuotationId ? `BysonHub quotation: ${bhQuotationId}\n` : "") +
       `\nProducts:\n${productDetails}`,

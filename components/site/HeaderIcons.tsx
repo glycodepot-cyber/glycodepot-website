@@ -54,7 +54,11 @@ function HeaderIconContents({
                 elements: { avatarBox: "size-9" },
                 variables: { colorPrimary: "#1a7a3e" },
               }}
-            />
+            >
+              <UserButton.MenuItems>
+                <UserButton.Link label="Home" labelIcon={<span aria-hidden>⌂</span>} href="/" />
+              </UserButton.MenuItems>
+            </UserButton>
           </span>
         ) : (
           <Tooltip>

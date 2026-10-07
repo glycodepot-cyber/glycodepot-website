@@ -82,6 +82,7 @@ export async function saveProduct(formData: FormData) {
       ),
       isActive: formData.get(`variantActive:${index}`) === "on",
     })),
+    formData.getAll("deleteVariantId").map(String).filter(Boolean),
   );
   revalidatePath("/products");
   revalidatePath(`/admin/products/${id}`);

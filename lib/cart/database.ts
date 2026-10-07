@@ -32,6 +32,7 @@ type ProductRow = {
   seo_description: string | null;
   focus_keyword: string | null;
   canonical_url: string | null;
+  tags: string[];
 };
 type VariantRow = {
   id: string;
@@ -60,7 +61,7 @@ export const loadDatabaseCatalog = cache(
       sql`SELECT id, slug, sku, name, short_description, description,
                primary_category_id, price_cents, compare_at_price_cents,
                currency, stock_quantity, is_rfq, attributes, badge, is_featured, is_hot,
-               seo_title, seo_description, focus_keyword, canonical_url
+               seo_title, seo_description, focus_keyword, canonical_url, tags
         FROM products WHERE is_active = true ORDER BY name`,
       sql`SELECT id, product_id, sku, name, price_cents, compare_at_price_cents,
                stock_quantity, is_active
@@ -116,6 +117,9 @@ export const loadDatabaseCatalog = cache(
 
     const products: Product[] = productRows.map((row) => {
       const name = cleanCatalogLabel(row.name) || row.name;
+      const productVariants = variants.get(row.id) ?? [];
+      const pricedVariants = productVariants.filter((variant) => variant.price !== null).sort((a,b) => a.price!.amount-b.price!.amount);
+      const cardVariant = pricedVariants[0];
       return {
         id: row.id,
         slug: row.slug,
@@ -132,13 +136,14 @@ export const loadDatabaseCatalog = cache(
           ...image,
           alt: cleanCatalogLabel(image.alt) || name,
         })),
-        variants: variants.get(row.id) ?? [],
-        price: row.is_rfq ? null : money(row.price_cents),
-        compareAtPrice: row.is_rfq ? null : money(row.compare_at_price_cents),
+        variants: productVariants,
+        price: cardVariant?.price ?? money(row.price_cents),
+        compareAtPrice: cardVariant?.compareAtPrice ?? money(row.compare_at_price_cents),
         isRfq: row.is_rfq || undefined,
         badge: row.badge,
         isFeatured: row.is_featured,
         isHot: row.is_hot,
+        requiresDryIce: row.tags.some((tag) => ["dry-ice", "dry ice", "dry_ice"].includes(tag.trim().toLowerCase())),
         seoTitle: row.seo_title ?? undefined,
         seoDescription: row.seo_description ?? undefined,
         focusKeyword: row.focus_keyword ?? undefined,

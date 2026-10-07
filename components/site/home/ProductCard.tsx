@@ -102,7 +102,7 @@ export function ProductCard({ product, categorySlug }: ProductCardProps) {
           {!isQuote ? (
             <span className="flex items-baseline gap-1.5">
               <span className="text-[15px] font-semibold text-[var(--color-foreground)]">
-                {formatMoney(product.price)}
+                {product.variants.filter(v=>v.price).length>1?"From ":""}{formatMoney(product.price)}
               </span>
               {product.compareAtPrice ? (
                 <s className="text-[12px] font-medium text-[var(--color-muted)] decoration-[var(--color-muted)]/70">

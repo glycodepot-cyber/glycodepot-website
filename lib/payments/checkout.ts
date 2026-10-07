@@ -2,6 +2,9 @@ import "server-only";
 
 import { getDb, isDatabaseConfigured } from "@/lib/db";
 import { getStripe, isStripeConfigured } from "./stripe";
+import { hasDryIceTag, shippingFeeCents } from "./shipping";
+
+type Address = { firstName:string; lastName:string; company?:string; address1:string; city:string; state:string; postal:string; country:string };
 
 type Customer = {
   name: string;
@@ -11,6 +14,8 @@ type Customer = {
   address1: string;
   postal_code?: string;
   country?: string;
+  shippingAddress?: Address;
+  billingAddress?: Address;
 };
 
 type CheckoutItem = { productId: string; variantId?: string; quantity: number };
@@ -23,7 +28,24 @@ type PriceRow = {
   unit_price_cents: number | null;
   stock_quantity: number;
   is_rfq: boolean;
+  tags: string[];
 };
+
+let schemaReady: Promise<void> | null = null;
+function ensureOrderSchema() {
+  if (schemaReady) return schemaReady;
+  const sql=getDb();
+  schemaReady=(async()=>{
+    await sql`CREATE SEQUENCE IF NOT EXISTS glycodepot_order_number_seq START WITH 10001`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_number bigint`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS billing_address jsonb NOT NULL DEFAULT '{}'`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS requires_dry_ice boolean NOT NULL DEFAULT false`;
+    await sql`ALTER TABLE orders ALTER COLUMN order_number SET DEFAULT nextval('glycodepot_order_number_seq')`;
+    await sql`UPDATE orders SET order_number=nextval('glycodepot_order_number_seq') WHERE order_number IS NULL`;
+    await sql`CREATE UNIQUE INDEX IF NOT EXISTS orders_order_number_idx ON orders(order_number)`;
+  })();
+  return schemaReady;
+}
 
 export function isInternalCheckoutEnabled(): boolean {
   return process.env.CHECKOUT_PROVIDER === "stripe";
@@ -33,13 +55,14 @@ export async function prepareInternalPayment(
   customer: Customer,
   items: CheckoutItem[],
   idempotencyKey: string,
-): Promise<{ orderId: string; clientSecret: string; subtotal: number; total: number }> {
+): Promise<{ orderId: string; orderNumber: string; clientSecret: string; subtotal: number; shipping: number; total: number; requiresDryIce: boolean }> {
   if (!isDatabaseConfigured() || !isStripeConfigured()) {
     throw new Error("Internal checkout is not fully configured.");
   }
   if (!items.length) throw new Error("Your cart is empty.");
 
   const sql = getDb();
+  await ensureOrderSchema();
   const priced: Array<PriceRow & { quantity: number }> = [];
 
   for (const item of items) {
@@ -52,14 +75,14 @@ export async function prepareInternalPayment(
                          concat(p.name, CASE WHEN v.name IS NULL THEN '' ELSE ' — ' || v.name END) AS name,
                          coalesce(v.sku, p.sku) AS sku,
                          v.price_cents AS unit_price_cents,
-                         v.stock_quantity, p.is_rfq
+                         v.stock_quantity, p.is_rfq, p.tags
                   FROM products p
                   JOIN product_variants v ON v.product_id = p.id
                   WHERE p.id = ${item.productId} AND v.id = ${item.variantId}
                     AND p.is_active = true AND v.is_active = true`
       : await sql`SELECT p.id AS product_id, NULL::text AS variant_id,
                          p.name, p.sku, p.price_cents AS unit_price_cents,
-                         p.stock_quantity, p.is_rfq
+                         p.stock_quantity, p.is_rfq, p.tags
                   FROM products p
                   WHERE p.id = ${item.productId} AND p.is_active = true`;
     const row = (rows as unknown as PriceRow[])[0];
@@ -77,18 +100,21 @@ export async function prepareInternalPayment(
     (sum, item) => sum + item.unit_price_cents! * item.quantity,
     0,
   );
+  const requiresDryIce = priced.some((item) => hasDryIceTag(item.tags));
+  const country = customer.shippingAddress?.country ?? customer.country ?? "US";
+  const shippingCents = shippingFeeCents(country, requiresDryIce);
+  const totalCents = subtotalCents + shippingCents;
+  const shippingAddress = customer.shippingAddress ?? { line1:customer.address1, postal:customer.postal_code??"", country };
+  const billingAddress = customer.billingAddress ?? shippingAddress;
   const orders = await sql`INSERT INTO orders
-    (customer_email, customer_name, status, subtotal_cents, total_cents, currency, shipping_address)
+    (customer_email, customer_name, status, subtotal_cents, shipping_cents, total_cents, currency, shipping_address, billing_address, requires_dry_ice)
     VALUES (${customer.email.trim().toLowerCase()}, ${customer.name.trim()}, 'pending_payment',
-      ${subtotalCents}, ${subtotalCents}, 'USD', ${JSON.stringify({
-        line1: customer.address1,
-        postalCode: customer.postal_code ?? "",
-        country: customer.country ?? "US",
-        phone: customer.phone,
-        company: customer.company ?? "",
-      })}::jsonb)
-    RETURNING id`;
-  const orderId = String((orders as unknown as Array<{ id: string }>)[0].id);
+      ${subtotalCents}, ${shippingCents}, ${totalCents}, 'USD', ${JSON.stringify({...shippingAddress,phone:customer.phone})}::jsonb,
+      ${JSON.stringify(billingAddress)}::jsonb, ${requiresDryIce})
+    RETURNING id, order_number`;
+  const created = (orders as unknown as Array<{ id:string; order_number:string }>)[0];
+  const orderId = String(created.id);
+  const orderNumber = String(created.order_number);
 
   for (const item of priced) {
     await sql`INSERT INTO order_items
@@ -100,12 +126,12 @@ export async function prepareInternalPayment(
   try {
     const intent = await getStripe().paymentIntents.create(
       {
-        amount: subtotalCents,
+        amount: totalCents,
         currency: "usd",
         automatic_payment_methods: { enabled: true },
         receipt_email: customer.email.trim().toLowerCase(),
-        description: `GlycoDepot order ${orderId}`,
-        metadata: { orderId },
+        description: `GlycoDepot order ${orderNumber}`,
+        metadata: { orderId, orderNumber },
       },
       { idempotencyKey },
     );
@@ -114,9 +140,12 @@ export async function prepareInternalPayment(
               WHERE id = ${orderId}::uuid`;
     return {
       orderId,
+      orderNumber,
       clientSecret: intent.client_secret,
       subtotal: subtotalCents / 100,
-      total: subtotalCents / 100,
+      shipping: shippingCents / 100,
+      total: totalCents / 100,
+      requiresDryIce,
     };
   } catch (error) {
     await sql`UPDATE orders SET status = 'checkout_failed', updated_at = now()
