@@ -18,13 +18,22 @@ export default async function AccountDashboardPage() {
   if (!userId) redirect("/my-account");
 
   const user = await currentUser();
-  const email = user?.emailAddresses.find((item) => item.id === user.primaryEmailAddressId)?.emailAddress
-    ?? user?.emailAddresses[0]?.emailAddress;
+  const email =
+    user?.emailAddresses.find((item) => item.id === user.primaryEmailAddressId)
+      ?.emailAddress ?? user?.emailAddresses[0]?.emailAddress;
   const adminEmails = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((value) => value.trim().toLowerCase())
     .filter(Boolean);
   const isAdmin = Boolean(email && adminEmails.includes(email.toLowerCase()));
+  const productManagerEmails = (process.env.PRODUCT_MANAGER_EMAILS ?? "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+  const isProductManager = Boolean(
+    email && productManagerEmails.includes(email.toLowerCase()),
+  );
+  const isStaff = isAdmin || isProductManager;
 
   return (
     <>
@@ -38,13 +47,13 @@ export default async function AccountDashboardPage() {
       />
       <Section spacing="default">
         <Container>
-          {isAdmin ? (
+          {isStaff ? (
             <div className="mb-6 flex justify-end">
               <Link
                 href="/admin"
                 className="inline-flex rounded-full bg-[var(--color-brand)] px-5 py-3 font-semibold text-white"
               >
-                Open Admin Dashboard
+                Open {isAdmin ? "Admin" : "Product Manager"} Dashboard
               </Link>
             </div>
           ) : null}

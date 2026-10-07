@@ -2,31 +2,43 @@
 
 import ExcelJS from "exceljs";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireStaff } from "@/lib/admin/auth";
 import { getDb } from "@/lib/db";
 
 function value(cell: ExcelJS.Cell): unknown {
   const input = cell.value;
-  if (input && typeof input === "object" && "result" in input) return input.result;
-  if (input && typeof input === "object" && "richText" in input) return input.richText.map((part) => part.text).join("");
+  if (input && typeof input === "object" && "result" in input)
+    return input.result;
+  if (input && typeof input === "object" && "richText" in input)
+    return input.richText.map((part) => part.text).join("");
   if (input && typeof input === "object" && "text" in input) return input.text;
   return input;
 }
 
 function bool(input: unknown): boolean {
-  return ["true", "yes", "1", "active"].includes(String(input ?? "").trim().toLowerCase());
+  return ["true", "yes", "1", "active"].includes(
+    String(input ?? "")
+      .trim()
+      .toLowerCase(),
+  );
 }
 
 function cents(input: unknown): number | null {
   if (input === null || input === undefined || input === "") return null;
   const number = Number(String(input).replace(/[$,]/g, ""));
-  return Number.isFinite(number) && number >= 0 ? Math.round(number * 100) : null;
+  return Number.isFinite(number) && number >= 0
+    ? Math.round(number * 100)
+    : null;
 }
 
 export async function importProducts(formData: FormData) {
-  await requireAdmin();
+  await requireStaff();
   const file = formData.get("file");
-  if (!(file instanceof File) || !file.name.toLowerCase().endsWith(".xlsx") || file.size > 15_000_000) {
+  if (
+    !(file instanceof File) ||
+    !file.name.toLowerCase().endsWith(".xlsx") ||
+    file.size > 15_000_000
+  ) {
     redirect("/admin/products?error=Choose+a+valid+XLSX+file+under+15MB");
   }
 
@@ -36,9 +48,17 @@ export async function importProducts(formData: FormData) {
   if (!sheet) redirect("/admin/products?error=The+workbook+has+no+worksheet");
 
   const headers = new Map<string, number>();
-  sheet.getRow(1).eachCell((cell, column) => headers.set(String(value(cell) ?? "").trim().toLowerCase(), column));
+  sheet.getRow(1).eachCell((cell, column) =>
+    headers.set(
+      String(value(cell) ?? "")
+        .trim()
+        .toLowerCase(),
+      column,
+    ),
+  );
   const idColumn = headers.get("product id");
-  if (!idColumn) redirect("/admin/products?error=Product+ID+column+is+required");
+  if (!idColumn)
+    redirect("/admin/products?error=Product+ID+column+is+required");
 
   const rows: Array<Record<string, unknown>> = [];
   sheet.eachRow((row, number) => {
@@ -60,7 +80,10 @@ export async function importProducts(formData: FormData) {
       is_rfq: bool(get("RFQ")),
       is_active: bool(get("Active")),
       vendor: String(get("Vendor") ?? "").trim() || null,
-      tags: String(get("Tags") ?? "").split(",").map((tag) => tag.trim()).filter(Boolean),
+      tags: String(get("Tags") ?? "")
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
     });
   });
 
@@ -68,7 +91,8 @@ export async function importProducts(formData: FormData) {
   let updated = 0;
   for (let index = 0; index < rows.length; index += 500) {
     const batch = rows.slice(index, index + 500);
-    const result = await sql.query(`WITH changes AS (
+    const result = await sql.query(
+      `WITH changes AS (
       SELECT * FROM jsonb_to_recordset($1::jsonb) AS x(
         id text, sku text, name text, price_cents integer, compare_at_price_cents integer,
         stock_quantity integer, unit text, is_rfq boolean, is_active boolean, vendor text, tags text[]
@@ -79,9 +103,13 @@ export async function importProducts(formData: FormData) {
       compare_at_price_cents = CASE WHEN c.is_rfq THEN NULL ELSE c.compare_at_price_cents END,
       stock_quantity = c.stock_quantity, unit = c.unit, is_rfq = c.is_rfq,
       is_active = c.is_active, vendor = c.vendor, tags = c.tags, updated_at = now()
-    FROM changes c WHERE p.id = c.id RETURNING p.id`, [JSON.stringify(batch)]);
+    FROM changes c WHERE p.id = c.id RETURNING p.id`,
+      [JSON.stringify(batch)],
+    );
     updated += result.length;
   }
 
-  redirect(`/admin/products?imported=${updated}&skipped=${Math.max(0, rows.length - updated)}`);
+  redirect(
+    `/admin/products?imported=${updated}&skipped=${Math.max(0, rows.length - updated)}`,
+  );
 }
