@@ -56,7 +56,8 @@ function HeaderIconContents({
               }}
             >
               <UserButton.MenuItems>
-                <UserButton.Link label="Home" labelIcon={<span aria-hidden>⌂</span>} href="/" />
+                <UserButton.Link label="Account dashboard" labelIcon={<span aria-hidden>⌂</span>} href="/my-account/dashboard" />
+                <UserButton.Link label="Admin dashboard" labelIcon={<span aria-hidden>⚙</span>} href="/admin" />
               </UserButton.MenuItems>
             </UserButton>
           </span>
