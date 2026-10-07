@@ -33,6 +33,16 @@ export async function POST(request: Request) {
     }
   }
 
+  if (event.type === "payment_intent.succeeded" || event.type === "payment_intent.payment_failed") {
+    const intent = event.data.object;
+    const orderId = intent.metadata?.orderId;
+    if (orderId) {
+      const status = event.type === "payment_intent.succeeded" ? "paid" : "payment_failed";
+      const sql = getDb();
+      await sql`UPDATE orders SET status = ${status}, stripe_payment_intent_id = ${intent.id},
+                updated_at = now() WHERE id = ${orderId}::uuid`;
+    }
+  }
+
   return NextResponse.json({ received: true });
 }
-

@@ -7,6 +7,7 @@ type Customer = {
   name: string;
   email: string;
   phone: string;
+  company?: string;
   address1: string;
   postal_code?: string;
   country?: string;
@@ -26,6 +27,102 @@ type PriceRow = {
 
 export function isInternalCheckoutEnabled(): boolean {
   return process.env.CHECKOUT_PROVIDER === "stripe";
+}
+
+export async function prepareInternalPayment(
+  customer: Customer,
+  items: CheckoutItem[],
+  idempotencyKey: string,
+): Promise<{ orderId: string; clientSecret: string; subtotal: number; total: number }> {
+  if (!isDatabaseConfigured() || !isStripeConfigured()) {
+    throw new Error("Internal checkout is not fully configured.");
+  }
+  if (!items.length) throw new Error("Your cart is empty.");
+
+  const sql = getDb();
+  const priced: Array<PriceRow & { quantity: number }> = [];
+
+  for (const item of items) {
+    if (!Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 100) {
+      throw new Error("Invalid item quantity.");
+    }
+
+    const rows = item.variantId
+      ? await sql`SELECT p.id AS product_id, v.id AS variant_id,
+                         concat(p.name, CASE WHEN v.name IS NULL THEN '' ELSE ' — ' || v.name END) AS name,
+                         coalesce(v.sku, p.sku) AS sku,
+                         v.price_cents AS unit_price_cents,
+                         v.stock_quantity, p.is_rfq
+                  FROM products p
+                  JOIN product_variants v ON v.product_id = p.id
+                  WHERE p.id = ${item.productId} AND v.id = ${item.variantId}
+                    AND p.is_active = true AND v.is_active = true`
+      : await sql`SELECT p.id AS product_id, NULL::text AS variant_id,
+                         p.name, p.sku, p.price_cents AS unit_price_cents,
+                         p.stock_quantity, p.is_rfq
+                  FROM products p
+                  WHERE p.id = ${item.productId} AND p.is_active = true`;
+    const row = (rows as unknown as PriceRow[])[0];
+    if (!row) throw new Error("A product in your cart is no longer available.");
+    if (row.unit_price_cents === null) {
+      throw new Error(`${row.name} requires a quotation and cannot be checked out.`);
+    }
+    if (row.stock_quantity < item.quantity) {
+      throw new Error(`${row.name} does not have enough stock.`);
+    }
+    priced.push({ ...row, quantity: item.quantity });
+  }
+
+  const subtotalCents = priced.reduce(
+    (sum, item) => sum + item.unit_price_cents! * item.quantity,
+    0,
+  );
+  const orders = await sql`INSERT INTO orders
+    (customer_email, customer_name, status, subtotal_cents, total_cents, currency, shipping_address)
+    VALUES (${customer.email.trim().toLowerCase()}, ${customer.name.trim()}, 'pending_payment',
+      ${subtotalCents}, ${subtotalCents}, 'USD', ${JSON.stringify({
+        line1: customer.address1,
+        postalCode: customer.postal_code ?? "",
+        country: customer.country ?? "US",
+        phone: customer.phone,
+        company: customer.company ?? "",
+      })}::jsonb)
+    RETURNING id`;
+  const orderId = String((orders as unknown as Array<{ id: string }>)[0].id);
+
+  for (const item of priced) {
+    await sql`INSERT INTO order_items
+      (order_id, product_id, variant_id, sku, name, quantity, unit_price_cents, line_total_cents)
+      VALUES (${orderId}::uuid, ${item.product_id}, ${item.variant_id}, ${item.sku}, ${item.name},
+        ${item.quantity}, ${item.unit_price_cents!}, ${item.unit_price_cents! * item.quantity})`;
+  }
+
+  try {
+    const intent = await getStripe().paymentIntents.create(
+      {
+        amount: subtotalCents,
+        currency: "usd",
+        automatic_payment_methods: { enabled: true },
+        receipt_email: customer.email.trim().toLowerCase(),
+        description: `GlycoDepot order ${orderId}`,
+        metadata: { orderId },
+      },
+      { idempotencyKey },
+    );
+    if (!intent.client_secret) throw new Error("Stripe did not return a payment secret.");
+    await sql`UPDATE orders SET stripe_payment_intent_id = ${intent.id}, updated_at = now()
+              WHERE id = ${orderId}::uuid`;
+    return {
+      orderId,
+      clientSecret: intent.client_secret,
+      subtotal: subtotalCents / 100,
+      total: subtotalCents / 100,
+    };
+  } catch (error) {
+    await sql`UPDATE orders SET status = 'checkout_failed', updated_at = now()
+              WHERE id = ${orderId}::uuid`;
+    throw error;
+  }
 }
 
 export async function createInternalCheckout(
@@ -135,4 +232,3 @@ export async function createInternalCheckout(
     throw error;
   }
 }
-

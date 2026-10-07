@@ -16,6 +16,7 @@ import { ghlContact, ghlNewsletter, ghlQuote } from "@/lib/api/ghl";
 import {
   createInternalCheckout,
   isInternalCheckoutEnabled,
+  prepareInternalPayment,
 } from "@/lib/payments/checkout";
 
 /**
@@ -51,6 +52,7 @@ export interface SubmitOrderInput {
     name: string;
     email: string;
     phone: string;
+    company?: string;
     address1: string;
     address2?: string;
     postal_code?: string;
@@ -61,6 +63,32 @@ export interface SubmitOrderInput {
     variantId?: string;
     quantity: number;
   }>;
+}
+
+export type PreparePaymentResult =
+  | { ok: true; orderId: string; clientSecret: string; subtotal: number; total: number }
+  | { ok: false; error: string };
+
+export async function preparePayment(
+  input: SubmitOrderInput,
+): Promise<PreparePaymentResult> {
+  if (!input.items.length) return { ok: false, error: "Your cart is empty." };
+  if (!isInternalCheckoutEnabled()) {
+    return { ok: false, error: "Secure card payment is not configured." };
+  }
+  try {
+    const result = await prepareInternalPayment(
+      input.customer,
+      input.items,
+      makeIdempotencyKey(input),
+    );
+    return { ok: true, ...result };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Unable to prepare payment.",
+    };
+  }
 }
 
 export type SubmitOrderResult =

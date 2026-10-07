@@ -144,16 +144,7 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {isQuote ? (
-          <AddToQuoteButton
-            product={product}
-            variant={variant}
-            quantity={qty}
-            tone="brand"
-            size="lg"
-            label="Request a quote"
-          />
-        ) : (
+        {!isQuote ? (
           <AddToCartButton
             product={product}
             variant={variant}
@@ -162,7 +153,15 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
             label="Checkout"
             checkoutOnAdd
           />
-        )}
+        ) : null}
+        <AddToQuoteButton
+          product={product}
+          variant={variant}
+          quantity={qty}
+          tone={isQuote ? "brand" : "outline"}
+          size="lg"
+          label="Request a quote"
+        />
       </div>
 
       <ul className="grid gap-3 border-t border-[var(--color-border)] pt-6 text-[13px] text-[var(--color-muted-foreground)]">
