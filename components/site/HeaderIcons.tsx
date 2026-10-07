@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { UserRound } from "lucide-react";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import {
@@ -12,6 +13,7 @@ import {
 import { CartButton } from "./CartButton";
 import { QuoteButton } from "./QuoteButton";
 import { utilityNav } from "@/lib/content";
+import { setCommerceScope } from "@/lib/commerce/scope";
 
 export function HeaderIcons() {
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
@@ -22,7 +24,11 @@ export function HeaderIcons() {
 }
 
 function ClerkHeaderIcons() {
-  const { isSignedIn, isLoaded } = useAuth();
+  const { isSignedIn, isLoaded, userId } = useAuth();
+
+  useEffect(() => {
+    if (isLoaded) setCommerceScope(userId);
+  }, [isLoaded, userId]);
 
   return <HeaderIconContents isLoaded={isLoaded} isSignedIn={isSignedIn} />;
 }
