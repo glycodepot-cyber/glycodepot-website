@@ -13,6 +13,7 @@ import {
   type BysonOrderPayload,
 } from "@/lib/api/bysonhub";
 import { ghlContact, ghlNewsletter, ghlQuote } from "@/lib/api/ghl";
+import { sendSalesNotification } from "@/lib/email/notifications";
 import {
   createInternalCheckout,
   isInternalCheckoutEnabled,
@@ -287,6 +288,21 @@ export async function submitQuote(
       phone: request.customer.phone,
     },
     extra: { lines: request.lines, customer: request.customer },
+  });
+
+  await sendSalesNotification({
+    subject: `New GlycoDepot RFQ — ${request.customer.company || request.customer.name}`,
+    replyTo: request.customer.email,
+    text:
+      `A new quote request was submitted.\n\n` +
+      `Customer: ${request.customer.name}\n` +
+      `Company: ${request.customer.company || "—"}\n` +
+      `Email: ${request.customer.email}\n` +
+      `Phone: ${request.customer.phone || "—"}\n` +
+      `Address: ${[request.customer.address1, request.customer.city, request.customer.state, request.customer.postal, request.customer.country].filter(Boolean).join(", ")}\n` +
+      (request.customer.notes ? `Notes: ${request.customer.notes}\n` : "") +
+      (bhQuotationId ? `BysonHub quotation: ${bhQuotationId}\n` : "") +
+      `\nProducts:\n${productDetails}`,
   });
 
   return {
