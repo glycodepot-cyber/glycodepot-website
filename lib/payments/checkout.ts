@@ -63,7 +63,9 @@ export async function createInternalCheckout(
                   WHERE p.id = ${item.productId} AND p.is_active = true`;
     const row = (rows as unknown as PriceRow[])[0];
     if (!row) throw new Error("A product in your cart is no longer available.");
-    if (row.is_rfq || row.unit_price_cents === null) {
+    // Checkout eligibility is determined by the selected item's price. Imported
+    // products can retain a stale product-level RFQ flag after variants are priced.
+    if (row.unit_price_cents === null) {
       throw new Error(`${row.name} requires a quotation and cannot be checked out.`);
     }
     if (row.stock_quantity < item.quantity) {
