@@ -25,7 +25,7 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
     (v) => v.id === variantId,
   );
   const activePrice = variant ? variant.price : product.price;
-  const isQuote = product.isRfq === true || activePrice === null;
+  // A concrete price always wins over the legacy product-level RFQ flag.\n  // Some imported products retain isRfq=true even after variant prices are set.\n  const isQuote = activePrice === null;
   const activeCompareAt = variant
     ? (variant.compareAtPrice ?? null)
     : (product.compareAtPrice ?? null);
