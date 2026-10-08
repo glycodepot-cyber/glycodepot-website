@@ -30,12 +30,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   ]);
   if (!product) return { title: "Product not found" };
   return {
-    title: product.name,
-    description: product.shortDescription ?? product.description,
-    alternates: { canonical: `/products/${cat?.slug ?? category}/${product.slug}` },
+    title: product.seoTitle || product.name,
+    description: product.seoDescription || product.shortDescription || product.description,
+    keywords: product.focusKeyword || undefined,
+    alternates: { canonical: product.canonicalUrl || `/products/${cat?.slug ?? category}/${product.slug}` },
     openGraph: {
-      title: product.name,
-      description: product.shortDescription ?? product.description,
+      title: product.seoTitle || product.name,
+      description: product.seoDescription || product.shortDescription || product.description,
       type: "website",
       images: product.images[0] ? [{ url: product.images[0].src }] : undefined,
     },
@@ -46,12 +47,14 @@ const badgeStyles = {
   sale: "bg-[var(--color-accent)] text-white",
   new: "bg-[var(--color-brand)] text-white",
   popular: "bg-[var(--color-brand-soft)] text-[var(--color-brand)]",
+  hot: "bg-orange-100 text-orange-800",
 } as const;
 
 const badgeLabel = {
   sale: "Sale",
   new: "New",
   popular: "Popular",
+  hot: "Hot",
 } as const;
 
 export default async function ProductPage({ params }: PageProps) {

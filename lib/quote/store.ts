@@ -3,8 +3,9 @@
 import { useSyncExternalStore } from "react";
 import type { Product, ProductVariant } from "@/lib/cart";
 import { trackAddToCart } from "@/lib/analytics/dataLayer";
+import { scopedStorageKey, SCOPE_EVENT } from "@/lib/commerce/scope";
 
-const STORAGE_KEY = "gd_quote_list_v1";
+const STORAGE_KEY = "gd_quote_list_v2";
 const EVENT_NAME = "gd:quote-changed";
 
 export interface QuoteListItem {
@@ -24,7 +25,7 @@ const listeners = new Set<Listener>();
 function readFromStorage(): QuoteListItem[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(scopedStorageKey(STORAGE_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as QuoteListItem[];
     return Array.isArray(parsed) ? parsed : [];
@@ -36,7 +37,7 @@ function readFromStorage(): QuoteListItem[] {
 function writeToStorage(items: QuoteListItem[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    window.localStorage.setItem(scopedStorageKey(STORAGE_KEY), JSON.stringify(items));
     window.dispatchEvent(new CustomEvent(EVENT_NAME));
   } catch {
     // quota / private-mode — ignore
@@ -53,12 +54,14 @@ function subscribe(listener: Listener) {
   if (typeof window !== "undefined") {
     window.addEventListener(EVENT_NAME, onChange);
     window.addEventListener("storage", onChange);
+    window.addEventListener(SCOPE_EVENT, onChange);
   }
   return () => {
     listeners.delete(listener);
     if (typeof window !== "undefined") {
       window.removeEventListener(EVENT_NAME, onChange);
       window.removeEventListener("storage", onChange);
+      window.removeEventListener(SCOPE_EVENT, onChange);
     }
   };
 }
@@ -80,6 +83,10 @@ if (typeof window !== "undefined") {
     emit();
   });
   window.addEventListener("storage", () => {
+    cache = readFromStorage();
+    emit();
+  });
+  window.addEventListener(SCOPE_EVENT, () => {
     cache = readFromStorage();
     emit();
   });

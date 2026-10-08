@@ -11,25 +11,33 @@ import { NextResponse } from "next/server";
  *   - VERCEL_DEPLOY_HOOK_URL  (create in Project Settings → Git → Deploy Hooks)
  *   - CRON_SECRET             (random string; Vercel cron sends it in Authorization)
  *
- * If either is missing, this endpoint is a no-op and returns 200 so the cron
- * doesn't alarm. It also rejects calls without the secret to keep the hook
- * private from the public internet.
+ * Configuration fails closed: without both values the route is unavailable,
+ * and the deploy hook is never exposed to unauthenticated callers.
  */
 export async function GET(request: Request) {
   const auth = request.headers.get("authorization") ?? "";
   const secret = process.env.CRON_SECRET;
 
-  if (secret && auth !== `Bearer ${secret}`) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  if (!secret) {
+    return NextResponse.json(
+      { ok: false, error: "Catalog refresh is not configured" },
+      { status: 503 },
+    );
+  }
+
+  if (auth !== `Bearer ${secret}`) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
 
   const hookUrl = process.env.VERCEL_DEPLOY_HOOK_URL;
   if (!hookUrl) {
-    return NextResponse.json({
-      ok: true,
-      skipped: true,
-      reason: "VERCEL_DEPLOY_HOOK_URL not set — wire it in Project Settings.",
-    });
+    return NextResponse.json(
+      { ok: false, error: "Catalog refresh is not configured" },
+      { status: 503 },
+    );
   }
 
   try {
@@ -41,7 +49,10 @@ export async function GET(request: Request) {
         { status: 502 },
       );
     }
-    return NextResponse.json({ ok: true, triggeredAt: new Date().toISOString() });
+    return NextResponse.json({
+      ok: true,
+      triggeredAt: new Date().toISOString(),
+    });
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : String(err) },
