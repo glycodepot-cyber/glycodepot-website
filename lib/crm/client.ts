@@ -45,11 +45,25 @@ export class GhlSalesClient {
     return response.json() as Promise<T>;
   }
 
-  async sync(payload: SalesPayload): Promise<{ contactId: string; opportunityId: string }> {
+  async checkConnection(): Promise<{ pipeline: string; stages: string[] }> {
+    const pipeline = await this.getPipeline();
+    const required = ["New Quote Request", "Awaiting Payment", "Paid & Won"];
+    if (required.some((name) => !pipeline.stages.some((stage) => stage.name === name))) {
+      throw new Error("GHL website sales stage is missing");
+    }
+    return { pipeline: pipeline.name, stages: required };
+  }
+
+  private async getPipeline(): Promise<Pipeline> {
     const query = new URLSearchParams({ locationId: this.config.locationId });
     const { pipelines } = await this.request<{ pipelines: Pipeline[] }>(`/opportunities/pipelines?${query}`);
     const pipeline = pipelines.find((p) => p.name === this.config.pipelineName);
     if (!pipeline) throw new Error("GHL website sales pipeline is missing");
+    return pipeline;
+  }
+
+  async sync(payload: SalesPayload): Promise<{ contactId: string; opportunityId: string }> {
+    const pipeline = await this.getPipeline();
     const stageName = payload.paid ? "Paid & Won" : payload.kind === "quote" ? "New Quote Request" : "Awaiting Payment";
     const stage = pipeline.stages.find((s) => s.name === stageName);
     if (!stage) throw new Error("GHL website sales stage is missing");
