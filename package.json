@@ -8,6 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:crm": "node --experimental-transform-types --test tests/crm-client.test.mjs",
     "prebake": "node scripts/prebake-catalog.mjs",
     "import:products": "dotenv -e .env.local -- node scripts/import-products.mjs"
   },

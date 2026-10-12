@@ -3,6 +3,16 @@ import "server-only";
 import { getDb, isDatabaseConfigured } from "@/lib/db";
 import { getStripe, isStripeConfigured } from "./stripe";
 import { hasDryIceTag, shippingFeeCents } from "./shipping";
+import { after } from "next/server";
+import { captureWebsiteOrder, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
+
+function scheduleOrderSync(orderId: string) {
+  if (!directSalesEnabled()) return;
+  after(async () => {
+    try { await captureWebsiteOrder(orderId); await drainWebsiteSales(); }
+    catch { console.error("[ghl] Order is saved; CRM delivery is pending"); }
+  });
+}
 
 type Address = { firstName:string; lastName:string; company?:string; address1:string; city:string; state:string; postal:string; country:string };
 
@@ -138,6 +148,7 @@ export async function prepareInternalPayment(
     if (!intent.client_secret) throw new Error("Stripe did not return a payment secret.");
     await sql`UPDATE orders SET stripe_payment_intent_id = ${intent.id}, updated_at = now()
               WHERE id = ${orderId}::uuid`;
+    scheduleOrderSync(orderId);
     return {
       orderId,
       orderNumber,
@@ -249,6 +260,7 @@ export async function createInternalCheckout(
     if (!session.url) throw new Error("Stripe did not return a checkout URL.");
     await sql`UPDATE orders SET stripe_checkout_session_id = ${session.id}, updated_at = now()
               WHERE id = ${orderId}::uuid`;
+    scheduleOrderSync(orderId);
     return {
       orderId,
       paymentLink: session.url,

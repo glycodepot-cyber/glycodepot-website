@@ -7,6 +7,8 @@
  */
 
 import { createHash } from "node:crypto";
+import { after } from "next/server";
+import { captureWebsiteQuote, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
 import {
   BYSON_CONFIGURED,
   placeOrder,
@@ -192,6 +194,14 @@ export async function submitOrder(
 export async function submitQuote(
   request: QuoteRequest,
 ): Promise<QuoteResponse> {
+  if (directSalesEnabled()) {
+    const response = await captureWebsiteQuote(request);
+    after(async () => {
+      try { await drainWebsiteSales(); }
+      catch { console.error("[ghl] Quote is saved; CRM delivery is pending"); }
+    });
+    return response;
+  }
   // BH Quotation ID captured from BysonHub's response so GHL can cross-reference
   // the RFQ (SOW §3.2 "BH Quotation ID" — the primary key linking GHL ↔ BysonHub).
   let bhQuotationId: string | undefined;
