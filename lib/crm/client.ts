@@ -9,7 +9,14 @@ export type SalesPayload = {
   productDetails: string;
   notes?: string;
   value?: number;
+  quoteDetails?: {
+    billing: QuoteAddress;
+    shipping: QuoteAddress;
+    items: Array<{productId:string;variantId?:string;name:string;sku?:string;quantity:number;unitPriceCents:number|null;url?:string;requiresDryIce:boolean}>;
+  };
 };
+
+export type QuoteAddress = {name:string;company?:string;address1:string;city:string;state:string;postal:string;country:string;phone?:string};
 
 type Pipeline = { id: string; name: string; stages: Array<{ id: string; name: string }> };
 type Opportunity = { id: string; name: string; status: string };

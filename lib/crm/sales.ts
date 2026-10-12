@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import type { QuoteRequest, QuoteResponse } from "@/lib/cart/types";
 import { GhlSalesClient, type SalesPayload } from "./client";
 import { drainSalesNotifications } from "@/lib/email/sales-outbox";
+import { drainDraftEstimates } from "@/lib/crm/estimates";
 
 export function directSalesEnabled(): boolean {
   return process.env.GHL_DIRECT_ENABLED === "true";
@@ -46,6 +47,7 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
   await ensureSalesSchema();
   const sql = getDb();
   const details: string[] = [];
+  const items: NonNullable<SalesPayload["quoteDetails"]>["items"] = [];
   for (const line of request.lines) {
     if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10000) {
       throw new Error("Invalid requested quantity.");
@@ -53,20 +55,24 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
     // Resolve names/SKUs from the website database, not client-provided names.
     const rows = line.variantId
       ? await sql`SELECT concat(p.name, ' — ', v.name) AS name, coalesce(v.sku, p.sku) AS sku,
-                         p.slug, c.slug AS category_slug
+                         p.slug, c.slug AS category_slug, v.price_cents, p.tags
                   FROM products p JOIN product_variants v ON v.product_id = p.id
                   LEFT JOIN categories c ON c.id = p.primary_category_id
                   WHERE p.id = ${line.productId} AND v.id = ${line.variantId}
                     AND p.is_active = true AND v.is_active = true`
-      : await sql`SELECT p.name, p.sku, p.slug, c.slug AS category_slug FROM products p
+      : await sql`SELECT p.name, p.sku, p.slug, c.slug AS category_slug, p.price_cents, p.tags FROM products p
                   LEFT JOIN categories c ON c.id = p.primary_category_id
                   WHERE p.id = ${line.productId} AND p.is_active = true`;
-    const product = (rows as Array<{ name: string; sku: string | null; slug: string; category_slug: string | null }>)[0];
+    const product = (rows as Array<{ name: string; sku: string | null; slug: string; category_slug: string | null; price_cents:number|null;tags:string[] }>)[0];
     if (!product) throw new Error("A selected product is no longer available.");
     details.push(`${line.quantity} × ${product.name}${product.sku ? ` [${product.sku}]` : ""}`);
-    if (product.category_slug) details.push(`${(process.env.NEXT_PUBLIC_SITE_URL ?? "https://glycodepot.com").replace(/\/$/, "")}/products/${encodeURIComponent(product.category_slug)}/${encodeURIComponent(product.slug)}`);
+    const url = product.category_slug ? `${(process.env.NEXT_PUBLIC_SITE_URL ?? "https://glycodepot.com").replace(/\/$/, "")}/products/${encodeURIComponent(product.category_slug)}/${encodeURIComponent(product.slug)}` : undefined;
+    if (url) details.push(url);
+    items.push({productId:line.productId,variantId:line.variantId,name:product.name,sku:product.sku??undefined,quantity:line.quantity,unitPriceCents:product.price_cents,url,requiresDryIce:(product.tags??[]).some(tag=>/dry.?ice/i.test(tag))});
   }
   const customer = request.customer;
+  const shipping = {name:customer.name,company:customer.company,address1:customer.address1,city:customer.city,state:customer.state,postal:customer.postal,country:customer.country,phone:customer.phone};
+  const billing = customer.billingAddress ? {name:`${customer.billingAddress.firstName} ${customer.billingAddress.lastName}`.trim(),company:customer.billingAddress.company,address1:customer.billingAddress.address1,city:customer.billingAddress.city,state:customer.billingAddress.state,postal:customer.billingAddress.postal,country:customer.billingAddress.country,phone:customer.phone} : {...shipping};
   const key = createHash("sha256").update(JSON.stringify({
     customer: { ...customer, email: customer.email.trim().toLowerCase() },
     items: request.lines.map((l) => `${l.productId}|${l.variantId ?? ""}|${l.quantity}`).sort(),
@@ -82,7 +88,8 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
     phone: customer.phone,
     company: customer.company,
     productDetails: details.join("\n"),
-    notes: [customer.notes, `Shipping: ${[customer.address1, customer.city, customer.state, customer.postal, customer.country].filter(Boolean).join(", ")}`,
+    quoteDetails:{billing,shipping,items},
+    notes: [customer.notes, `Billing: ${[billing.name,billing.company,billing.address1,billing.city,billing.state,billing.postal,billing.country].filter(Boolean).join(", ")}`, `Shipping: ${[customer.address1, customer.city, customer.state, customer.postal, customer.country].filter(Boolean).join(", ")}`,
       `Source: ${request.meta?.leadSource ?? "Website submission"}`,
       request.meta?.landingPageUrl ? `Landing page: ${request.meta.landingPageUrl}` : undefined].filter(Boolean).join("\n"),
   };
@@ -176,5 +183,8 @@ export async function drainWebsiteSales(limit = 3) {
       failed++;
     }
   }
-  return { delivered, failed, ...emailResult };
+  let estimatesCreated = 0;
+  try { estimatesCreated = await drainDraftEstimates(); }
+  catch { console.error("[ghl] Draft estimate delivery is pending"); }
+  return { delivered, failed, ...emailResult, estimatesCreated };
 }
