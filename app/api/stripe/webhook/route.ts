@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       await sql`UPDATE orders SET status = ${status}, stripe_payment_intent_id = ${intent.id},
                 updated_at = now() WHERE id = ${orderId}::uuid AND (status != 'paid' OR ${status} = 'paid')`;
       if (status === "paid" && directSalesEnabled()) await captureWebsiteOrder(orderId, true);
-      if (event.type === "payment_intent.succeeded") {
+      if (event.type === "payment_intent.succeeded" && !directSalesEnabled()) {
         const orders = await sql`SELECT customer_name, customer_email FROM orders WHERE id = ${orderId}::uuid`;
         const order = (orders as unknown as Array<{ customer_name: string; customer_email: string }>)[0];
         const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
