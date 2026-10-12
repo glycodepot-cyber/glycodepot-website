@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import type { QuoteRequest, QuoteResponse } from "@/lib/cart/types";
 import { GhlSalesClient, type SalesPayload } from "./client";
+import { drainSalesNotifications } from "@/lib/email/sales-outbox";
 
 export function directSalesEnabled(): boolean {
   return process.env.GHL_DIRECT_ENABLED === "true";
@@ -126,7 +127,7 @@ export async function captureWebsiteOrder(orderId: string, paid = false): Promis
     WHERE EXCLUDED.payload->>'paid' = 'true' AND website_sales_requests.payload->>'paid' != 'true'`;
 }
 
-export async function drainWebsiteSales(limit = 3): Promise<{ delivered: number; failed: number }> {
+export async function drainWebsiteSales(limit = 3) {
   const token = process.env.GHL_API_TOKEN;
   const locationId = process.env.GHL_LOCATION_ID;
   if (!directSalesEnabled() || !token || !locationId) throw new Error("Direct GHL sales connection is not configured");
@@ -144,6 +145,9 @@ export async function drainWebsiteSales(limit = 3): Promise<{ delivered: number;
       ORDER BY o.created_at LIMIT 3`;
     for (const order of unqueued as Array<{ id: string }>) await captureWebsiteOrder(order.id);
   }
+  let emailResult = { emailAccepted: 0, emailFailed: 0 };
+  try { emailResult = await drainSalesNotifications(); }
+  catch { console.error("[email] Sales email delivery is pending"); }
   const lease = randomUUID();
   const rows = await sql`UPDATE website_sales_requests SET
     lease_token = ${lease}::uuid, locked_until = now() + interval '5 minutes', attempts = attempts + 1
@@ -172,5 +176,5 @@ export async function drainWebsiteSales(limit = 3): Promise<{ delivered: number;
       failed++;
     }
   }
-  return { delivered, failed };
+  return { delivered, failed, ...emailResult };
 }
