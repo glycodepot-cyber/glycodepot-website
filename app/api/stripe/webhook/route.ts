@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { getDb, isDatabaseConfigured } from "@/lib/db";
 import { getStripe, isStripeConfigured } from "@/lib/payments/stripe";
 import { sendSalesNotification } from "@/lib/email/notifications";
+import { captureWebsiteOrder, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
+import { after } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -26,11 +28,14 @@ export async function POST(request: Request) {
     const session = event.data.object;
     const orderId = session.metadata?.orderId ?? session.client_reference_id;
     if (orderId) {
-      const status = event.type === "checkout.session.completed" ? "paid" : "expired";
+      // Checkout completion is not payment confirmation for delayed methods.
+      const paid = event.type === "checkout.session.completed" && session.payment_status === "paid";
+      const status = event.type === "checkout.session.expired" ? "expired" : paid ? "paid" : "pending_payment";
       const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : null;
       const sql = getDb();
       await sql`UPDATE orders SET status = ${status}, stripe_payment_intent_id = ${paymentIntent},
-                updated_at = now() WHERE id = ${orderId}::uuid`;
+                updated_at = now() WHERE id = ${orderId}::uuid AND (status != 'paid' OR ${paid})`;
+      if (paid && directSalesEnabled()) await captureWebsiteOrder(orderId, true);
     }
   }
 
@@ -41,7 +46,8 @@ export async function POST(request: Request) {
       const status = event.type === "payment_intent.succeeded" ? "paid" : "payment_failed";
       const sql = getDb();
       await sql`UPDATE orders SET status = ${status}, stripe_payment_intent_id = ${intent.id},
-                updated_at = now() WHERE id = ${orderId}::uuid`;
+                updated_at = now() WHERE id = ${orderId}::uuid AND (status != 'paid' OR ${status} = 'paid')`;
+      if (status === "paid" && directSalesEnabled()) await captureWebsiteOrder(orderId, true);
       if (event.type === "payment_intent.succeeded") {
         const orders = await sql`SELECT customer_name, customer_email FROM orders WHERE id = ${orderId}::uuid`;
         const order = (orders as unknown as Array<{ customer_name: string; customer_email: string }>)[0];
@@ -62,5 +68,9 @@ export async function POST(request: Request) {
     }
   }
 
+  if (directSalesEnabled()) after(async () => {
+    try { await drainWebsiteSales(); }
+    catch { console.error("[ghl] Paid order is saved; CRM delivery is pending"); }
+  });
   return NextResponse.json({ received: true });
 }
