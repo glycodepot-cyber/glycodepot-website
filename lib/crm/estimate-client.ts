@@ -47,7 +47,11 @@ export class GhlEstimateClient {
         const error=await response.json().catch(()=>null) as {message?:unknown}|null;
         const messages=Array.isArray(error?.message)?error.message:[error?.message];
         fields=messages.filter((m):m is string=>typeof m==="string"&&/^(businessDetails|contactDetails|items|meta|frequencySettings|autoInvoice|discount)(\.[a-zA-Z0-9_]+)* (must be a string|must be an object|must be a number|should not exist)$/.test(m));
-        const hint=typeof error?.message==="string"?error.message:null;
+        const hint=typeof error?.message==="string"?error.message
+          .replace(/\b[^\s]+@[^\s]+\b/g,"email")
+          .replace(/['"`][^'"`]*['"`]/g,"value")
+          .replace(/\b[a-f0-9]{8}-[a-f0-9-]{27,}\b/gi,"reference")
+          .replace(/\d+/g,"number").replace(/[_\n\r\t]/g," ").replace(/\s+/g," "):null;
         if(hint&&/^[A-Za-z][A-Za-z .,;:()-]{1,220}$/.test(hint)&&!/token|key|authorization|credential|secret/i.test(hint))fields.push(hint.replace(/[,:()-]/g," "));
         if(!fields.length) {
           const descriptors:string[]=[];
