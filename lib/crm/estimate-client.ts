@@ -17,7 +17,7 @@ export function draftEstimateBody(payload:SalesPayload,locationId:string,contact
   return {
     altId:locationId,altType:"location",liveMode:true,
     name:`Website RFQ ${payload.reference}`,title:"GLYCODEPOT ESTIMATE",currency:"USD",
-    businessDetails:{name:"Glycodepot LLC",phoneNo:"+19566953603",website:"https://glycodepot.com",address:{addressLine1:"1445 Woodmont Ln NW Suite 183",city:"Atlanta",state:"GA",postalCode:"30318",countryCode:"US"}},
+    businessDetails:{name:"Glycodepot LLC",phoneNo:"+19566953603",website:"https://glycodepot.com",address:"1445 Woodmont Ln NW Suite 183, Atlanta, GA 30318, US"},
     contactDetails:{id:contactId,name:q.billing.name,email:payload.email,companyName:q.billing.company,...payload.phone?{phoneNo:payload.phone}:{},address:address(q.billing)},
     items:q.items.map(item=>({name:item.name,description:[item.sku?`SKU: ${item.sku}`:undefined,item.url,item.unitPriceCents===null?"Price requires manual review before sending":undefined].filter(Boolean).join("\n"),currency:"USD",amount:(item.unitPriceCents??0)/100,qty:item.quantity,taxes:[],type:"one_time",taxInclusive:false})),
     discount:{type:"percentage",value:0},frequencySettings:{enabled:false},automaticTaxesEnabled:false,
@@ -35,7 +35,17 @@ export class GhlEstimateClient {
   }
   private async request<T>(path:string,method="GET",body?:unknown):Promise<T> {
     const response=await this.transport(`https://services.leadconnectorhq.com${path}`,{method,headers:{Authorization:`Bearer ${this.config.token}`,Version:this.config.version??"2021-07-28","Content-Type":"application/json"},...(body===undefined?{}:{body:JSON.stringify(body)}),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10_000)});
-    if(!response.ok)throw new Error(`GHL HTTP ${response.status}`);
+    if(!response.ok) {
+      // Only expose known schema field names and validation categories;
+      // never include provider values, customer data, or credentials.
+      let fields:string[]=[];
+      if(response.status===422||response.status===400) {
+        const error=await response.json().catch(()=>null) as {message?:unknown}|null;
+        const messages=Array.isArray(error?.message)?error.message:[error?.message];
+        fields=messages.filter((m):m is string=>typeof m==="string"&&/^(businessDetails|contactDetails|items|meta|frequencySettings|autoInvoice|discount)(\.[a-zA-Z0-9_]+)* (must be a string|must be an object|must be a number|should not exist)$/.test(m));
+      }
+      throw new Error(`GHL HTTP ${response.status}${fields.length?": "+fields.join("; "):""}`);
+    }
     return response.json();
   }
   async checkAccess() {
