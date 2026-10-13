@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {draftEstimateBody,GhlEstimateClient} from '../lib/crm/estimate-client.ts';
+import {draftEstimateBody,GhlEstimateClient,quoteEstimateName} from '../lib/crm/estimate-client.ts';
 import {quoteAction,invoiceAction} from '../lib/crm/quote-policy.ts';
 const billing={name:'Billing Person',company:'Billing Lab',address1:'Billing Street',city:'Boston',state:'MA',postal:'02110',country:'US'};
 const shipping={name:'Shipping Person',company:'Shipping Lab',address1:'Shipping Street',city:'Austin',state:'TX',postal:'78701',country:'US'};
@@ -23,9 +23,16 @@ test('invalid structured prices or quantities never reach provider',()=>{
 });
 test('draft retry returns existing estimate and never sends or overwrites manually edited prices',async()=>{
  const calls=[];
- const client=new GhlEstimateClient({token:'secret',locationId:'location'},async(url,init)=>{calls.push({url,init});return Response.json({estimates:[{_id:'existing',name:'Website RFQ rfq-1',estimateNumber:99}]});});
+ const client=new GhlEstimateClient({token:'secret',locationId:'location'},async(url,init)=>{calls.push({url,init});return Response.json({estimates:[{_id:'existing',name:quoteEstimateName(quote.reference),estimateNumber:99}]});});
  assert.deepEqual(await client.ensureDraft(quote,'contact','opportunity'),{id:'existing',number:'99'});
  assert.equal(calls.length,1);assert.equal(calls[0].init.method,'GET');
+});
+test('UUID requests use a short display name and preserve full identity; collisions never overwrite a draft',async()=>{
+ const reference='11111111-2222-3333-4444-555555555555';
+ const body=draftEstimateBody({...quote,reference},'l','c','o');
+ assert.ok(body.name.length<=20);assert.equal(body.meta.websiteReference,reference);
+ const client=new GhlEstimateClient({token:'secret',locationId:'l'},async()=>Response.json({estimates:[{_id:'other',name:body.name,meta:{websiteReference:'different-reference'}}]}));
+ await assert.rejects(client.ensureDraft({...quote,reference},'c','o'),/reference collision/);
 });
 test('new request creates only an unsent draft, provider errors stay generic',async()=>{
  const calls=[];

@@ -1,5 +1,9 @@
 import type { SalesPayload, QuoteAddress } from "./client";
 
+export function quoteEstimateName(reference:string) {
+  return `RFQ ${reference.replace(/-/g,"").slice(0,16)}`;
+}
+
 function address(value:QuoteAddress) {
   return {addressLine1:value.address1,city:value.city,state:value.state,postalCode:value.postal,countryCode:value.country};
 }
@@ -18,7 +22,7 @@ export function draftEstimateBody(payload:SalesPayload,locationId:string,contact
   }
   return {
     altId:locationId,altType:"location",liveMode:true,
-    name:`Website RFQ ${payload.reference}`,title:"GLYCODEPOT ESTIMATE",currency:"USD",
+    name:quoteEstimateName(payload.reference),title:"GLYCODEPOT ESTIMATE",currency:"USD",
     issueDate:issued.toISOString().slice(0,10),expiryDate:expires.toISOString().slice(0,10),
     businessDetails:{name:"Glycodepot LLC",phoneNo:"+19566953603",website:"https://glycodepot.com",logoUrl:"https://glycodepot.com/Glycodepot_Logo.jpeg",customValues:[],address:{addressLine1:"1445 Woodmont Ln NW Suite 183",city:"Atlanta",state:"GA",postalCode:"30318",countryCode:"US"}},
     contactDetails:{id:contactId,name:q.billing.name,email:payload.email,companyName:q.billing.company,...payload.phone?{phoneNo:payload.phone}:{},address:address(q.billing)},
@@ -91,17 +95,21 @@ export class GhlEstimateClient {
     return {estimatesReadable:true,invoicesReadable:true};
   }
   async websiteEstimateStatuses(references:string[]) {
-    const query=new URLSearchParams({altId:this.config.locationId,altType:"location",search:"Website RFQ",limit:"100",offset:"0"});
-    const result=await this.request<{estimates:Array<{_id:string;name:string;estimateNumber?:number;status?:string}>}>(`/invoices/estimate/list?${query}`);
+    const query=new URLSearchParams({altId:this.config.locationId,altType:"location",search:"RFQ",limit:"100",offset:"0"});
+    const result=await this.request<{estimates:Array<{_id:string;name:string;estimateNumber?:number;status?:string;meta?:{websiteReference?:string}}> }>(`/invoices/estimate/list?${query}`);
     if(!Array.isArray(result.estimates))throw new Error("Estimate list response is invalid");
-    return result.estimates.filter(e=>references.includes(e.name.replace(/^Website RFQ /,""))).map(e=>({id:e._id,reference:e.name.replace(/^Website RFQ /,""),number:e.estimateNumber,status:e.status}));
+    return result.estimates.flatMap(e=>{
+      const reference=references.find(ref=>e.meta?.websiteReference===ref||e.name===quoteEstimateName(ref));
+      return reference?[{id:e._id,reference,number:e.estimateNumber,status:e.status}]:[];
+    });
   }
   async ensureDraft(payload:SalesPayload,contactId:string,opportunityId:string):Promise<{id:string;number?:string}> {
     const body=draftEstimateBody(payload,this.config.locationId,contactId,opportunityId);
     const query=new URLSearchParams({altId:this.config.locationId,altType:"location",search:body.name,contactId,limit:"100",offset:"0"});
-    const result=await this.request<{estimates:Array<{_id:string;name:string;estimateNumber?:number}>}>(`/invoices/estimate/list?${query}`);
+    const result=await this.request<{estimates:Array<{_id:string;name:string;estimateNumber?:number;meta?:{websiteReference?:string}}> }>(`/invoices/estimate/list?${query}`);
     if(!Array.isArray(result.estimates))throw new Error("Estimate list response is invalid");
     const existing=result.estimates.find(row=>row.name===body.name);
+    if(existing?.meta?.websiteReference&&existing.meta.websiteReference!==payload.reference)throw new Error("Estimate reference collision");
     if(existing?._id)return {id:existing._id,number:existing.estimateNumber?.toString()};
     const created=await this.request<{_id:string;estimateNumber?:number}>("/invoices/estimate","POST",body);
     if(!created._id)throw new Error("Estimate provider did not return an ID");
