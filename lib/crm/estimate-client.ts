@@ -43,6 +43,13 @@ export class GhlEstimateClient {
         const error=await response.json().catch(()=>null) as {message?:unknown}|null;
         const messages=Array.isArray(error?.message)?error.message:[error?.message];
         fields=messages.filter((m):m is string=>typeof m==="string"&&/^(businessDetails|contactDetails|items|meta|frequencySettings|autoInvoice|discount)(\.[a-zA-Z0-9_]+)* (must be a string|must be an object|must be a number|should not exist)$/.test(m));
+        if(!fields.length) {
+          const serialized=JSON.stringify(error);
+          const names=["businessDetails","contactDetails","items","meta","frequencySettings","autoInvoice","discount","altId","altType","currency","issueDate","expiryDate","estimateNumber","userId","liveMode"];
+          fields=names.filter(name=>serialized.includes(name));
+          const categories=["required","string","object","number","array","invalid","whitelist","empty"];
+          fields.push(...categories.filter(name=>serialized.toLowerCase().includes(name)));
+        }
       }
       throw new Error(`GHL HTTP ${response.status}${fields.length?": "+fields.join("; "):""}`);
     }
