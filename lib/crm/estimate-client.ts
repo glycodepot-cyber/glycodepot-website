@@ -43,49 +43,7 @@ export class GhlEstimateClient {
   }
   private async request<T>(path:string,method="GET",body?:unknown):Promise<T> {
     const response=await this.transport(`https://services.leadconnectorhq.com${path}`,{method,headers:{Authorization:`Bearer ${this.config.token}`,Version:this.config.version??"2021-07-28","Content-Type":"application/json"},...(body===undefined?{}:{body:JSON.stringify(body)}),cache:"no-store",redirect:"error",signal:AbortSignal.timeout(10_000)});
-    if(!response.ok) {
-      // Only expose known schema field names and validation categories;
-      // never include provider values, customer data, or credentials.
-      let fields:string[]=[];
-      if(response.status===422||response.status===400) {
-        const error=await response.json().catch(()=>null) as {message?:unknown}|null;
-        const messages=Array.isArray(error?.message)?error.message:[error?.message];
-        fields=messages.filter((m):m is string=>typeof m==="string"&&/^(businessDetails|contactDetails|items|meta|frequencySettings|autoInvoice|discount)(\.[a-zA-Z0-9_]+)* (must be a string|must be an object|must be a number|should not exist)$/.test(m));
-        for(const message of messages) {
-          if(typeof message!=="string"||/token|key|authorization|credential|secret/i.test(message))continue;
-          const hint=message.replace(/\b[^\s]+@[^\s]+\b/g,"email")
-            .replace(/['"`][^'"`]*['"`]/g,"value")
-            .replace(/\b[a-f0-9]{8}-[a-f0-9-]{27,}\b/gi,"reference")
-            .replace(/\d+/g,"number").replace(/[^A-Za-z .;]/g," ").replace(/\s+/g," ").trim().slice(0,220);
-          if(hint)fields.push(hint);
-        }
-        if(!fields.length) {
-          const descriptors:string[]=[];
-          const allowed=new Set(["businessDetails","contactDetails","items","meta","frequencySettings","autoInvoice","discount","altId","altType","currency","issueDate","expiryDate","estimateNumber","userId","liveMode","address","addressLine1","addressLine2","city","state","postalCode","countryCode","phoneNo","name","email","companyName","schedule","enabled","directPayments","amount","qty","taxes","type","taxInclusive"]);
-          const visit=(value:unknown,parent="")=>{
-            if(Array.isArray(value)){value.forEach(child=>visit(child,parent));return;}
-            if(!value||typeof value!=="object")return;
-            const node=value as Record<string,unknown>;
-            const property=typeof node.property==="string"&&allowed.has(node.property)?node.property:"";
-            const path=[parent,property].filter(Boolean).join(".");
-            if(property&&node.constraints&&typeof node.constraints==="object") {
-              const keys=Object.keys(node.constraints).filter(k=>/^is[A-Z][A-Za-z]+$|^nestedValidation$|^whitelistValidation$/.test(k));
-              descriptors.push(...keys.map(k=>`${path} ${k}`));
-            }
-            Object.values(node).forEach(child=>visit(child,path));
-          };
-          visit(error);
-          fields.push(...descriptors);
-          const serialized=JSON.stringify(error);
-          const names=["businessDetails","contactDetails","items","meta","frequencySettings","autoInvoice","discount","altId","altType","currency","issueDate","expiryDate","estimateNumber","userId","liveMode","sentTo","attachments","estimateNumberPrefix","contactId","logoUrl","customValues"];
-          fields.push(...names.filter(name=>serialized.includes(name)));
-          const categories=["required","string","object","number","array","invalid","whitelist","empty"];
-          fields.push(...categories.filter(name=>serialized.toLowerCase().includes(name)));
-          if(!fields.length&&error&&typeof error==="object")fields.push(...Object.keys(error).filter(key=>/^[a-zA-Z]{1,30}$/.test(key)));
-        }
-      }
-      throw new Error(`GHL HTTP ${response.status}${fields.length?": "+fields.join("; "):""}`);
-    }
+    if(!response.ok)throw new Error(`GHL HTTP ${response.status}`);
     return response.json();
   }
   async checkAccess() {

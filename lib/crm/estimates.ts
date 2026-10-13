@@ -39,7 +39,7 @@ export async function drainDraftEstimates() {
       await sql`UPDATE website_quote_estimates SET estimate_id=${estimate.id},estimate_number=${estimate.number??null},lease_token=NULL,locked_until=NULL,last_error=NULL WHERE request_id=${row.request_id}::uuid AND lease_token=${lease}::uuid`;
       created++;
     } catch(error) {
-      const reason=error instanceof Error&&/^GHL HTTP \d{3}(: [a-zA-Z0-9_. ;]+)?$/.test(error.message)?error.message:"Draft estimate is pending";
+      const reason=error instanceof Error&&/^GHL HTTP \d{3}$/.test(error.message)?error.message:"Draft estimate is pending";
       await sql`UPDATE website_quote_estimates SET lease_token=NULL,locked_until=NULL,last_error=${reason},next_attempt_at=now()+${Math.min(3600,60*2**Math.min(row.attempts,6))}*interval '1 second' WHERE request_id=${row.request_id}::uuid AND lease_token=${lease}::uuid`;
     }
   }
