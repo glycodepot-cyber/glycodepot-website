@@ -54,6 +54,12 @@ export class GhlEstimateClient {
     await this.request(`/invoices/?${query}`);
     return {estimatesReadable:true,invoicesReadable:true};
   }
+  async websiteEstimateStatuses(references:string[]) {
+    const query=new URLSearchParams({altId:this.config.locationId,altType:"location",search:"Website RFQ",limit:"100",offset:"0"});
+    const result=await this.request<{estimates:Array<{_id:string;name:string;estimateNumber?:number;status?:string}>}>(`/invoices/estimate/list?${query}`);
+    if(!Array.isArray(result.estimates))throw new Error("Estimate list response is invalid");
+    return result.estimates.filter(e=>references.includes(e.name.replace(/^Website RFQ /,""))).map(e=>({id:e._id,reference:e.name.replace(/^Website RFQ /,""),number:e.estimateNumber,status:e.status}));
+  }
   async ensureDraft(payload:SalesPayload,contactId:string,opportunityId:string):Promise<{id:string;number?:string}> {
     const body=draftEstimateBody(payload,this.config.locationId,contactId,opportunityId);
     const query=new URLSearchParams({altId:this.config.locationId,altType:"location",search:body.name,contactId,limit:"100",offset:"0"});
