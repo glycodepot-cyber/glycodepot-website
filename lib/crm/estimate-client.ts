@@ -20,7 +20,7 @@ export function draftEstimateBody(payload:SalesPayload,locationId:string,contact
     altId:locationId,altType:"location",liveMode:true,
     name:`Website RFQ ${payload.reference}`,title:"GLYCODEPOT ESTIMATE",currency:"USD",
     issueDate:issued.toISOString().slice(0,10),expiryDate:expires.toISOString().slice(0,10),
-    businessDetails:{name:"Glycodepot LLC",phoneNo:"+19566953603",website:"https://glycodepot.com",address:"1445 Woodmont Ln NW Suite 183, Atlanta, GA 30318, US"},
+    businessDetails:{name:"Glycodepot LLC",phoneNo:"+19566953603",website:"https://glycodepot.com",logoUrl:"https://glycodepot.com/Glycodepot_Logo.jpeg",customValues:[],address:{addressLine1:"1445 Woodmont Ln NW Suite 183",city:"Atlanta",state:"GA",postalCode:"30318",countryCode:"US"}},
     contactDetails:{id:contactId,name:q.billing.name,email:payload.email,companyName:q.billing.company,...payload.phone?{phoneNo:payload.phone}:{},address:address(q.billing)},
     items:q.items.map(item=>({name:item.name,description:[item.sku?`SKU: ${item.sku}`:undefined,item.url,item.unitPriceCents===null?"Price requires manual review before sending":undefined].filter(Boolean).join("\n"),currency:"USD",amount:(item.unitPriceCents??0)/100,qty:item.quantity,taxes:[],type:"one_time",taxInclusive:false})),
     discount:{type:"percentage",value:0},frequencySettings:{enabled:false},automaticTaxesEnabled:false,
