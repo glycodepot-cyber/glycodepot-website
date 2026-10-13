@@ -47,6 +47,8 @@ export class GhlEstimateClient {
         const error=await response.json().catch(()=>null) as {message?:unknown}|null;
         const messages=Array.isArray(error?.message)?error.message:[error?.message];
         fields=messages.filter((m):m is string=>typeof m==="string"&&/^(businessDetails|contactDetails|items|meta|frequencySettings|autoInvoice|discount)(\.[a-zA-Z0-9_]+)* (must be a string|must be an object|must be a number|should not exist)$/.test(m));
+        const hint=typeof error?.message==="string"?error.message:null;
+        if(hint&&/^[A-Za-z][A-Za-z .,;:()-]{1,220}$/.test(hint)&&!/token|key|authorization|credential|secret/i.test(hint))fields.push(hint.replace(/[,:()-]/g," "));
         if(!fields.length) {
           const descriptors:string[]=[];
           const allowed=new Set(["businessDetails","contactDetails","items","meta","frequencySettings","autoInvoice","discount","altId","altType","currency","issueDate","expiryDate","estimateNumber","userId","liveMode","address","addressLine1","addressLine2","city","state","postalCode","countryCode","phoneNo","name","email","companyName","schedule","enabled","directPayments","amount","qty","taxes","type","taxInclusive"]);
