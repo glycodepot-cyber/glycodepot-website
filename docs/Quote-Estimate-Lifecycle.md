@@ -9,7 +9,8 @@ product URL and dry-ice flag from the authoritative website catalog.
 The draft-estimate worker is gated by `GHL_ESTIMATES_ENABLED` and an explicit
 `GHL_ESTIMATES_FROM_AT` activation timestamp. It processes only new structured
 quotes with confirmed CRM contact/opportunity IDs. A durable request mapping,
-leases, backoff, and exact request-name lookup protect retries. Existing
+leases, backoff, and deterministic compact RFQ names protect retries. Full
+request identity remains in metadata; a mismatched reference fails closed. Existing
 estimates are returned without overwriting a sales rep's price edits.
 
 Estimate creation omits send instructions and recurring schedules. The
@@ -18,6 +19,19 @@ is preserved separately in metadata and notes. Catalog prices are editable;
 items without a price are flagged for review. The sales rep must review price,
 shipping, tax, availability, dates and terms before using GHL's Send action.
 Auto-invoice and direct-payment options are included for acceptance.
+
+Estimate creation has been validated against the live provider, including
+native Draft status, catalog prices, quantities, billing addresses, retained
+shipping addresses, and retry reuse. The provider requires explicit issue and
+expiry dates, a structured business address, custom-value arrays and a name
+within its 40-character limit. Native opportunity associations can be added
+using the editor's Link Opportunity control; the worker retains the original
+opportunity ID in metadata but does not create that native association.
+
+The authenticated estimate check reports recent request references, CRM sync
+state, durable estimate IDs and provider matches without returning customer
+addresses or email contents. Its POST handler supports retrying an existing
+pending request; it never sends an estimate or overwrites an existing draft.
 
 ## Prepared policy, not yet scheduled
 
@@ -37,10 +51,8 @@ live API validation; the pure policy does not send messages itself.
 
 ## Remaining integration work
 
-- Expand the location private integration to estimate read/write and invoice
-  read/write permissions, then verify the protected estimate access check.
-- Validate draft creation with a marked test RFQ, including native price edits
-  and draft retry behavior. Enable the gate only after validation.
+- Keep preview estimate creation disabled and use the explicit production
+  activation timestamp to avoid importing historical requests.
 - Confirm GHL payment-email sending authentication and reply routing. Website
   Resend authentication does not authenticate the separate GHL email service.
 - Connect native estimate events to follow-ups and acceptance/invoice handling,
