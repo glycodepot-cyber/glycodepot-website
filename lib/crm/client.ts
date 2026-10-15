@@ -85,6 +85,13 @@ export class GhlSalesClient {
     });
     if (!contact?.id) throw new Error("GHL did not return a contact ID");
 
+    const source = payload.kind === "quote" ? "glycodepot.com — Request a Quote" : "glycodepot.com — Order";
+    const current = await this.request<{ contact?: { source?: string | null } }>(`/contacts/${encodeURIComponent(contact.id)}`);
+    if (!current.contact) throw new Error("GHL did not return contact details");
+    if (!current.contact.source?.trim()) {
+      await this.request(`/contacts/${encodeURIComponent(contact.id)}`, "PUT", { source });
+    }
+
     const name = `Website ${payload.kind === "quote" ? "RFQ" : "Order"} ${payload.reference}`;
     const legacy = this.config.version !== undefined && this.config.version !== "v3";
     const search = new URLSearchParams({
@@ -103,6 +110,7 @@ export class GhlSalesClient {
         pipelineStageId: stage.id,
         contactId: contact.id,
         name,
+        source,
         status: payload.paid ? "won" : "open",
         ...(payload.value === undefined ? {} : { monetaryValue: payload.value }),
       });

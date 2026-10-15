@@ -9,7 +9,7 @@ const pipeline = { id: "pipeline", name: "Website Sales", stages: [
   { id: "new", name: "New Quote Request" }, { id: "pending", name: "Awaiting Payment" }, { id: "paid", name: "Paid & Won" },
 ] };
 
-function fixture({ existing = [], notes = [], fail = null, pipelines = [pipeline] } = {}) {
+function fixture({ existing = [], notes = [], fail = null, pipelines = [pipeline], contactSource = null } = {}) {
   const calls = [];
   const transport = async (url, init) => {
     const path = new URL(url).pathname;
@@ -19,6 +19,10 @@ function fixture({ existing = [], notes = [], fail = null, pipelines = [pipeline
     let result;
     if (path === "/opportunities/pipelines") result = { pipelines };
     else if (path === "/contacts/upsert") result = { contact: { id: "contact" } };
+    else if (path === "/contacts/contact" && init.method === "GET") result = { contact: { id: "contact", source: contactSource } };
+    else if (path === "/contacts/contact" && init.method === "PUT") {
+      contactSource = body.source; result = { contact: { id: "contact", source: contactSource } };
+    }
     else if (path === "/opportunities/search") result = { opportunities: existing };
     else if (path === "/opportunities/" && init.method === "POST") {
       const opportunity = { id: "opp", name: body.name, status: body.status };
@@ -64,6 +68,21 @@ test("retry reuses the exact opportunity and note instead of creating duplicates
   assert.equal(f.notes.length, 1);
 });
 
+test("website RFQs fill a blank source once and attribute the opportunity", async () => {
+  const f = fixture({ contactSource: " " });
+  await f.client.sync(quote); await f.client.sync(quote);
+  const updates = f.calls.filter(c => c.path === "/contacts/contact" && c.method === "PUT");
+  assert.deepEqual(updates.map(c => c.body), [{ source: "glycodepot.com — Request a Quote" }]);
+  assert.equal(f.calls.find(c => c.path === "/opportunities/").body.source, "glycodepot.com — Request a Quote");
+});
+
+test("website intake preserves an existing source and distinguishes orders", async () => {
+  const existing = fixture({ contactSource: "Conference referral" }); await existing.client.sync(quote);
+  assert.equal(existing.calls.some(c => c.path === "/contacts/contact" && c.method === "PUT"), false);
+  const order = fixture(); await order.client.sync({ ...quote, kind: "order" });
+  assert.deepEqual(order.calls.find(c => c.path === "/contacts/contact" && c.method === "PUT").body, { source: "glycodepot.com — Order" });
+});
+
 test("separate requests from the same customer create separate opportunities", async () => {
   const f = fixture(); await f.client.sync(quote); await f.client.sync({ ...quote, reference: "request-2" });
   assert.equal(f.existing.length, 2);
@@ -103,6 +122,7 @@ test("legacy API version uses the documented legacy search parameter names", asy
     const path = new URL(url).pathname;
     if (path === "/opportunities/pipelines") return Response.json({ pipelines: [pipeline] });
     if (path === "/contacts/upsert") return Response.json({ contact: { id: "contact" } });
+    if (path === "/contacts/contact") return Response.json({ contact: { id: "contact", source: "Existing source" } });
     if (path === "/opportunities/search") return Response.json({ opportunities: [{ id: "opp", name: "Website RFQ request-1", status: "open" }] });
     return Response.json({ notes: [{ body: "[Website request-1]" }] });
   };
