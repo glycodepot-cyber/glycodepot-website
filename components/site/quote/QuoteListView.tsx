@@ -170,7 +170,173 @@ export function QuoteListView() {
     if (!customer.firstName.trim()) next.firstName = "Required.";
     if (!customer.lastName.trim()) next.lastName = "Required.";
     if (!customer.company.trim()) next.company = "Required.";
-    for(const field of ["address1","city","state","postal"] as const) if(!customer…1746 tokens truncated…                   type="button"
+    for(const field of ["address1","city","state","postal"] as const) if(!customer[field].trim()) next[field]="Required.";
+    if(!billingSame) for(const field of ["firstName","lastName","company","address1","city","state","postal"] as const) if(!billing[field].trim()) next[`billing.${field}`]="Required.";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!validate()) return;
+    setStatus("loading");
+    const lines: QuoteLine[] = items.map((i) => ({
+      productId: i.productId,
+      variantId: i.variantId,
+      name: `${i.name}${i.variantName ? ` · ${i.variantName}` : ""}`,
+      quantity: i.quantity,
+      image: i.image,
+    }));
+
+    // Map each cart item to its top-level category group (Glycochemistry /
+    // Glycobiology / Glyco-analysis) via the category slug embedded in its href
+    // (/products/{categorySlug}/{slug}), for SOW §3.2 "Product category interest".
+    const categoryNames = [
+      ...new Set(
+        items
+          .map((i) => i.href.split("/")[2])
+          .map((slug) => findGroupForCategory(slug)?.name)
+          .filter((n): n is string => Boolean(n)),
+      ),
+    ];
+
+    const attribution = attributionForWebhook();
+
+    try {
+      const res = await submitQuote({
+        lines,
+        customer: {
+          name: `${customer.firstName} ${customer.lastName}`.trim(),
+          email: customer.email.trim(),
+          company: customer.company.trim(),
+          phone: customer.phone.trim(),
+          address1: customer.address1.trim(),
+          city: customer.city.trim(),
+          state: customer.state.trim(),
+          postal: customer.postal.trim(),
+          country: customer.country,
+          notes: customer.notes.trim() || undefined,
+          billingAddress: billingSame ? {firstName:customer.firstName,lastName:customer.lastName,company:customer.company,address1:customer.address1,city:customer.city,state:customer.state,postal:customer.postal,country:customer.country} : billing,
+        },
+        meta: {
+          productCategories: categoryNames,
+          leadSource: attribution.leadSource,
+          googleAdsCampaign: attribution.googleAdsCampaign,
+          googleAdsAdGroup: attribution.googleAdsAdGroup,
+          landingPageUrl: attribution.landingPageUrl,
+          gclid: attribution.gclid,
+        },
+      });
+      trackRfqSubmit({
+        requestId: res.id,
+        itemCount: items.length,
+        categories: categoryNames,
+        bhQuoteId: res.bhQuotationId,
+      });
+      clearQuote();
+      setStatus("done");
+      toast.success("Quote submitted! We'll be in touch shortly.");
+    } catch {
+      setStatus("idle");
+      toast.error("Couldn't send your request. Please try again.");
+    }
+  }
+
+  if (status === "done") {
+    return (
+      <div className="mx-auto flex max-w-xl flex-col items-center gap-5 rounded-[var(--radius-xl)] border border-[var(--color-success)] bg-[var(--color-success)]/5 p-10 text-center">
+        <span className="grid size-14 place-items-center rounded-full bg-[var(--color-success)] text-white">
+          <Check className="size-6" />
+        </span>
+        <div className="space-y-2">
+          <h2 className="type-h2 text-[var(--color-foreground)]">
+            {quoteCopy.successTitle}
+          </h2>
+          <p className="text-[15px] text-[var(--color-muted-foreground)]">
+            {quoteCopy.successBody}
+          </p>
+        </div>
+        <BrandButton href="/products">Continue browsing</BrandButton>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <div className="flex flex-col items-center gap-6 rounded-[var(--radius-xl)] border border-dashed border-[var(--color-border-strong)] bg-white p-10 text-center lg:p-14">
+          <div className="grid size-16 place-items-center rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)]">
+            <ClipboardList className="size-7" aria-hidden />
+          </div>
+          <div className="space-y-2">
+            <h2 className="type-h3 text-[var(--color-foreground)]">
+              {quoteCopy.empty.title}
+            </h2>
+            <p className="max-w-md text-pretty text-[15px] text-[var(--color-muted-foreground)]">
+              {quoteCopy.empty.body}
+            </p>
+          </div>
+          <BrandButton href={quoteCopy.empty.cta.href} size="lg">
+            {quoteCopy.empty.cta.label}
+          </BrandButton>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:gap-12">
+      {/* List */}
+      <div>
+        <div className="flex items-center justify-between">
+          <p className="text-[14px] text-[var(--color-muted-foreground)]">
+            {count} {count === 1 ? "item" : "items"} in your list
+          </p>
+          <button
+            type="button"
+            onClick={clearQuote}
+            className="text-[13px] font-medium text-[var(--color-muted)] hover:text-[var(--color-accent)]"
+          >
+            Clear list
+          </button>
+        </div>
+
+        <ul className="mt-4 divide-y divide-[var(--color-border)] rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white">
+          {items.map((item) => {
+            const key = `${item.productId}:${item.variantId ?? ""}`;
+            return (
+              <li key={key} className="flex gap-4 p-4 sm:p-5">
+                <Link
+                  href={item.href}
+                  className="relative size-16 shrink-0 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]"
+                >
+                  {item.image ? (
+                    <Image
+                      src={item.image.src}
+                      alt={item.image.alt}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                    />
+                  ) : null}
+                </Link>
+                <div className="flex min-w-0 flex-1 flex-col justify-between gap-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link
+                        href={item.href}
+                        className="text-[15px] font-semibold text-[var(--color-foreground)] hover:text-[var(--color-brand)]"
+                      >
+                        {item.name}
+                      </Link>
+                      {item.variantName ? (
+                        <p className="text-[13px] text-[var(--color-muted)]">
+                          {item.variantName}
+                        </p>
+                      ) : null}
+                    </div>
+                    <button
+                      type="button"
                       aria-label={`Remove ${item.name}`}
                       onClick={() =>
                         removeFromQuote(item.productId, item.variantId)
