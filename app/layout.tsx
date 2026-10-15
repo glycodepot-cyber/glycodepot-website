@@ -9,6 +9,7 @@ import {
   GoogleTagManagerNoScript,
 } from "@/components/analytics/GoogleTagManager";
 import { AttributionCapture } from "@/components/analytics/AttributionCapture";
+import { GoogleAds } from "@/components/analytics/GoogleAds";
 import "./globals.css";
 
 const jost = Jost({
@@ -63,6 +64,7 @@ export default function RootLayout({
 
   const document = (
     <html lang="en" className={`${jost.variable} h-full antialiased`}>
+      <GoogleAds />
       <GoogleTagManager />
       <body className="min-h-full flex flex-col font-sans">
         <GoogleTagManagerNoScript />
