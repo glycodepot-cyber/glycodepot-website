@@ -15,6 +15,9 @@ import {
 import type { ListQuery } from "@/lib/cart";
 import { findGroupForCategory } from "@/lib/content/category-groups";
 
+import { offerPages } from "@/lib/content/offer-pages";
+import { CategoryOffer } from "@/components/site/catalog/CategoryOffer";
+
 const PAGE_SIZE = 12;
 type SP = { search?: string; sort?: string; page?: string };
 
@@ -30,8 +33,8 @@ export async function generateMetadata({
   const cat = await getCategoryBySlug(slug);
   if (!cat) return { title: "Category not found" };
   return {
-    title: cat.name,
-    description: cat.description,
+    title: offerPages[cat.slug]?.title ?? cat.name,
+    description: offerPages[cat.slug]?.description ?? cat.description,
     alternates: { canonical: `/products/${cat.slug}` },
   };
 }
@@ -72,13 +75,14 @@ export default async function CategoryPage({
     }),
   ]);
 
+  const offer = offerPages[cat.slug];
   const otherCategories = categories.filter((c) => c.id !== cat.id);
 
   return (
     <>
       <PageHero
-        title={cat.name}
-        description={cat.description}
+        title={offer?.title ?? cat.name}
+        description={offer?.description ?? cat.description}
         breadcrumbs={(() => {
           const group = findGroupForCategory(cat.slug);
           return [
@@ -93,7 +97,8 @@ export default async function CategoryPage({
 
       <Section spacing="default">
         <Container>
-          <div>
+          {offer ? <CategoryOffer offer={offer} position="intro" /> : null}
+          <div id="catalog" className="scroll-mt-28">
             <ProductFilters
               resultCount={result.items.length}
               totalCount={result.totalItems}
@@ -133,6 +138,7 @@ export default async function CategoryPage({
             totalPages={result.totalPages}
             hrefFor={buildHrefFor(`/products/${cat.slug}`, sp)}
           />
+          {offer ? <CategoryOffer offer={offer} position="details" /> : null}
         </Container>
       </Section>
 

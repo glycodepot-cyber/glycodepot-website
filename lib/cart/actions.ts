@@ -202,6 +202,7 @@ export async function submitQuote(
     });
     return response;
   }
+  if (request.service) throw new Error("Custom synthesis requests are temporarily unavailable. Please contact info@glycodepot.com.");
   // BH Quotation ID captured from BysonHub's response so GHL can cross-reference
   // the RFQ (SOW §3.2 "BH Quotation ID" — the primary key linking GHL ↔ BysonHub).
   let bhQuotationId: string | undefined;

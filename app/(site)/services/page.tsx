@@ -52,6 +52,7 @@ export default function ServicesPage() {
       <Section spacing="default" tone="surface">
         <Container>
           <Eyebrow>Our Services</Eyebrow>
+          <div className="mt-6 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-7"><h2 className="type-h2">Custom glycan synthesis</h2><p className="my-4 max-w-2xl text-[var(--color-muted-foreground)]">Need a glycan or oligosaccharide outside the catalog? Share your target structure, specifications, and quantity for project review.</p><BrandButton href="/services/custom-glycan-synthesis">Explore custom synthesis</BrandButton></div>
           <ol className="mt-8 grid gap-5 md:grid-cols-2">
             {services.map((s, i) => (
               <li

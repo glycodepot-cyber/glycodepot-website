@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import type { QuoteRequest, QuoteResponse } from "@/lib/cart/types";
+import { serviceQuoteItem } from "./service-quote";
 import { GhlSalesClient, type SalesPayload } from "./client";
 import { drainSalesNotifications } from "@/lib/email/sales-outbox";
 import { drainDraftEstimates } from "@/lib/crm/estimates";
@@ -41,13 +42,20 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
   if (!request.customer?.name?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.customer?.email ?? "")) {
     throw new Error("Please provide your name and a valid email address.");
   }
-  if (!Array.isArray(request.lines) || !request.lines.length || request.lines.length > 100) {
+  if (!Array.isArray(request.lines)) throw new Error("Invalid quote items.");
+  const serviceItem = serviceQuoteItem(request);
+  const service = Boolean(serviceItem);
+  if (!Array.isArray(request.lines) || (!service && !request.lines.length) || request.lines.length > 100) {
     throw new Error("Please select between 1 and 100 products.");
   }
   await ensureSalesSchema();
   const sql = getDb();
   const details: string[] = [];
   const items: NonNullable<SalesPayload["quoteDetails"]>["items"] = [];
+  if (serviceItem) {
+    details.push("Custom glycan synthesis — feasibility and price review required");
+    items.push(serviceItem);
+  }
   for (const line of request.lines) {
     if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 10000) {
       throw new Error("Invalid requested quantity.");
@@ -75,6 +83,7 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
   const billing = customer.billingAddress ? {name:`${customer.billingAddress.firstName} ${customer.billingAddress.lastName}`.trim(),company:customer.billingAddress.company,address1:customer.billingAddress.address1,city:customer.billingAddress.city,state:customer.billingAddress.state,postal:customer.billingAddress.postal,country:customer.billingAddress.country,phone:customer.phone} : {...shipping};
   const key = createHash("sha256").update(JSON.stringify({
     customer: { ...customer, email: customer.email.trim().toLowerCase() },
+    service: request.service,
     items: request.lines.map((l) => `${l.productId}|${l.variantId ?? ""}|${l.quantity}`).sort(),
     minute: Math.floor(Date.now() / 60_000),
   })).digest("hex");
@@ -91,6 +100,9 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
     quoteDetails:{billing,shipping,items},
     notes: [customer.notes, `Billing: ${[billing.name,billing.company,billing.address1,billing.city,billing.state,billing.postal,billing.country].filter(Boolean).join(", ")}`, `Shipping: ${[customer.address1, customer.city, customer.state, customer.postal, customer.country].filter(Boolean).join(", ")}`,
       `Source: ${request.meta?.leadSource ?? "Website submission"}`,
+      request.meta?.googleAdsCampaign ? `Google Ads campaign: ${request.meta.googleAdsCampaign}` : undefined,
+      request.meta?.googleAdsAdGroup ? `Google Ads ad group: ${request.meta.googleAdsAdGroup}` : undefined,
+      request.meta?.gclid ? `Google Ads click ID: ${request.meta.gclid}` : undefined,
       request.meta?.landingPageUrl ? `Landing page: ${request.meta.landingPageUrl}` : undefined].filter(Boolean).join("\n"),
   };
   const rows = await sql`INSERT INTO website_sales_requests (id, source_key, payload)

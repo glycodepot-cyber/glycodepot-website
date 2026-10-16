@@ -105,6 +105,7 @@ export interface QuoteLine {
 }
 
 export interface QuoteRequest {
+  service?: "custom-glycan-synthesis";
   lines: QuoteLine[];
   customer: {
     name: string;

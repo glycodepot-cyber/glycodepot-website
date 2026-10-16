@@ -25,6 +25,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/",
     "/about",
     "/services",
+    "/services/custom-glycan-synthesis",
     "/blog",
     "/start-selling",
     "/contact",
