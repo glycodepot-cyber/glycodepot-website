@@ -27,6 +27,7 @@ import {
   clearQuote,
   getQuoteCount,
 } from "@/lib/quote/store";
+import { QUOTE_FILE_ACCEPT, validateQuoteFiles } from "@/lib/quote/file-policy";
 import { quoteCopy } from "@/lib/content";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -153,6 +154,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
     country: "US",
     notes: "",
   });
+  const [files, setFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [billingSame,setBillingSame]=useState(true);
   const [billing,setBilling]=useState<BillingAddress>({firstName:"",lastName:"",company:"",address1:"",city:"",state:"",postal:"",country:"US"});
@@ -172,6 +174,8 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
     if (service && customer.notes.trim().length < 20) next.notes = "Describe the target structure, quantity, and project requirements.";
     for(const field of ["address1","city","state","postal"] as const) if(!customer[field].trim()) next[field]="Required.";
     if(!billingSame) for(const field of ["firstName","lastName","company","address1","city","state","postal"] as const) if(!billing[field].trim()) next[`billing.${field}`]="Required.";
+    const fileError = validateQuoteFiles(files);
+    if (fileError) next.files = fileError;
     setErrors(next);
     return Object.keys(next).length === 0;
   }
@@ -203,6 +207,8 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
     const attribution = attributionForWebhook();
 
     try {
+      const uploaded = new FormData();
+      if (service) files.forEach(file => uploaded.append("files", file));
       const res = await submitQuote({
         ...(service ? { service: "custom-glycan-synthesis" as const } : {}),
         lines,
@@ -227,7 +233,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
           landingPageUrl: attribution.landingPageUrl,
           gclid: attribution.gclid,
         },
-      });
+      }, uploaded);
       trackRfqSubmit({
         requestId: res.id,
         itemCount: service ? 1 : items.length,
@@ -298,7 +304,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
             <li>Share your desired timeline and analytical documentation needs.</li>
           </ul>
           <p>Our team will review feasibility and prepare pricing for your approval before work begins.</p>
-          <p className="text-sm text-[var(--color-muted-foreground)]">For confidential structures, contact info@glycodepot.com to arrange an appropriate way to share project information.</p>
+          <p className="text-sm text-[var(--color-muted-foreground)]">Upload structures and supporting files with your request. For information requiring an NDA, contact info@glycodepot.com before sharing.</p>
         </div>
       ) : <div>
         <div className="flex items-center justify-between">
@@ -502,6 +508,16 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
               className="w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white p-3 text-sm leading-relaxed outline-none placeholder:text-[var(--color-muted)] hover:border-[var(--color-border-strong)] focus:border-[var(--color-brand)]"
             />
           </Field>
+
+          {service ? <Field id="q-files" label="Upload structures or supporting files (optional)" error={errors.files}>
+            <input id="q-files" type="file" multiple accept={QUOTE_FILE_ACCEPT}
+              aria-describedby="q-files-help" aria-invalid={!!errors.files}
+              disabled={status === "loading"}
+              className="block w-full min-w-0 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white p-3 text-sm file:mr-3 file:rounded file:border-0 file:bg-[var(--color-brand-soft)] file:px-3 file:py-2 file:font-semibold file:text-[var(--color-brand)]"
+              onChange={event => {const selected = Array.from(event.target.files ?? []); setFiles(selected); setErrors(previous => ({...previous, files: validateQuoteFiles(selected) ?? ""}));}} />
+            <p id="q-files-help" className="mt-2 text-xs leading-relaxed text-[var(--color-muted-foreground)]">Up to 3 files, 3 MB combined. PDF, PNG, JPG, Word, Excel, CSV, TXT, MOL, or SDF. Files are shared privately with the GlycoDepot review team.</p>
+            {files.length ? <ul className="mt-2 space-y-1 text-xs text-[var(--color-muted-foreground)]">{files.map((file,index) => <li key={`${file.name}-${index}`} className="break-all">{file.name} ({Math.ceil(file.size / 1024)} KB)</li>)}</ul> : null}
+          </Field> : null}
 
           <BrandButton
             type="submit"

@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  experimental: { serverActions: { bodySizeLimit: "4mb" } },
   poweredByHeader: false,
   compress: true,
   // Ensure the prebaked catalog ships with every serverless function bundle.

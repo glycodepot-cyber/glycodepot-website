@@ -6,6 +6,7 @@
  * that the bundler could trace into the client bundle.
  */
 
+import { prepareQuoteFiles } from "@/lib/quote/files";
 import { createHash } from "node:crypto";
 import { after } from "next/server";
 import { captureWebsiteQuote, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
@@ -193,9 +194,12 @@ export async function submitOrder(
 
 export async function submitQuote(
   request: QuoteRequest,
+  files?: FormData,
 ): Promise<QuoteResponse> {
+  if (files?.getAll("files").length && request.service !== "custom-glycan-synthesis") throw new Error("Uploads are available for custom synthesis requests.");
   if (directSalesEnabled()) {
-    const response = await captureWebsiteQuote(request);
+    const uploaded = await prepareQuoteFiles(files);
+    const response = await captureWebsiteQuote(request, uploaded);
     after(async () => {
       try { await drainWebsiteSales(); }
       catch { console.error("[ghl] Quote is saved; CRM delivery is pending"); }

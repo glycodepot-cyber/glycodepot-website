@@ -2,6 +2,7 @@ import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
 import type { QuoteRequest, QuoteResponse } from "@/lib/cart/types";
+import type { PreparedQuoteFile } from "@/lib/quote/files";
 import { serviceQuoteItem } from "./service-quote";
 import { GhlSalesClient, type SalesPayload } from "./client";
 import { drainSalesNotifications } from "@/lib/email/sales-outbox";
@@ -30,7 +31,18 @@ export function ensureSalesSchema(): Promise<void> {
       last_error text,
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now()
-    )`.then(() => undefined).catch((error: unknown) => {
+    )`.then(async () => {
+      await sql`CREATE TABLE IF NOT EXISTS website_quote_files (
+        id uuid PRIMARY KEY,
+        request_id uuid NOT NULL REFERENCES website_sales_requests(id),
+        position integer NOT NULL,
+        filename text NOT NULL,
+        size_bytes integer NOT NULL CHECK (size_bytes > 0 AND size_bytes <= 3145728),
+        data_base64 text NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (request_id, position)
+      )`;
+    }).catch((error: unknown) => {
       schemaReady = undefined;
       throw error;
     });
@@ -38,7 +50,7 @@ export function ensureSalesSchema(): Promise<void> {
   return schemaReady;
 }
 
-export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteResponse> {
+export async function captureWebsiteQuote(request: QuoteRequest, files: PreparedQuoteFile[] = []): Promise<QuoteResponse> {
   if (!request.customer?.name?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(request.customer?.email ?? "")) {
     throw new Error("Please provide your name and a valid email address.");
   }
@@ -84,6 +96,7 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
   const key = createHash("sha256").update(JSON.stringify({
     customer: { ...customer, email: customer.email.trim().toLowerCase() },
     service: request.service,
+    files: files.map(file => ({name:file.filename,digest:file.digest})),
     items: request.lines.map((l) => `${l.productId}|${l.variantId ?? ""}|${l.quantity}`).sort(),
     minute: Math.floor(Date.now() / 60_000),
   })).digest("hex");
@@ -98,17 +111,29 @@ export async function captureWebsiteQuote(request: QuoteRequest): Promise<QuoteR
     company: customer.company,
     productDetails: details.join("\n"),
     quoteDetails:{billing,shipping,items},
-    notes: [customer.notes, `Billing: ${[billing.name,billing.company,billing.address1,billing.city,billing.state,billing.postal,billing.country].filter(Boolean).join(", ")}`, `Shipping: ${[customer.address1, customer.city, customer.state, customer.postal, customer.country].filter(Boolean).join(", ")}`,
+    notes: [customer.notes,
+      ...files.map(file => `Uploaded file: ${file.filename} (${file.size} bytes) — https://www.glycodepot.com/admin/quote-files/${file.id}`),
+      files.length ? "Uploaded files require a GlycoDepot website admin login to download." : undefined,
+      `Billing: ${[billing.name,billing.company,billing.address1,billing.city,billing.state,billing.postal,billing.country].filter(Boolean).join(", ")}`, `Shipping: ${[customer.address1, customer.city, customer.state, customer.postal, customer.country].filter(Boolean).join(", ")}`,
       `Source: ${request.meta?.leadSource ?? "Website submission"}`,
       request.meta?.googleAdsCampaign ? `Google Ads campaign: ${request.meta.googleAdsCampaign}` : undefined,
       request.meta?.googleAdsAdGroup ? `Google Ads ad group: ${request.meta.googleAdsAdGroup}` : undefined,
       request.meta?.gclid ? `Google Ads click ID: ${request.meta.gclid}` : undefined,
       request.meta?.landingPageUrl ? `Landing page: ${request.meta.landingPageUrl}` : undefined].filter(Boolean).join("\n"),
   };
-  const rows = await sql`INSERT INTO website_sales_requests (id, source_key, payload)
+  // Persist the request and its files atomically before confirming receipt.
+  const rows = await sql`WITH stored AS (
+    INSERT INTO website_sales_requests (id, source_key, payload)
     VALUES (${id}::uuid, ${`quote:${key}`}, ${JSON.stringify(payload)}::jsonb)
     ON CONFLICT (source_key) DO UPDATE SET source_key = EXCLUDED.source_key
-    RETURNING id, created_at`;
+    RETURNING id, created_at
+  ), saved_files AS (
+    INSERT INTO website_quote_files (id, request_id, position, filename, size_bytes, data_base64)
+    SELECT f.id::uuid, s.id, f.position, f.filename, f.size, f.data
+    FROM stored s CROSS JOIN jsonb_to_recordset(${JSON.stringify(files)}::jsonb)
+      AS f(id text, position integer, filename text, size integer, data text)
+    ON CONFLICT (request_id, position) DO NOTHING
+  ) SELECT id, created_at FROM stored`;
   const stored = (rows as Array<{ id: string; created_at: string }>)[0];
   return { id: stored.id, receivedAt: new Date(stored.created_at).toISOString() };
 }
