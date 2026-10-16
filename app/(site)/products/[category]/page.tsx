@@ -17,6 +17,7 @@ import { findGroupForCategory } from "@/lib/content/category-groups";
 
 import { offerPages } from "@/lib/content/offer-pages";
 import { CategoryOffer } from "@/components/site/catalog/CategoryOffer";
+import { GlycanCaseStudies } from "@/components/site/catalog/GlycanCaseStudies";
 import { NGlycanShowcase } from "@/components/site/catalog/NGlycanShowcase";
 
 const PAGE_SIZE = 12;
@@ -98,7 +99,7 @@ export default async function CategoryPage({
 
       <Section spacing="default">
         <Container>
-          {cat.slug === "n-glycans" ? <NGlycanShowcase /> : null}
+          {cat.slug === "n-glycans" ? <><NGlycanShowcase /><GlycanCaseStudies /></> : null}
           {offer ? <CategoryOffer offer={offer} position="intro" /> : null}
           <div id="catalog" className="scroll-mt-28">
             <ProductFilters

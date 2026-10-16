@@ -15,7 +15,7 @@ export function NGlycanShowcase() {
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-200">N-glycan standards</p>
       <h2 id="nglycan-library-title" className="mt-4 max-w-3xl text-3xl font-semibold leading-tight sm:text-4xl">The right structure.<br />Down to the linkage.</h2>
       <p className="mt-5 max-w-2xl text-base leading-relaxed text-emerald-50">Explore selected structures from our N-glycan standard projects. Closely related glycans can differ in antenna placement or terminal linkages. Share your exact target with our team.</p>
-      <div className="mt-7"><BrandButton href="/services/custom-glycan-synthesis#request" className="border border-white/40 bg-white text-[#073f30] hover:bg-emerald-50">Consult our expert</BrandButton></div>
+      <div className="mt-7 flex flex-wrap items-center gap-5"><BrandButton href="/services/custom-glycan-synthesis#request" className="border border-white/40 bg-white text-[#073f30] hover:bg-emerald-50">Consult our expert</BrandButton><a href="#case-studies" className="text-sm font-semibold text-white underline underline-offset-4">View case studies</a></div>
     </div>
     <div className="grid divide-y divide-[var(--color-border)] sm:grid-cols-2 lg:grid-cols-4 lg:divide-y-0">
       {structures.map((s) => <figure key={s.image} className="group flex flex-col border-[var(--color-border)] p-6 sm:odd:border-r lg:border-r lg:last:border-r-0">
