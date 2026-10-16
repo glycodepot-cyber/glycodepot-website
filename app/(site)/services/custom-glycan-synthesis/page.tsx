@@ -25,7 +25,7 @@ const caseStudies = [
     brief: "The project called for gram-scale Asn-linked N-glycans across multiple glycosylation patterns, with defined structures and a purity specification of at least 95%.",
     approach: "A bottom-up, fully enzymatic synthesis strategy used the selectivity of glycosyltransferases to control glycosidic bond formation and achieve high stereochemical control during assembly.",
     scope: "The project scope included both 1 g and 10 g N-glycan requirements. Each target was specified separately to align structure, quantity, and purity with the research program.",
-    cta: "Discuss a gram-scale project",
+    cta: "Consult our expert",
   },
   {
     id: "custom-n-glycan-standards",
@@ -40,7 +40,7 @@ const caseStudies = [
     brief: "The requirement was a set of custom N-glycan standards with project-specific structural requirements and supporting analytical documentation for research use.",
     approach: "The analytical package included NMR spectra and mass-spectrometric datasets to support characterization of the prepared standards. The scope and documentation were tailored to the individual targets.",
     scope: "Molecular structures and ligand identities are withheld from this public summary. Project-specific structures and analytical requirements can be discussed privately with our team.",
-    cta: "Request a custom standard",
+    cta: "Consult our expert",
   },
 ];
 
@@ -50,7 +50,7 @@ export default function CustomGlycanSynthesisPage() {
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
     <PageHero title="Custom Glycan Synthesis" description="From a target structure to a project-specific quote. Tell us the glycan, amount, and specifications your research requires." breadcrumbs={[{label:"Services",href:"/services"},{label:"Custom glycan synthesis"}]} />
     <Section spacing="tight"><Container>
-      <div className="flex flex-wrap gap-3"><BrandButton href="#request" size="lg">Request a synthesis quote</BrandButton><BrandButton href="/products/n-glycans" tone="outline" size="lg">Browse N-glycan standards</BrandButton><a href="#case-studies" className="self-center text-sm font-semibold text-[var(--color-brand)] hover:underline">View case studies</a></div>
+      <div className="flex flex-wrap gap-3"><BrandButton href="#request" size="lg">Consult our expert</BrandButton><BrandButton href="/products/n-glycans" tone="outline" size="lg">Browse N-glycan standards</BrandButton><a href="#case-studies" className="self-center text-sm font-semibold text-[var(--color-brand)] hover:underline">View case studies</a></div>
       <div className="mt-9 grid gap-5 md:grid-cols-3">
         {[
           ["Define your target", "Specify glycan sequence, linkages, branching, chemical form, and any labeling or conjugation requirements."],
@@ -87,7 +87,7 @@ export default function CustomGlycanSynthesisPage() {
       </div>
     </Container></Section>
     <Section tone="surface" spacing="default"><Container>
-      <div id="request" className="scroll-mt-48"><h2 className="type-h2 mb-3">Request your custom synthesis quote</h2><p className="mb-8 text-[var(--color-muted-foreground)]">Provide the project brief below, along with billing and shipping details. Your request does not commit you to a purchase.</p><QuoteListView service /></div>
+      <div id="request" className="scroll-mt-48"><h2 className="type-h2 mb-3">Consult our glycan expert</h2><p className="mb-8 text-[var(--color-muted-foreground)]">Share your project brief, billing and shipping details, and supporting files. Our team will review your requirements and get in touch.</p><QuoteListView service /></div>
     </Container></Section>
   </>;
 }

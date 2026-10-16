@@ -526,7 +526,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
             className="w-full"
           >
             <Send className="size-4" />
-            {status === "loading" ? "Sending…" : quoteCopy.submitLabel}
+            {status === "loading" ? "Sending…" : service ? "Send consultation request" : quoteCopy.submitLabel}
           </BrandButton>
         </form>
       </aside>
