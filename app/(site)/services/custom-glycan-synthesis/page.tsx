@@ -50,7 +50,7 @@ export default function CustomGlycanSynthesisPage() {
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
     <PageHero title="Custom Glycan Synthesis" description="From a target structure to a project-specific quote. Tell us the glycan, amount, and specifications your research requires." breadcrumbs={[{label:"Services",href:"/services"},{label:"Custom glycan synthesis"}]} />
     <Section spacing="tight"><Container>
-      <div className="flex flex-wrap gap-3"><BrandButton href="#request" size="lg">Request a synthesis quote</BrandButton><BrandButton href="/products/n-glycans" tone="outline" size="lg">Browse N-glycan standards</BrandButton><Link href="#case-studies" className="self-center text-sm font-semibold text-[var(--color-brand)] hover:underline">View case studies</Link></div>
+      <div className="flex flex-wrap gap-3"><BrandButton href="#request" size="lg">Request a synthesis quote</BrandButton><BrandButton href="/products/n-glycans" tone="outline" size="lg">Browse N-glycan standards</BrandButton><a href="#case-studies" className="self-center text-sm font-semibold text-[var(--color-brand)] hover:underline">View case studies</a></div>
       <div className="mt-9 grid gap-5 md:grid-cols-3">
         {[
           ["Define your target", "Specify glycan sequence, linkages, branching, chemical form, and any labeling or conjugation requirements."],
@@ -61,12 +61,12 @@ export default function CustomGlycanSynthesisPage() {
       <p className="mt-6 text-sm text-[var(--color-muted-foreground)]">Looking for an existing reagent? Browse <Link href="/products/sugar-nucleotides" className="text-[var(--color-brand)] underline">sugar nucleotides</Link> or <Link href="/products/n-glycans" className="text-[var(--color-brand)] underline">N-glycans</Link> before requesting a custom project. Services are for Research Use Only.</p>
     </Container></Section>
     <Section spacing="default"><Container>
-      <div id="case-studies" className="scroll-mt-28">
+      <div id="case-studies" className="scroll-mt-48">
         <p className="type-overline text-[var(--color-brand)]">Selected projects</p>
         <h2 className="type-h2 mt-3">Custom glycan synthesis case studies</h2>
         <p className="mt-4 max-w-3xl text-[var(--color-muted-foreground)]">From gram-scale enzymatic synthesis to research standards with analytical documentation, each project starts with a defined target and an agreed scope.</p>
         <div className="mt-9 grid gap-6 lg:grid-cols-2">
-          {caseStudies.map(study => <article key={study.id} id={study.id} className="flex scroll-mt-28 flex-col overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white">
+          {caseStudies.map(study => <article key={study.id} id={study.id} className="flex scroll-mt-48 flex-col overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white">
             <div className="border-b border-[var(--color-border)] bg-[var(--color-brand-soft)] p-6 sm:p-8">
               <p className="text-sm font-semibold text-[var(--color-brand)]">Case {study.number}</p>
               <h3 className="type-h2 mt-3">{study.title}</h3>
@@ -87,7 +87,7 @@ export default function CustomGlycanSynthesisPage() {
       </div>
     </Container></Section>
     <Section tone="surface" spacing="default"><Container>
-      <div id="request" className="scroll-mt-28"><h2 className="type-h2 mb-3">Request your custom synthesis quote</h2><p className="mb-8 text-[var(--color-muted-foreground)]">Provide the project brief below, along with billing and shipping details. Your request does not commit you to a purchase.</p><QuoteListView service /></div>
+      <div id="request" className="scroll-mt-48"><h2 className="type-h2 mb-3">Request your custom synthesis quote</h2><p className="mb-8 text-[var(--color-muted-foreground)]">Provide the project brief below, along with billing and shipping details. Your request does not commit you to a purchase.</p><QuoteListView service /></div>
     </Container></Section>
   </>;
 }
