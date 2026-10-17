@@ -33,6 +33,7 @@ type ProductRow = {
   focus_keyword: string | null;
   canonical_url: string | null;
   tags: string[];
+  updated_at: string;
 };
 type VariantRow = {
   id: string;
@@ -61,7 +62,7 @@ export const loadDatabaseCatalog = cache(
       sql`SELECT id, slug, sku, name, short_description, description,
                primary_category_id, price_cents, compare_at_price_cents,
                currency, stock_quantity, is_rfq, attributes, badge, is_featured, is_hot,
-               seo_title, seo_description, focus_keyword, canonical_url, tags
+               seo_title, seo_description, focus_keyword, canonical_url, tags, updated_at
         FROM products WHERE is_active = true ORDER BY name`,
       sql`SELECT id, product_id, sku, name, price_cents, compare_at_price_cents,
                stock_quantity, is_active
@@ -143,6 +144,8 @@ export const loadDatabaseCatalog = cache(
         badge: row.badge,
         isFeatured: row.is_featured,
         isHot: row.is_hot,
+        tags: row.tags,
+        updatedAt: row.updated_at,
         requiresDryIce: row.tags.some((tag) => ["dry-ice", "dry ice", "dry_ice"].includes(tag.trim().toLowerCase())),
         seoTitle: row.seo_title ?? undefined,
         seoDescription: row.seo_description ?? undefined,

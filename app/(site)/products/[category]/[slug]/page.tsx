@@ -11,7 +11,7 @@ import { ProductDwellTracker } from "@/components/analytics/PageEventTrackers";
 import { ProductJsonLd } from "@/components/site/catalog/ProductJsonLd";
 import { RecentlyViewedRail } from "@/components/site/catalog/RecentlyViewedRail";
 import { formatMoney } from "@/lib/format";
-import { SITE_URL } from "@/lib/site-url";
+import { SITE_URL, canonicalSiteUrl } from "@/lib/site-url";
 import {
   getCategoryBySlug,
   getProductBySlug,
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: product.seoTitle || product.name,
     description: product.seoDescription || product.shortDescription || product.description,
     keywords: product.focusKeyword || undefined,
-    alternates: { canonical: product.canonicalUrl || `/products/${cat?.slug ?? category}/${product.slug}` },
+    alternates: { canonical: canonicalSiteUrl(product.canonicalUrl, `/products/${cat?.slug ?? category}/${product.slug}`) },
     openGraph: {
       title: product.seoTitle || product.name,
       description: product.seoDescription || product.shortDescription || product.description,

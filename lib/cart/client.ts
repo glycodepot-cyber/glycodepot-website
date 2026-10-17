@@ -38,6 +38,7 @@ import { categoryGroups } from "@/lib/content/category-groups";
 import { isDatabaseConfigured } from "@/lib/db";
 import { loadDatabaseCatalog } from "./database";
 import { applyPricePolicy } from "./price-policy";
+import { tagSlug } from "@/lib/seo/legacy-map";
 
 /* ----------------- Prebake (build-time JSON) ----------------- */
 
@@ -177,6 +178,7 @@ export async function listProducts(
       items = [];
     }
   }
+  if (query.tagSlug) items = items.filter(p => p.tags?.some(tag => tagSlug(tag) === query.tagSlug));
   if (query.search) {
     const q = query.search.toLowerCase();
     items = items.filter(

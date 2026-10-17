@@ -10,6 +10,23 @@ const handleClerk = clerkMiddleware(async (auth, req) => {
 });
 
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  const publicRead = req.method === "GET" || req.method === "HEAD";
+  const pathname = req.nextUrl.pathname;
+  const legacy = /^\/(product|product-category|product-tag|shop)(\/|$)/.test(pathname);
+  const privatePath = /^\/(api|admin|my-account|checkout)(\/|$)/.test(pathname);
+  if (publicRead && !privatePath) {
+    const target = req.nextUrl.clone();
+    if (["glycodepot.com", "shukkoor.glycodepot.com"].includes(target.hostname)) {
+      target.hostname = "www.glycodepot.com";
+      target.protocol = "https:";
+      return NextResponse.redirect(target, 301);
+    }
+    if (!legacy && pathname !== "/" && pathname.endsWith("/")) {
+      target.pathname = pathname.replace(/\/+$/, "");
+      return NextResponse.redirect(target, 301);
+    }
+  }
+
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || !process.env.CLERK_SECRET_KEY) {
     return NextResponse.next();
   }

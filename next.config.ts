@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
     root: path.resolve(__dirname),
   },
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
+  // Legacy WordPress URLs are resolved directly, including their trailing slash.
+  skipTrailingSlashRedirect: true,
   poweredByHeader: false,
   compress: true,
   // Ensure the prebaked catalog ships with every serverless function bundle.

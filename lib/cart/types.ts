@@ -72,6 +72,8 @@ export interface Product {
   requiresDryIce?: boolean;
   seoTitle?: string;
   seoDescription?: string;
+  tags?: string[];
+  updatedAt?: string;
   focusKeyword?: string;
   canonicalUrl?: string;
   attributes?: Record<string, string>;
@@ -170,6 +172,7 @@ export interface Order {
 }
 
 export interface ListQuery {
+  tagSlug?: string;
   page?: number;
   pageSize?: number;
   sort?: "popular" | "newest" | "price-asc" | "price-desc";

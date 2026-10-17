@@ -30,7 +30,6 @@ export const metadata: Metadata = {
   },
   description:
     "High-quality glycoscience reagents, glycans, enzymes, and expert services. Building blocks, sugar nucleotides, glycan arrays, custom synthesis — sourced from expert labs to yours.",
-  alternates: { canonical: "/" },
   openGraph: {
     title: "GlycoDepot — Your Trusted Source for Glycoscience Solutions",
     description:
