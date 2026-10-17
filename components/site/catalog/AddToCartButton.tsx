@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ShoppingCart, Check } from "lucide-react";
 import { BrandButton } from "@/components/primitives";
@@ -19,6 +20,7 @@ interface AddToCartButtonProps {
   size?: Size;
   label?: string;
   className?: string;
+  checkoutOnAdd?: boolean;
 }
 
 export function AddToCartButton({
@@ -29,14 +31,15 @@ export function AddToCartButton({
   size = "md",
   label = "Add to cart",
   className,
+  checkoutOnAdd = false,
 }: AddToCartButtonProps) {
+  const router = useRouter();
   const [added, setAdded] = useState(false);
   const [loading, startTransition] = useTransition();
 
   function onClick() {
     startTransition(() => {
       addCartItem(product, variant, quantity);
-      openCart();
       setAdded(true);
       emitAdded({
         type: "cart",
@@ -44,6 +47,13 @@ export function AddToCartButton({
         variantName: variant?.name,
         image: product.images[0],
       });
+
+      if (checkoutOnAdd) {
+        router.push("/checkout");
+        return;
+      }
+
+      openCart();
       window.setTimeout(() => setAdded(false), 1800);
     });
   }

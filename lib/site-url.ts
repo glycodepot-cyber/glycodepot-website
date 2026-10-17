@@ -1,13 +1,14 @@
-/**
- * Single source of truth for the public site URL.
- *
- * Set NEXT_PUBLIC_SITE_URL in Vercel env vars when DNS cutover to
- * glycodepot.com happens — every canonical link, OG image URL, sitemap
- * entry, robots.txt host, and JSON-LD url updates automatically. No code
- * change needed at cutover time.
- *
- * Default is the staging Vercel URL so dev/preview builds always work.
- */
-export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://glycodepot-web.vercel.app"
-).replace(/\/+$/, "");
+/** Permanent public origin selected by the site owner. Preview pages also canonicalize to production. */
+export const SITE_URL = "https://www.glycodepot.com";
+
+export function canonicalSiteUrl(value: string | undefined, fallbackPath: string): string {
+  if (value) {
+    try {
+      const url = new URL(value, SITE_URL);
+      if (["glycodepot.com", "www.glycodepot.com"].includes(url.hostname) && url.pathname.startsWith("/products/")) {
+        return `${SITE_URL}${url.pathname.replace(/\/+$/, "")}`;
+      }
+    } catch { /* Invalid imported canonical falls back to the current product. */ }
+  }
+  return `${SITE_URL}${fallbackPath}`;
+}

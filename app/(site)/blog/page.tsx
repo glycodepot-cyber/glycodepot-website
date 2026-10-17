@@ -6,6 +6,7 @@ import { blogPosts, blogCategories } from "@/lib/content/blog";
 import { SITE_URL } from "@/lib/site-url";
 
 export const metadata: Metadata = {
+  alternates: { canonical: `${SITE_URL}/blog` },
   title: "Glycoscience Blog — Research Insights & Product Guides",
   description:
     "Stay current with glycobiology research. GlycoDepot's blog covers sugar nucleotides, glycoenzymes, glycan arrays, HMOs, and the tools that power modern glycoscience.",

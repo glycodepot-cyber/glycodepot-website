@@ -6,11 +6,12 @@ import { Container, Section, SectionHeading } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
 import { ProductCard } from "@/components/site/home/ProductCard";
 import { ProductPurchasePanel } from "@/components/site/catalog/ProductPurchasePanel";
+import { AnalyticalCarousel } from "@/components/site/catalog/AnalyticalCarousel";
 import { ProductDwellTracker } from "@/components/analytics/PageEventTrackers";
 import { ProductJsonLd } from "@/components/site/catalog/ProductJsonLd";
 import { RecentlyViewedRail } from "@/components/site/catalog/RecentlyViewedRail";
 import { formatMoney } from "@/lib/format";
-import { SITE_URL } from "@/lib/site-url";
+import { SITE_URL, canonicalSiteUrl } from "@/lib/site-url";
 import {
   getCategoryBySlug,
   getProductBySlug,
@@ -30,12 +31,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   ]);
   if (!product) return { title: "Product not found" };
   return {
-    title: product.name,
-    description: product.shortDescription ?? product.description,
-    alternates: { canonical: `/products/${cat?.slug ?? category}/${product.slug}` },
+    title: product.seoTitle || product.name,
+    description: product.seoDescription || product.shortDescription || product.description,
+    keywords: product.focusKeyword || undefined,
+    alternates: { canonical: canonicalSiteUrl(product.canonicalUrl, `/products/${cat?.slug ?? category}/${product.slug}`) },
     openGraph: {
-      title: product.name,
-      description: product.shortDescription ?? product.description,
+      title: product.seoTitle || product.name,
+      description: product.seoDescription || product.shortDescription || product.description,
       type: "website",
       images: product.images[0] ? [{ url: product.images[0].src }] : undefined,
     },
@@ -46,12 +48,14 @@ const badgeStyles = {
   sale: "bg-[var(--color-accent)] text-white",
   new: "bg-[var(--color-brand)] text-white",
   popular: "bg-[var(--color-brand-soft)] text-[var(--color-brand)]",
+  hot: "bg-orange-100 text-orange-800",
 } as const;
 
 const badgeLabel = {
   sale: "Sale",
   new: "New",
   popular: "Popular",
+  hot: "Hot",
 } as const;
 
 export default async function ProductPage({ params }: PageProps) {
@@ -163,6 +167,29 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </Container>
       </Section>
+
+      {product.id === "bprd_12943" ? (
+        <Section spacing="default">
+          <Container>
+            <div id="coa" className="space-y-6">
+              <SectionHeading title="PAPS CoA & analytical data" />
+              <p className="max-w-3xl text-[var(--color-muted-foreground)]">
+                Supplied product data sheet for catalog GTRC-001, lot GTRC-001_250821_ES.
+                The images include the lot specification, HPLC chromatogram, and HRMS spectrum.
+                These results apply to the documented lot; request the documentation for your supplied batch.
+              </p>
+              <AnalyticalCarousel title="PAPS lot GTRC-001_250821_ES" slides={[
+                { src: "/images/science/paps/paps-lot-specification.png", caption: "Lot specification and structure" },
+                { src: "/images/science/paps/paps-hplc.png", caption: "HPLC chromatogram and conditions" },
+                { src: "/images/science/paps/paps-hrms.png", caption: "HRMS spectrum and conditions" },
+              ]} />
+              <a href="/documents/products/GD-PDS-GTRC-001-PAPS.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-semibold text-white">
+                Open PAPS product data sheet (PDF) ↗
+              </a>
+            </div>
+          </Container>
+        </Section>
+      ) : null}
 
       {related.length > 0 ? (
         <Section spacing="default">

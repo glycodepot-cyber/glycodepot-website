@@ -6,13 +6,22 @@
  * that the bundler could trace into the client bundle.
  */
 
+import { prepareQuoteFiles } from "@/lib/quote/files";
 import { createHash } from "node:crypto";
+import { after } from "next/server";
+import { captureWebsiteQuote, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
 import {
   BYSON_CONFIGURED,
   placeOrder,
   type BysonOrderPayload,
 } from "@/lib/api/bysonhub";
 import { ghlContact, ghlNewsletter, ghlQuote } from "@/lib/api/ghl";
+import { sendSalesNotification } from "@/lib/email/notifications";
+import {
+  createInternalCheckout,
+  isInternalCheckoutEnabled,
+  prepareInternalPayment,
+} from "@/lib/payments/checkout";
 
 /**
  * Stable idempotency key derived from cart contents + customer email.
@@ -47,16 +56,45 @@ export interface SubmitOrderInput {
     name: string;
     email: string;
     phone: string;
+    company?: string;
     address1: string;
     address2?: string;
     postal_code?: string;
     country?: string;
+    shippingAddress?: {firstName:string;lastName:string;company?:string;address1:string;city:string;state:string;postal:string;country:string};
+    billingAddress?: {firstName:string;lastName:string;company?:string;address1:string;city:string;state:string;postal:string;country:string};
   };
   items: Array<{
     productId: string;
     variantId?: string;
     quantity: number;
   }>;
+}
+
+export type PreparePaymentResult =
+  | { ok: true; orderId: string; orderNumber:string; clientSecret: string; subtotal: number; shipping:number; total: number; requiresDryIce:boolean }
+  | { ok: false; error: string };
+
+export async function preparePayment(
+  input: SubmitOrderInput,
+): Promise<PreparePaymentResult> {
+  if (!input.items.length) return { ok: false, error: "Your cart is empty." };
+  if (!isInternalCheckoutEnabled()) {
+    return { ok: false, error: "Secure card payment is not configured." };
+  }
+  try {
+    const result = await prepareInternalPayment(
+      input.customer,
+      input.items,
+      makeIdempotencyKey(input),
+    );
+    return { ok: true, ...result };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Unable to prepare payment.",
+    };
+  }
 }
 
 export type SubmitOrderResult =
@@ -73,6 +111,33 @@ export type SubmitOrderResult =
 export async function submitOrder(
   input: SubmitOrderInput,
 ): Promise<SubmitOrderResult> {
+  if (!input.items.length) {
+    return { ok: false, error: "Your cart is empty." };
+  }
+
+  if (isInternalCheckoutEnabled()) {
+    try {
+      const result = await createInternalCheckout(
+        input.customer,
+        input.items,
+        makeIdempotencyKey(input),
+      );
+      return {
+        ok: true,
+        orderId: result.orderId,
+        paymentLink: result.paymentLink,
+        subtotal: result.subtotal,
+        total: result.total,
+        shipping: { zone: null, fee: 0, dryIceSurchargeApplied: false },
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : "Unable to start secure checkout.",
+      };
+    }
+  }
+
   if (!BYSON_CONFIGURED) {
     return {
       ok: false,
@@ -80,10 +145,6 @@ export async function submitOrder(
         "Order backend not configured yet. We've captured your details — our team will follow up.",
     };
   }
-  if (!input.items.length) {
-    return { ok: false, error: "Your cart is empty." };
-  }
-
   const mappedItems: BysonOrderPayload["items"] = [];
   for (const i of input.items) {
     const productId = bysonProductIdFromDomain(i.productId);
@@ -133,7 +194,19 @@ export async function submitOrder(
 
 export async function submitQuote(
   request: QuoteRequest,
+  files?: FormData,
 ): Promise<QuoteResponse> {
+  if (files?.getAll("files").length && request.service !== "custom-glycan-synthesis") throw new Error("Uploads are available for custom synthesis requests.");
+  if (directSalesEnabled()) {
+    const uploaded = await prepareQuoteFiles(files);
+    const response = await captureWebsiteQuote(request, uploaded);
+    after(async () => {
+      try { await drainWebsiteSales(); }
+      catch { console.error("[ghl] Quote is saved; CRM delivery is pending"); }
+    });
+    return response;
+  }
+  if (request.service) throw new Error("Custom synthesis requests are temporarily unavailable. Please contact info@glycodepot.com.");
   // BH Quotation ID captured from BysonHub's response so GHL can cross-reference
   // the RFQ (SOW §3.2 "BH Quotation ID" — the primary key linking GHL ↔ BysonHub).
   let bhQuotationId: string | undefined;
@@ -232,6 +305,22 @@ export async function submitQuote(
       phone: request.customer.phone,
     },
     extra: { lines: request.lines, customer: request.customer },
+  });
+
+  await sendSalesNotification({
+    subject: `New GlycoDepot RFQ — ${request.customer.company || request.customer.name}`,
+    replyTo: request.customer.email,
+    text:
+      `A new quote request was submitted.\n\n` +
+      `Customer: ${request.customer.name}\n` +
+      `Company: ${request.customer.company || "—"}\n` +
+      `Email: ${request.customer.email}\n` +
+      `Phone: ${request.customer.phone || "—"}\n` +
+      `Address: ${[request.customer.address1, request.customer.city, request.customer.state, request.customer.postal, request.customer.country].filter(Boolean).join(", ")}\n` +
+      (request.customer.billingAddress ? `Billing: ${[request.customer.billingAddress.address1, request.customer.billingAddress.city, request.customer.billingAddress.state, request.customer.billingAddress.postal, request.customer.billingAddress.country].filter(Boolean).join(", ")}\n` : "") +
+      (request.customer.notes ? `Notes: ${request.customer.notes}\n` : "") +
+      (bhQuotationId ? `BysonHub quotation: ${bhQuotationId}\n` : "") +
+      `\nProducts:\n${productDetails}`,
   });
 
   return {

@@ -14,27 +14,29 @@ interface PurchasePanelProps {
 
 export function ProductPurchasePanel({ product }: PurchasePanelProps) {
   const variants = product.variants;
-  const initial = variants.find((v) => v.inStock) ?? variants[0];
+  const initial =
+    variants.find((v) => v.inStock && v.price !== null) ??
+    variants.find((v) => v.inStock) ??
+    variants[0];
   const [variantId, setVariantId] = useState<string | undefined>(initial?.id);
   const [qty, setQty] = useState(1);
 
   const variant: ProductVariant | undefined = variants.find(
     (v) => v.id === variantId,
   );
-  const isQuote = !variant?.price && !product.price;
-  const activePrice = variant?.price ?? product.price ?? null;
-  // Take the compare-at from whichever record supplied activePrice, so the
-  // struck-through figure always describes the size actually selected.
+  const activePrice = variant ? variant.price : product.price;
+  // A concrete price always wins over the legacy product-level RFQ flag.
+  // Some imported products retain isRfq=true even after variant prices are set.
+  const isQuote = activePrice === null;
   const activeCompareAt = variant
     ? (variant.compareAtPrice ?? null)
     : (product.compareAtPrice ?? null);
 
   return (
     <div className="space-y-7">
-      {/* Price */}
       <div className="space-y-1">
         <span className="type-overline text-[var(--color-muted)]">
-          {isQuote ? "Pricing" : "From"}
+          {isQuote ? "Pricing" : "Price"}
         </span>
         <div className="flex items-baseline gap-2.5">
           <div
@@ -60,7 +62,6 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
         ) : null}
       </div>
 
-      {/* Variant picker */}
       {variants.length > 1 ? (
         <div className="space-y-2.5">
           <p className="text-[13px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
@@ -97,7 +98,11 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
                     >
                       {formatMoney(v.price)}
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="text-[12px] font-medium text-[var(--color-muted)]">
+                      Quote
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -105,7 +110,6 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
         </div>
       ) : null}
 
-      {/* Quantity */}
       <div className="space-y-2.5">
         <p className="text-[13px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
           Quantity
@@ -139,27 +143,27 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
         </div>
       </div>
 
-      {/* Actions */}
       <div className="flex flex-wrap gap-3">
-        {isQuote ? null : (
+        {!isQuote ? (
           <AddToCartButton
             product={product}
             variant={variant}
             quantity={qty}
             size="lg"
+            label="Checkout"
+            checkoutOnAdd
           />
-        )}
+        ) : null}
         <AddToQuoteButton
           product={product}
           variant={variant}
           quantity={qty}
           tone={isQuote ? "brand" : "outline"}
           size="lg"
-          label={isQuote ? "Request a quote" : "Add to quote"}
+          label="Request a quote"
         />
       </div>
 
-      {/* Trust strip */}
       <ul className="grid gap-3 border-t border-[var(--color-border)] pt-6 text-[13px] text-[var(--color-muted-foreground)]">
         <li className="flex items-center gap-3">
           <ShieldCheck className="size-4 text-[var(--color-brand)]" aria-hidden />

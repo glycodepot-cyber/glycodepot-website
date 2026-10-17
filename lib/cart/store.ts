@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import type { Product, ProductVariant } from "./types";
 import { trackAddToCart } from "@/lib/analytics/dataLayer";
+import { scopedStorageKey, SCOPE_EVENT } from "@/lib/commerce/scope";
 
 /**
  * Local cart store — localStorage-backed, hydration-safe.
@@ -12,7 +13,7 @@ import { trackAddToCart } from "@/lib/analytics/dataLayer";
  * lib/cart/client.ts) for the live endpoints; component code stays the same.
  */
 
-const STORAGE_KEY = "gd_cart_v1";
+const STORAGE_KEY = "gd_cart_v2";
 const EVENT_NAME = "gd:cart-changed";
 
 export interface CartItemLocal {
@@ -24,6 +25,7 @@ export interface CartItemLocal {
   quantity: number;
   image?: { src: string; alt: string };
   href: string;
+  requiresDryIce?: boolean;
 }
 
 /* ----------------- persistence ----------------- */
@@ -31,7 +33,7 @@ export interface CartItemLocal {
 function readFromStorage(): CartItemLocal[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(scopedStorageKey(STORAGE_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as CartItemLocal[];
     return Array.isArray(parsed) ? parsed : [];
@@ -43,7 +45,7 @@ function readFromStorage(): CartItemLocal[] {
 function writeToStorage(items: CartItemLocal[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    window.localStorage.setItem(scopedStorageKey(STORAGE_KEY), JSON.stringify(items));
     window.dispatchEvent(new CustomEvent(EVENT_NAME));
   } catch {
     // quota / private mode — ignore
@@ -64,6 +66,7 @@ if (typeof window !== "undefined") {
   };
   window.addEventListener(EVENT_NAME, refresh);
   window.addEventListener("storage", refresh);
+  window.addEventListener(SCOPE_EVENT, refresh);
 }
 
 function subscribeItems(listener: () => void) {
@@ -128,6 +131,7 @@ export function addCartItem(
       quantity,
       image: product.images[0],
       href: hrefFor(product),
+      requiresDryIce: product.requiresDryIce,
     });
   }
   writeToStorage(items);
