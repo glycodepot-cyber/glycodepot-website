@@ -1,3 +1,4 @@
+import { isQuotePriceCents } from "@/lib/cart/price-policy";
 import "server-only";
 import { createHash, randomUUID } from "node:crypto";
 import { getDb } from "@/lib/db";
@@ -88,7 +89,7 @@ export async function captureWebsiteQuote(request: QuoteRequest, files: Prepared
     details.push(`${line.quantity} × ${product.name}${product.sku ? ` [${product.sku}]` : ""}`);
     const url = product.category_slug ? `${(process.env.NEXT_PUBLIC_SITE_URL ?? "https://glycodepot.com").replace(/\/$/, "")}/products/${encodeURIComponent(product.category_slug)}/${encodeURIComponent(product.slug)}` : undefined;
     if (url) details.push(url);
-    items.push({productId:line.productId,variantId:line.variantId,name:product.name,sku:product.sku??undefined,quantity:line.quantity,unitPriceCents:product.price_cents,url,requiresDryIce:(product.tags??[]).some(tag=>/dry.?ice/i.test(tag))});
+    items.push({productId:line.productId,variantId:line.variantId,name:product.name,sku:product.sku??undefined,quantity:line.quantity,unitPriceCents:isQuotePriceCents(product.price_cents)?null:product.price_cents,url,requiresDryIce:(product.tags??[]).some(tag=>/dry.?ice/i.test(tag))});
   }
   const customer = request.customer;
   const shipping = {name:customer.name,company:customer.company,address1:customer.address1,city:customer.city,state:customer.state,postal:customer.postal,country:customer.country,phone:customer.phone};

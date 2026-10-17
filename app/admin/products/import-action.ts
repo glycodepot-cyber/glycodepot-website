@@ -99,8 +99,8 @@ export async function importProducts(formData: FormData) {
       )
     )
     UPDATE products p SET sku = c.sku, name = CASE WHEN c.name = '' THEN p.name ELSE c.name END,
-      price_cents = CASE WHEN c.is_rfq THEN NULL ELSE c.price_cents END,
-      compare_at_price_cents = CASE WHEN c.is_rfq THEN NULL ELSE c.compare_at_price_cents END,
+      price_cents = c.price_cents,
+      compare_at_price_cents = c.compare_at_price_cents,
       stock_quantity = c.stock_quantity, unit = c.unit, is_rfq = c.is_rfq,
       is_active = c.is_active, vendor = c.vendor, tags = c.tags, updated_at = now()
     FROM changes c WHERE p.id = c.id RETURNING p.id`,

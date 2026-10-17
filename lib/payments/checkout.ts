@@ -1,3 +1,4 @@
+import { isQuotePriceCents } from "@/lib/cart/price-policy";
 import "server-only";
 
 import { getDb, isDatabaseConfigured } from "@/lib/db";
@@ -97,7 +98,7 @@ export async function prepareInternalPayment(
                   WHERE p.id = ${item.productId} AND p.is_active = true`;
     const row = (rows as unknown as PriceRow[])[0];
     if (!row) throw new Error("A product in your cart is no longer available.");
-    if (row.unit_price_cents === null) {
+    if (isQuotePriceCents(row.unit_price_cents)) {
       throw new Error(`${row.name} requires a quotation and cannot be checked out.`);
     }
     if (row.stock_quantity < item.quantity) {
@@ -202,7 +203,7 @@ export async function createInternalCheckout(
     if (!row) throw new Error("A product in your cart is no longer available.");
     // Checkout eligibility is determined by the selected item's price. Imported
     // products can retain a stale product-level RFQ flag after variants are priced.
-    if (row.unit_price_cents === null) {
+    if (isQuotePriceCents(row.unit_price_cents)) {
       throw new Error(`${row.name} requires a quotation and cannot be checked out.`);
     }
     if (row.stock_quantity < item.quantity) {
