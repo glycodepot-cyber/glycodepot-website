@@ -1,4 +1,6 @@
 import { BrandButton } from "@/components/primitives";
+import { AnalyticalCarousel } from "./AnalyticalCarousel";
+import { analyticalCases } from "@/lib/content/analytical-cases";
 
 const caseStudies = [
   {
@@ -55,6 +57,12 @@ export function GlycanCaseStudies() {
               <div><h4 className="font-semibold">Project scope</h4><p className="mt-2 text-[15px] leading-relaxed text-[var(--color-muted-foreground)]">{study.scope}</p></div>
               <div className="mt-auto pt-2"><BrandButton href="/services/custom-glycan-synthesis#request" tone="outline" className="w-full whitespace-normal px-4 text-center sm:w-auto">{study.cta}</BrandButton></div>
             </div>
+          </article>)}
+        </div>
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          {analyticalCases.map(study => <article key={study.id} id={study.id} className="flex scroll-mt-48 flex-col overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white">
+            <div className="border-b border-[var(--color-border)] bg-[var(--color-brand-soft)] p-6 sm:p-8"><p className="text-sm font-semibold text-[var(--color-brand)]">Case {study.number}</p><h3 className="type-h2 mt-3">{study.title}</h3><p className="mt-3 text-sm font-semibold text-[var(--color-brand)]">{study.methods}</p><p className="mt-4 text-[15px] leading-relaxed text-[var(--color-muted-foreground)]">{study.brief}</p></div>
+            <div className="flex flex-1 flex-col gap-5 p-6 sm:p-8"><AnalyticalCarousel title={study.title} slides={study.slides} /><p className="text-[15px] leading-relaxed text-[var(--color-muted-foreground)]">{study.detail}</p><p className="text-xs leading-relaxed text-[var(--color-muted-foreground)]">Selected project data. These panels are not a certificate for every product or batch. HPLC peak-area percentages are not an absolute purity measurement.</p><div className="mt-auto"><BrandButton href="/services/custom-glycan-synthesis#request" tone="outline">Consult our expert</BrandButton></div></div>
           </article>)}
         </div>
         <p className="mt-5 text-xs leading-relaxed text-[var(--color-muted-foreground)]">Project examples are shared anonymously. Quantities and specifications describe these projects; feasibility, purity, and scale are reviewed for each new request. Research Use Only.</p>
