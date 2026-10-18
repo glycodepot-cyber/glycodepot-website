@@ -136,7 +136,8 @@ export const loadDatabaseCatalog = cache(
           images.get(row.id) ?? [{ src: "/Glycodepot_Logo.jpeg", alt: name }]
         ).map((image) => ({
           ...image,
-          alt: cleanCatalogLabel(image.alt) || name,
+          // Product names are editable; imported alt labels can retain obsolete CAS numbers.
+          alt: name,
         })),
         variants: productVariants,
         price: cardVariant?.price ?? money(row.price_cents),
