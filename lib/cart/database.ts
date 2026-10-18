@@ -123,6 +123,7 @@ export const loadDatabaseCatalog = cache(
       const cardVariant = pricedVariants[0];
       return {
         id: row.id,
+        sku: row.sku ?? undefined,
         slug: row.slug,
         name,
         shortDescription: row.short_description ?? undefined,

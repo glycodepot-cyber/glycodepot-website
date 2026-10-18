@@ -11,12 +11,14 @@ import { ProductDwellTracker } from "@/components/analytics/PageEventTrackers";
 import { ProductJsonLd } from "@/components/site/catalog/ProductJsonLd";
 import { RecentlyViewedRail } from "@/components/site/catalog/RecentlyViewedRail";
 import { formatMoney } from "@/lib/format";
-import { SITE_URL, canonicalSiteUrl } from "@/lib/site-url";
+import { canonicalSiteUrl } from "@/lib/site-url";
 import {
   getCategoryBySlug,
   getProductBySlug,
   listRelatedProducts,
 } from "@/lib/cart/client";
+import { productReferences } from "@/lib/content/product-enrichment";
+import { productDescription, productBreadcrumbs, serializeJsonLd } from "@/lib/seo/product-data";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -29,16 +31,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     getCategoryBySlug(category),
     getProductBySlug(slug),
   ]);
-  if (!product) return { title: "Product not found" };
+  if (!product || !cat || !product.categories.includes(cat.id)) return { title: "Product not found", robots: { index: false } };
+  const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
+  const description = productDescription(product);
   return {
     title: product.seoTitle || product.name,
-    description: product.seoDescription || product.shortDescription || product.description,
+    description,
     keywords: product.focusKeyword || undefined,
-    alternates: { canonical: canonicalSiteUrl(product.canonicalUrl, `/products/${cat?.slug ?? category}/${product.slug}`) },
+    alternates: { canonical },
     openGraph: {
       title: product.seoTitle || product.name,
-      description: product.seoDescription || product.shortDescription || product.description,
+      description,
       type: "website",
+      url: canonical,
       images: product.images[0] ? [{ url: product.images[0].src }] : undefined,
     },
   };
@@ -71,6 +76,8 @@ export default async function ProductPage({ params }: PageProps) {
 
   const related = await listRelatedProducts(product, 4);
   const image = product.images[0];
+  const references = productReferences(product.id);
+  const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
 
   return (
     <>
@@ -145,7 +152,7 @@ export default async function ProductPage({ params }: PageProps) {
             <aside className="rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-7">
               <h3 className="type-h3 text-[var(--color-foreground)]">Specifications</h3>
               <dl className="mt-5 divide-y divide-[var(--color-border)] text-[14px]">
-                {Object.entries(product.attributes ?? {}).map(([k, v]) => (
+                {Object.entries({ ...(product.sku ? { SKU: product.sku } : {}), ...product.attributes }).map(([k, v]) => (
                   <div key={k} className="flex items-baseline justify-between gap-4 py-3">
                     <dt className="font-medium text-[var(--color-muted-foreground)]">
                       {k}
@@ -157,6 +164,8 @@ export default async function ProductPage({ params }: PageProps) {
                 ))}
               </dl>
 
+              {references.length > 0 ? <p className="mt-5 text-sm leading-relaxed text-[var(--color-muted-foreground)]">Reference chemical identities are form-specific. Confirm the supplied counterion, hydration and specifications on the lot CoA.</p> : null}
+
               <Link
                 href="/contact"
                 className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)]"
@@ -167,6 +176,17 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </Container>
       </Section>
+
+      {references.length > 0 ? (
+        <Section spacing="default">
+          <Container>
+            <h2 className="type-h2">Chemical identity & research references</h2>
+            <p className="mt-3 max-w-3xl text-[var(--color-muted-foreground)]">These sources support chemical identity or research context. External supplier purity, formulation and storage specifications do not describe GlycoDepot lots.</p>
+            <ul className="mt-5 space-y-3">{references.map(reference=><li key={reference.url}><a className="font-medium text-[var(--color-brand)] underline underline-offset-4" href={reference.url} target="_blank" rel="noopener noreferrer">{reference.label} ↗</a></li>)}</ul>
+            <Link href="/services/custom-glycan-synthesis" className="mt-6 inline-flex font-semibold text-[var(--color-brand)]">Planning an enzymatic glycan synthesis? Consult our experts →</Link>
+          </Container>
+        </Section>
+      ) : null}
 
       {product.id === "bprd_12943" ? (
         <Section spacing="default">
@@ -217,9 +237,10 @@ export default async function ProductPage({ params }: PageProps) {
         }}
       />
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productBreadcrumbs(cat,product.name,canonical)) }} />
       <ProductJsonLd
         product={product}
-        url={`${SITE_URL}/products/${cat.slug}/${product.slug}`}
+        url={canonical}
       />
     </>
   );

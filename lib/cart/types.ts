@@ -47,6 +47,7 @@ export interface ProductVariant {
 }
 
 export interface Product {
+  sku?: string;
   id: ProductId;
   slug: string;
   name: string;
