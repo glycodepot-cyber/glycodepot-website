@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PRODUCT_ENRICHMENTS } from '../lib/content/product-enrichment.ts';
+import { PRODUCT_ENRICHMENTS, productReferences } from '../lib/content/product-enrichment.ts';
 import { PROTECTED_SUGAR_NUCLEOTIDE_IDS } from '../lib/cart/price-policy.ts';
 import { registerHooks } from 'node:module';
 registerHooks({resolve(specifier,context,nextResolve){
@@ -44,4 +44,12 @@ test('metadata is concise, breadcrumbs use www and JSON-LD cannot break out of a
   const crumbs=productBreadcrumbs({name:'Other',slug:'other'},'Test','https://www.glycodepot.com/products/other/test');
   assert.equal(crumbs.itemListElement.length,3);
   assert.equal(crumbs.itemListElement[0].item,'https://www.glycodepot.com/products');
+});
+
+ test('storefront references never link to competing suppliers',()=>{
+  const hosts=new Set(['pubchem.ncbi.nlm.nih.gov','pubmed.ncbi.nlm.nih.gov','journals.biologists.com','tdr.lib.ntu.edu.tw']);
+  for(const p of PRODUCT_ENRICHMENTS)for(const r of productReferences(p.id))assert.ok(hosts.has(new URL(r.url).hostname));
+  assert.deepEqual(productReferences('bprd_15161'),[]);
+  assert.ok(productReferences('bprd_15158').some(r=>new URL(r.url).hostname==='pubchem.ncbi.nlm.nih.gov'));
+  assert.ok(PRODUCT_ENRICHMENTS.find(p=>p.id==='bprd_15161').references.length);
 });

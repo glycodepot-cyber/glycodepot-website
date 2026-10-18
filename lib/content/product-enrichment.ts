@@ -510,6 +510,14 @@ export const PRODUCT_ENRICHMENTS: ProductEnrichment[] = [
   }
 ];
 
+/** Public references are restricted to neutral databases and academic sources.
+ * Supplier verification links remain in the admin-only manifest review.
+ */
 export function productReferences(id:string) {
-  return PRODUCT_ENRICHMENTS.find(product=>product.id===id)?.references ?? [];
+  const publicHosts = new Set([
+    "pubchem.ncbi.nlm.nih.gov", "pubmed.ncbi.nlm.nih.gov",
+    "journals.biologists.com", "tdr.lib.ntu.edu.tw",
+  ]);
+  return (PRODUCT_ENRICHMENTS.find(product=>product.id===id)?.references ?? [])
+    .filter(reference => publicHosts.has(new URL(reference.url).hostname));
 }

@@ -181,7 +181,7 @@ export default async function ProductPage({ params }: PageProps) {
         <Section spacing="default">
           <Container>
             <h2 className="type-h2">Chemical identity & research references</h2>
-            <p className="mt-3 max-w-3xl text-[var(--color-muted-foreground)]">These sources support chemical identity or research context. External supplier purity, formulation and storage specifications do not describe GlycoDepot lots.</p>
+            <p className="mt-3 max-w-3xl text-[var(--color-muted-foreground)]">These independent sources provide chemical identity or research context. Use the GlycoDepot lot CoA for supplied-product specifications.</p>
             <ul className="mt-5 space-y-3">{references.map(reference=><li key={reference.url}><a className="font-medium text-[var(--color-brand)] underline underline-offset-4" href={reference.url} target="_blank" rel="noopener noreferrer">{reference.label} ↗</a></li>)}</ul>
             <Link href="/services/custom-glycan-synthesis" className="mt-6 inline-flex font-semibold text-[var(--color-brand)]">Planning an enzymatic glycan synthesis? Consult our experts →</Link>
           </Container>
