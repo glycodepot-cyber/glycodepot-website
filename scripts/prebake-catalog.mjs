@@ -29,7 +29,9 @@ async function loadBlobUrlMap() {
     try {
       const raw = await fs.readFile(file, "utf-8");
       const map = JSON.parse(raw);
-      console.log(`[prebake] URL map loaded from ${path.basename(file)} (${Object.keys(map).length} entries)`);
+      console.log(
+        `[prebake] URL map loaded from ${path.basename(file)} (${Object.keys(map).length} entries)`,
+      );
       return map;
     } catch {
       // try next
@@ -147,6 +149,10 @@ function flattenToSingleLine(text) {
   return text.replace(/\s+/g, " ").trim();
 }
 
+function cleanCatalogLabel(value) {
+  return flattenToSingleLine(stripHtmlToText(value));
+}
+
 /**
  * Keep in lockstep with `compareAtFrom` in lib/api/bysonhub-map.ts — this file
  * is a standalone .mjs build script and cannot import the TS mapper, so the
@@ -158,23 +164,30 @@ function flattenToSingleLine(text) {
  * `regular_price` is what the customer actually pays.
  */
 function compareAtFrom(price, compare) {
-  if (compare === null || compare === undefined || !(compare > price)) return null;
+  if (compare === null || compare === undefined || !(compare > price))
+    return null;
   return { amount: compare, currency: "USD" };
 }
 
 function variantFromByson(raw) {
-  const price = raw.regular_price > 0 ? { amount: raw.regular_price, currency: "USD" } : null;
+  const price =
+    raw.regular_price > 0
+      ? { amount: raw.regular_price, currency: "USD" }
+      : null;
   return {
     id: `bvar_${raw.id}`,
     sku: raw.sku,
-    name: raw.name,
+    name: cleanCatalogLabel(raw.name) || undefined,
     price,
-    compareAtPrice: price ? compareAtFrom(raw.regular_price, raw.compare_price) : null,
+    compareAtPrice: price
+      ? compareAtFrom(raw.regular_price, raw.compare_price)
+      : null,
     inStock: raw.stock_status === "instock",
   };
 }
 
 function productFromByson(raw) {
+  const name = cleanCatalogLabel(raw.name) || `Product ${raw.id}`;
   const variants = (raw.variations ?? []).map(variantFromByson);
   // Track the cheapest priced variant itself (not just its amount) so its
   // compare-at travels with the card price and the pair stays coherent.
@@ -201,11 +214,13 @@ function productFromByson(raw) {
         ? compareAtFrom(raw.regular_price, raw.compare_price)
         : null;
 
-  const primaryCategoryId = raw.category ? `bcat_${raw.category.id}` : undefined;
+  const primaryCategoryId = raw.category
+    ? `bcat_${raw.category.id}`
+    : undefined;
 
   const images = raw.images.length
-    ? raw.images.map((src) => ({ src, alt: raw.name }))
-    : [{ src: "/Glycodepot_Logo.jpeg", alt: raw.name }];
+    ? raw.images.map((src) => ({ src, alt: name }))
+    : [{ src: "/Glycodepot_Logo.jpeg", alt: name }];
 
   const attributes = {};
   if (raw.sku) attributes.SKU = raw.sku;
@@ -219,8 +234,8 @@ function productFromByson(raw) {
 
   return {
     id: `bprd_${raw.id}`,
-    slug: toSlug(raw.name) || `product-${raw.id}`,
-    name: raw.name,
+    slug: toSlug(name) || `product-${raw.id}`,
+    name,
     shortDescription,
     description: descriptionText || undefined,
     categories: primaryCategoryId ? [primaryCategoryId] : [],
@@ -272,7 +287,9 @@ async function existingFreshness() {
 
   const blobUrlMap = await loadBlobUrlMap();
   if (blobUrlMap) {
-    console.log(`[prebake] Blob URL map loaded (${Object.keys(blobUrlMap).length} entries)`);
+    console.log(
+      `[prebake] Blob URL map loaded (${Object.keys(blobUrlMap).length} entries)`,
+    );
   }
 
   try {
@@ -294,7 +311,10 @@ async function existingFreshness() {
       rawProducts = [...first.products, ...restProducts];
     }
 
-    const products = applyBlobUrls(rawProducts.map(productFromByson), blobUrlMap);
+    const products = applyBlobUrls(
+      rawProducts.map(productFromByson),
+      blobUrlMap,
+    );
     const categories = buildCategories(rawProducts);
 
     await fs.mkdir(OUT_DIR, { recursive: true });

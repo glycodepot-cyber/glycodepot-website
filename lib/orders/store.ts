@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { scopedStorageKey, SCOPE_EVENT } from "@/lib/commerce/scope";
 
 /**
  * Local order history — stored in the browser so customers can look up
@@ -9,7 +10,7 @@ import { useSyncExternalStore } from "react";
  * My Account dashboard read from this store.
  */
 
-const STORAGE_KEY = "gd_orders_v1";
+const STORAGE_KEY = "gd_orders_v2";
 const EVENT_NAME = "gd:orders-changed";
 
 export interface LocalOrderLine {
@@ -25,6 +26,7 @@ export interface LocalOrderLine {
 
 export interface LocalOrder {
   orderId: string;
+  internalOrderId?: string;
   placedAt: string;
   customerEmail: string;
   customerName: string;
@@ -35,7 +37,7 @@ export interface LocalOrder {
 function readFromStorage(): LocalOrder[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(scopedStorageKey(STORAGE_KEY));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as LocalOrder[];
     return Array.isArray(parsed) ? parsed : [];
@@ -47,7 +49,7 @@ function readFromStorage(): LocalOrder[] {
 function writeToStorage(orders: LocalOrder[]) {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+    window.localStorage.setItem(scopedStorageKey(STORAGE_KEY), JSON.stringify(orders));
     window.dispatchEvent(new CustomEvent(EVENT_NAME));
   } catch {
     // ignore (quota, private mode)
@@ -66,6 +68,7 @@ if (typeof window !== "undefined") {
   };
   window.addEventListener(EVENT_NAME, refresh);
   window.addEventListener("storage", refresh);
+  window.addEventListener(SCOPE_EVENT, refresh);
 }
 
 function subscribe(listener: () => void) {

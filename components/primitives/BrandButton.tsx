@@ -73,7 +73,7 @@ export function BrandButton(props: BrandButtonProps) {
 
   if ("href" in props && props.href) {
     const { href, external, tone: _t, size: _s, className: _c, children: _ch, ...rest } = props;
-    if (external || /^https?:/.test(href) || href.startsWith("mailto:") || href.startsWith("tel:")) {
+    if (external || href.startsWith("#") || /^https?:/.test(href) || href.startsWith("mailto:") || href.startsWith("tel:")) {
       return (
         <a
           href={href}

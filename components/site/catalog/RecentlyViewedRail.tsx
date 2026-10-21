@@ -49,11 +49,8 @@ export function RecentlyViewedRail({ trackOnMount }: RecentlyViewedRailProps) {
               <p className="line-clamp-2 text-[12px] font-medium leading-snug text-[var(--color-foreground)] group-hover:text-[var(--color-brand)]">
                 {item.name}
               </p>
-              {item.priceLabel ? (
-                <p className="text-[12px] font-semibold text-[var(--color-foreground)]">
-                  {item.priceLabel}
-                </p>
-              ) : null}
+              {/* Stored history can predate an RFQ or stock change. Show current
+                  pricing only on catalog cards and the linked product page. */}
             </Link>
           ))}
         </div>

@@ -41,6 +41,7 @@ export const categoryGroups: CategoryGroup[] = [
       "disaccharides",
       "sugar-nucleotides",
       "adc-linkers",
+      "aso-and-adc-materials",
       "aminophenyl",
       "6s-series",
       "2s-series",

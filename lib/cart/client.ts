@@ -35,6 +35,10 @@ import {
   productFromByson,
 } from "@/lib/api/bysonhub-map";
 import { categoryGroups } from "@/lib/content/category-groups";
+import { isDatabaseConfigured } from "@/lib/db";
+import { loadDatabaseCatalog } from "./database";
+import { applyPricePolicy } from "./price-policy";
+import { tagSlug } from "@/lib/seo/legacy-map";
 
 /* ----------------- Prebake (build-time JSON) ----------------- */
 
@@ -72,6 +76,13 @@ const _getCategoriesLiveRaw = unstable_cache(
 );
 
 async function getCategoriesSafe(): Promise<Category[]> {
+  if (isDatabaseConfigured()) {
+    try {
+      return (await loadDatabaseCatalog()).categories;
+    } catch (err) {
+      console.error("[catalog] database category load failed, using transition fallback:", err);
+    }
+  }
   if (prebake) return prebake.categories;
   if (!BYSON_CONFIGURED) return mockCategories;
   try {
@@ -87,10 +98,19 @@ async function getCategoriesSafe(): Promise<Category[]> {
 let memoLiveProducts: Product[] | null = null;
 let memoLiveCategories: Category[] | null = null;
 
-async function loadCatalog(): Promise<{
+async function loadRawCatalog(): Promise<{
   products: Product[];
   categories: Category[];
 }> {
+  if (isDatabaseConfigured()) {
+    try {
+      const databaseCatalog = await loadDatabaseCatalog();
+      if (databaseCatalog.products.length) return databaseCatalog;
+      console.error("[catalog] database returned an empty catalog; using transition fallback");
+    } catch (err) {
+      console.error("[catalog] database load failed, using transition fallback:", err);
+    }
+  }
   if (prebake) {
     return { products: prebake.products, categories: prebake.categories };
   }
@@ -113,6 +133,11 @@ async function loadCatalog(): Promise<{
     // Do NOT memoize a failure — let the next request retry the live API.
     return { products: mockProducts, categories: mockCategories };
   }
+}
+
+async function loadCatalog(): Promise<{ products: Product[]; categories: Category[] }> {
+  const catalog = await loadRawCatalog();
+  return { ...catalog, products: catalog.products.map(applyPricePolicy) };
 }
 
 /* ----------------- Public catalog API ----------------- */
@@ -153,6 +178,7 @@ export async function listProducts(
       items = [];
     }
   }
+  if (query.tagSlug) items = items.filter(p => p.tags?.some(tag => tagSlug(tag) === query.tagSlug));
   if (query.search) {
     const q = query.search.toLowerCase();
     items = items.filter(
