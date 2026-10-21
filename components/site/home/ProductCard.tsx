@@ -45,7 +45,9 @@ export function ProductCard({ product, categorySlug }: ProductCardProps) {
   const inStockVariants = product.variants.filter((v) => v.inStock).length;
   const totalVariants = product.variants.length;
   const stockLabel: { text: string; tone: "good" | "muted" | "warn" } | null =
-    totalVariants === 0
+    isQuote
+      ? { text: "Lead time on quote", tone: "muted" }
+      : totalVariants === 0
       ? null
       : inStockVariants === 0
         ? { text: "Out of stock", tone: "warn" }

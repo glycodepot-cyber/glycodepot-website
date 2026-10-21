@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Minus, Plus, ShieldCheck, Truck, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
+import { canSelectVariant } from "@/lib/cart/variant-availability";
 import type { Product, ProductVariant } from "@/lib/cart";
 import { AddToCartButton } from "./AddToCartButton";
 import { AddToQuoteButton } from "./AddToQuoteButton";
@@ -70,18 +71,19 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
           <div className="flex flex-wrap gap-2">
             {variants.map((v) => {
               const active = v.id === variantId;
+              const selectable = canSelectVariant(v);
               return (
                 <button
                   key={v.id}
                   type="button"
-                  disabled={!v.inStock}
+                  disabled={!selectable}
                   aria-pressed={active}
                   onClick={() => setVariantId(v.id)}
                   className={cn(
                     "inline-flex flex-col items-start gap-0.5 rounded-[var(--radius-md)] border px-3 py-2 text-left text-[13px] font-semibold transition-all",
                     active
                       ? "border-[var(--color-brand)] bg-[var(--color-brand-soft)] text-[var(--color-brand)]"
-                      : v.inStock
+                      : selectable
                         ? "border-[var(--color-border)] bg-white text-[var(--color-foreground)] hover:border-[var(--color-brand)]"
                         : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-muted)] line-through",
                   )}

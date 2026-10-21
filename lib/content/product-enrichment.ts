@@ -514,6 +514,10 @@ export const PRODUCT_ENRICHMENTS: ProductEnrichment[] = [
  * Supplier verification links remain in the admin-only manifest review.
  */
 export function productReferences(id:string) {
+  if (id.startsWith("gd_galnac_")) return [
+    { label: "GalNAc conjugation and hepatocyte delivery (Nair et al., 2014)", url: "https://pubmed.ncbi.nlm.nih.gov/25434769/" },
+    { label: "GalNAc-ASO receptor binding: valency and linker effects", url: "https://pubmed.ncbi.nlm.nih.gov/28158620/" },
+  ];
   const publicHosts = new Set([
     "pubchem.ncbi.nlm.nih.gov", "pubmed.ncbi.nlm.nih.gov",
     "journals.biologists.com", "tdr.lib.ntu.edu.tw",
