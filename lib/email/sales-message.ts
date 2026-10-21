@@ -7,6 +7,6 @@ export function salesMessage(payload: SalesPayload, payment: boolean) {
     replyTo: payload.email,
     text: `${label}\n\nReference: ${payload.reference}\nCustomer: ${payload.name}\nEmail: ${payload.email}\nCompany: ${payload.company ?? "—"}\nPhone: ${payload.phone || "—"}\n` +
       (payload.value === undefined ? "" : `Order total: USD ${payload.value.toFixed(2)}\n`) +
-      `\nProducts:\n${payload.productDetails}\n\n${payload.notes ?? ""}\n\nCatalog: https://glycodepot.com/products\nOpen GHL to review the matching Website Sales opportunity.`,
+      `\nProducts:\n${payload.productDetails}\n\n${payload.notes ?? ""}\n\nView in GlycoDepot admin: https://www.glycodepot.com/admin/${payload.kind === "quote" ? "quotes" : "orders"}/${encodeURIComponent(payload.reference)}\nCatalog: https://www.glycodepot.com/products\nOpen GHL to review the matching Website Sales opportunity.`,
   };
 }

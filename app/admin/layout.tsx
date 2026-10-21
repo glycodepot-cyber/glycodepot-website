@@ -16,13 +16,14 @@ export default async function AdminLayout({
     <div className="min-h-screen bg-[var(--color-surface)]">
       <header className="border-b border-[var(--color-border)] bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
             <Link href="/admin" className="font-bold text-[var(--color-brand)]">
               GlycoDepot Admin
             </Link>
             <Link href="/admin/products" className="text-sm font-medium">
               Products
             </Link>
+            {staff.role === "admin" ? <><Link href="/admin/orders" className="text-sm font-medium">Orders</Link><Link href="/admin/quotes" className="text-sm font-medium">Quote requests</Link></> : null}
             <Link href="/admin/categories" className="text-sm font-medium">
               Categories
             </Link>
