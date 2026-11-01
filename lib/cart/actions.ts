@@ -40,6 +40,56 @@ import {
 } from "@/lib/api/bysonhub-map";
 import type { Order, QuoteRequest, QuoteResponse } from "./types";
 
+const VOTEL_RFQ_WEBHOOK_URL = process.env.VOTEL_RFQ_WEBHOOK_URL?.trim();
+
+interface VotelRfqPayload {
+  name: string;
+  email: string;
+  product: string;
+  message: string;
+  request_type: "RFQ";
+  subject: "Request a Quote";
+  source_page: string;
+}
+
+function sourcePageForVotel(landingPageUrl?: string): string {
+  if (!landingPageUrl) return "/quote-request";
+  if (landingPageUrl.startsWith("/")) return landingPageUrl;
+  try {
+    const url = new URL(landingPageUrl);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return "/quote-request";
+  }
+}
+
+async function sendToVotelRfq(payload: VotelRfqPayload): Promise<void> {
+  if (!VOTEL_RFQ_WEBHOOK_URL) {
+    console.warn("[quote] Votel RFQ webhook is not configured.");
+    return;
+  }
+
+  try {
+    const response = await fetch(VOTEL_RFQ_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10_000),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Votel webhook returned HTTP ${response.status}`);
+    }
+  } catch (error) {
+    // Votel must not become a single point of failure for customer RFQs.
+    console.error(
+      "[quote] Votel RFQ webhook failed:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+  }
+}
+
 /* ----------- Checkout ----------- */
 
 export interface SubmitOrderInput {
@@ -204,6 +254,17 @@ export async function submitQuote(
     .join("\n");
 
   const meta = request.meta ?? {};
+
+  // Votel receives only the fields defined by its RFQ webhook contract.
+  await sendToVotelRfq({
+    name: request.customer.name,
+    email: request.customer.email,
+    product: productDetails || "Product inquiry",
+    message: request.customer.notes || `Quote request for ${request.lines.length} product line(s)`,
+    request_type: "RFQ",
+    subject: "Request a Quote",
+    source_page: sourcePageForVotel(meta.landingPageUrl),
+  });
 
   // Secondary: fire GHL webhook if configured (CRM notification).
   // `fields` map 1:1 to the SOW §3.2 GHL custom fields (flattened to the
