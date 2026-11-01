@@ -45,6 +45,18 @@ const VOTEL_RFQ_WEBHOOK_URL = process.env.VOTEL_RFQ_WEBHOOK_URL?.trim();
 interface VotelRfqPayload {
   name: string;
   email: string;
+  phone: string;
+  company: string;
+  client_address: string;
+  client_city: string;
+  client_state: string;
+  client_zip: string;
+  client_country: string;
+  shipping_address: string;
+  shipping_city: string;
+  shipping_state: string;
+  shipping_zip: string;
+  shipping_country: string;
   product: string;
   message: string;
   request_type: "RFQ";
@@ -255,12 +267,30 @@ export async function submitQuote(
 
   const meta = request.meta ?? {};
 
-  // Votel receives only the fields defined by its RFQ webhook contract.
+  // The RFQ form currently collects one address. Use it for both client and
+  // shipping fields so Votel receives a complete, import-ready record.
+  const votelCountry =
+    request.customer.country === "US" ? "USA" : request.customer.country;
+
   await sendToVotelRfq({
     name: request.customer.name,
     email: request.customer.email,
+    phone: request.customer.phone,
+    company: request.customer.company,
+    client_address: request.customer.address1,
+    client_city: request.customer.city,
+    client_state: request.customer.state,
+    client_zip: request.customer.postal,
+    client_country: votelCountry,
+    shipping_address: request.customer.address1,
+    shipping_city: request.customer.city,
+    shipping_state: request.customer.state,
+    shipping_zip: request.customer.postal,
+    shipping_country: votelCountry,
     product: productDetails || "Product inquiry",
-    message: request.customer.notes || `Quote request for ${request.lines.length} product line(s)`,
+    message:
+      request.customer.notes ||
+      `Quote request for ${request.lines.length} product line(s)`,
     request_type: "RFQ",
     subject: "Request a Quote",
     source_page: sourcePageForVotel(meta.landingPageUrl),
