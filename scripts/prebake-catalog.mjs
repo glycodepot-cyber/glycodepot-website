@@ -20,7 +20,10 @@ const ROOT = path.resolve(__dirname, "..");
 const OUT_DIR = path.join(ROOT, "lib", "data");
 const OUT_FILE = path.join(OUT_DIR, "catalog.json");
 const R2_URL_MAP_FILE = path.join(__dirname, "r2-url-map.json");
-const BLOB_URL_MAP_FILE = path.join(__dirname, "blob-url-map.json");
+// The archived Vercel Blob map remains the durable source for legacy product
+// images. It was previously disabled when the optimization quota was exhausted,
+// but these are direct public Blob URLs and do not use Next Image Optimization.
+const BLOB_URL_MAP_FILE = path.join(__dirname, "blob-url-map.disabled.json");
 
 // Load the image URL map: prefer R2 (free), fall back to Vercel Blob.
 // Either map rewrites product image URLs so images survive the DNS cutover.
@@ -40,21 +43,51 @@ async function loadBlobUrlMap() {
   return null;
 }
 
+function normalizedImageFilename(src) {
+  try {
+    const filename = decodeURIComponent(new URL(src, "https://glycodepot.com").pathname)
+      .split("/")
+      .pop();
+    // BysonHub/Supabase prefixes uploaded files with a timestamp and "main_".
+    return filename?.replace(/^\d+_main_/i, "").toLowerCase() ?? "";
+  } catch {
+    return "";
+  }
+}
+
 function applyBlobUrls(products, urlMap) {
   if (!urlMap) return products;
+
+  const blobByFilename = new Map();
+  for (const destination of Object.values(urlMap)) {
+    const filename = normalizedImageFilename(destination);
+    if (filename && !blobByFilename.has(filename)) {
+      blobByFilename.set(filename, destination);
+    }
+  }
+
   let rewrote = 0;
+  let fallbacks = 0;
   for (const p of products) {
     for (const img of p.images) {
-      const mapped = urlMap[img.src];
+      const mapped =
+        urlMap[img.src] ??
+        blobByFilename.get(normalizedImageFilename(img.src));
+
       if (mapped && mapped !== img.src) {
         img.src = mapped;
         rewrote++;
+      } else if (img.src.includes(".supabase.co/storage/")) {
+        // A missing source image must never render as a broken image icon.
+        img.src = "/Glycodepot_Logo.jpeg";
+        fallbacks++;
       }
     }
   }
-  if (rewrote > 0) {
-    console.log(`[prebake] Rewrote ${rewrote} image URLs → Vercel Blob CDN`);
-  }
+
+  console.log(
+    `[prebake] Product images: ${rewrote} restored from Blob; ${fallbacks} local fallbacks`,
+  );
   return products;
 }
 
