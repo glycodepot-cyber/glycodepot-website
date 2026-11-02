@@ -39,6 +39,48 @@ import { isDatabaseConfigured } from "@/lib/db";
 import { loadDatabaseCatalog } from "./database";
 import { applyPricePolicy } from "./price-policy";
 import { tagSlug } from "@/lib/seo/legacy-map";
+import archivedImageMapJson from "@/scripts/blob-url-map.disabled.json";
+
+/* ----------------- Durable product image recovery ----------------- */
+
+const archivedImageMap = archivedImageMapJson as Record<string, string>;
+
+function normalizedImageFilename(src: string): string {
+  try {
+    const filename = decodeURIComponent(
+      new URL(src, "https://glycodepot.com").pathname,
+    )
+      .split("/")
+      .pop();
+    return filename?.replace(/^\d+_main_/i, "").toLowerCase() ?? "";
+  } catch {
+    return "";
+  }
+}
+
+const archivedImageByFilename = new Map<string, string>();
+for (const destination of Object.values(archivedImageMap)) {
+  const filename = normalizedImageFilename(destination);
+  if (filename && !archivedImageByFilename.has(filename)) {
+    archivedImageByFilename.set(filename, destination);
+  }
+}
+
+function restoreProductImages(product: Product): Product {
+  const images = product.images.map((image) => {
+    const restored =
+      archivedImageMap[image.src] ??
+      archivedImageByFilename.get(normalizedImageFilename(image.src));
+
+    if (restored) return { ...image, src: restored };
+    if (image.src.includes(".supabase.co/storage/")) {
+      return { ...image, src: "/Glycodepot_Logo.jpeg" };
+    }
+    return image;
+  });
+
+  return { ...product, images };
+}
 
 /* ----------------- Prebake (build-time JSON) ----------------- */
 
@@ -137,7 +179,10 @@ async function loadRawCatalog(): Promise<{
 
 async function loadCatalog(): Promise<{ products: Product[]; categories: Category[] }> {
   const catalog = await loadRawCatalog();
-  return { ...catalog, products: catalog.products.map(applyPricePolicy) };
+  return {
+    ...catalog,
+    products: catalog.products.map(restoreProductImages).map(applyPricePolicy),
+  };
 }
 
 /* ----------------- Public catalog API ----------------- */
