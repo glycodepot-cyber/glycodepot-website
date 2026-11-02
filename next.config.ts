@@ -41,6 +41,20 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.supabase.co" },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/product/udp-galnaz-2na",
+        destination: "/products/sugar-nucleotides/udp-galnaz",
+        permanent: true,
+      },
+      {
+        source: "/product/udp-galnaz-2na/",
+        destination: "/products/sugar-nucleotides/udp-galnaz",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
