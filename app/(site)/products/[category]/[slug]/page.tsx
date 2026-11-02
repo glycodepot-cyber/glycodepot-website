@@ -22,6 +22,57 @@ interface PageProps {
   params: Promise<{ category: string; slug: string }>;
 }
 
+const udpGalnazSeo = {
+  title: "UDP-GalNAz | Azido GalNAc Sugar Nucleotide",
+  description:
+    "Buy UDP-GalNAz, an azide-functionalized UDP-GalNAc analogue for glycosyltransferase assays, chemoenzymatic glycan labeling, CuAAC and SPAAC workflows.",
+  summary:
+    "UDP-GalNAz (uridine 5′-diphospho-N-azidoacetylgalactosamine) is an azide-functionalized analogue of UDP-GalNAc used as a nucleotide-sugar donor in glycosyltransferase assays and chemoenzymatic glycan labeling. Its compact azide handle enables subsequent bioorthogonal conjugation while minimizing changes to the donor substrate.",
+  sections: [
+    {
+      title: "Applications",
+      body:
+        "Use UDP-GalNAz for in vitro O-GalNAc glycosylation studies, glycosyltransferase activity assays, glycan imaging and glycoproteomics workflows. After enzymatic transfer, the installed azide can be coupled to alkyne- or cyclooctyne-functionalized fluorophores, affinity tags and other probes.",
+    },
+    {
+      title: "Compatible bioorthogonal reactions",
+      body:
+        "The azide handle supports copper-catalyzed azide–alkyne cycloaddition (CuAAC), strain-promoted azide–alkyne cycloaddition (SPAAC) and Staudinger ligation. Select the conjugation method according to sample type, copper tolerance and required reaction kinetics.",
+    },
+    {
+      title: "Experimental note",
+      body:
+        "Acceptance of non-natural nucleotide-sugar donors is enzyme dependent. Confirm UDP-GalNAz compatibility, donor concentration and reaction conditions for the specific glycosyltransferase and acceptor used in your workflow.",
+    },
+  ],
+  faqs: [
+    {
+      question: "What is UDP-GalNAz?",
+      answer:
+        "UDP-GalNAz is UDP-N-azidoacetylgalactosamine, an azide-bearing analogue of UDP-GalNAc used as a donor substrate in glycosyltransferase and glycan-labeling workflows.",
+    },
+    {
+      question: "How is UDP-GalNAz detected after enzymatic transfer?",
+      answer:
+        "The transferred azide can be conjugated to a compatible probe using CuAAC, SPAAC or Staudinger ligation, depending on the experimental system.",
+    },
+    {
+      question: "Is UDP-GalNAz accepted by every GalNAc transferase?",
+      answer:
+        "No. Substrate tolerance varies by enzyme and assay conditions, so compatibility should be validated for the selected glycosyltransferase and acceptor.",
+    },
+    {
+      question: "Can GlycoDepot provide a certificate of analysis or custom quantity?",
+      answer:
+        "Yes. Request a quote or contact GlycoDepot for lot-specific documentation, custom quantities and technical support.",
+    },
+  ],
+} as const;
+
+function isUdpGalnaz(slug: string) {
+  return slug.toLowerCase() === "udp-galnaz";
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category, slug } = await params;
   const [cat, product] = await Promise.all([
@@ -29,15 +80,41 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     getProductBySlug(slug),
   ]);
   if (!product) return { title: "Product not found" };
+  const seo = isUdpGalnaz(product.slug) ? udpGalnazSeo : null;
+  const canonical = `/products/${cat?.slug ?? category}/${product.slug}`;
+  const title = seo?.title ?? product.name;
+  const description =
+    seo?.description ?? product.shortDescription ?? product.description;
   return {
-    title: product.name,
-    description: product.shortDescription ?? product.description,
-    alternates: { canonical: `/products/${cat?.slug ?? category}/${product.slug}` },
+    title,
+    description,
+    keywords: seo
+      ? [
+          "UDP-GalNAz",
+          "UDP-N-azidoacetylgalactosamine",
+          "azido GalNAc",
+          "sugar nucleotide",
+          "glycosyltransferase substrate",
+          "chemoenzymatic glycan labeling",
+          "click chemistry",
+        ]
+      : undefined,
+    alternates: { canonical },
+    robots: { index: true, follow: true },
     openGraph: {
-      title: product.name,
-      description: product.shortDescription ?? product.description,
+      title,
+      description,
       type: "website",
-      images: product.images[0] ? [{ url: product.images[0].src }] : undefined,
+      url: canonical,
+      images: product.images[0]
+        ? [{ url: product.images[0].src, alt: product.images[0].alt }]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: product.images[0] ? [product.images[0].src] : undefined,
     },
   };
 }
@@ -67,13 +144,14 @@ export default async function ProductPage({ params }: PageProps) {
 
   const related = await listRelatedProducts(product, 4);
   const image = product.images[0];
+  const seo = isUdpGalnaz(product.slug) ? udpGalnazSeo : null;
 
   return (
     <>
       <ProductDwellTracker productId={product.id} productName={product.name} />
       <PageHero
         title={product.name}
-        description={product.shortDescription}
+        description={seo?.description ?? product.shortDescription}
         breadcrumbs={[
           { label: "Products", href: "/products" },
           { label: cat.name, href: `/products/${cat.slug}` },
@@ -124,7 +202,25 @@ export default async function ProductPage({ params }: PageProps) {
             {/* Long description */}
             <div className="space-y-6">
               <h2 className="type-h2 text-[var(--color-foreground)]">About this product</h2>
-              {product.description ? (
+              {seo ? (
+                <div className="space-y-7 text-[16px] leading-relaxed text-[var(--color-muted-foreground)] lg:text-[17px]">
+                  <p>{seo.summary}</p>
+                  <p>
+                    Also known as <strong>UDP-N-azidoacetylgalactosamine</strong>,
+                    UDP-GalNAz provides a bioorthogonal chemical handle for
+                    selective downstream tagging of enzymatically installed
+                    GalNAz residues.
+                  </p>
+                  {seo.sections.map((section) => (
+                    <section key={section.title} className="space-y-2">
+                      <h3 className="type-h3 text-[var(--color-foreground)]">
+                        {section.title}
+                      </h3>
+                      <p>{section.body}</p>
+                    </section>
+                  ))}
+                </div>
+              ) : product.description ? (
                 <div className="whitespace-pre-line text-[16px] leading-relaxed text-[var(--color-muted-foreground)] lg:text-[17px]">
                   {product.description}
                 </div>
@@ -164,6 +260,31 @@ export default async function ProductPage({ params }: PageProps) {
         </Container>
       </Section>
 
+      {seo ? (
+        <Section spacing="default">
+          <Container>
+            <div className="mx-auto max-w-4xl">
+              <SectionHeading
+                title="UDP-GalNAz frequently asked questions"
+                description="Quick answers for planning a UDP-GalNAz labeling or glycosyltransferase workflow."
+              />
+              <div className="mt-8 divide-y divide-[var(--color-border)] rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white px-6">
+                {seo.faqs.map((faq) => (
+                  <details key={faq.question} className="group py-5">
+                    <summary className="cursor-pointer list-none font-semibold text-[var(--color-foreground)]">
+                      {faq.question}
+                    </summary>
+                    <p className="mt-3 text-[15px] leading-relaxed text-[var(--color-muted-foreground)]">
+                      {faq.answer}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </Container>
+        </Section>
+      ) : null}
+
       {related.length > 0 ? (
         <Section spacing="default">
           <Container>
@@ -194,6 +315,25 @@ export default async function ProductPage({ params }: PageProps) {
         product={product}
         url={`${SITE_URL}/products/${cat.slug}/${product.slug}`}
       />
+      {seo ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: seo.faqs.map((faq) => ({
+                "@type": "Question",
+                name: faq.question,
+                acceptedAnswer: {
+                  "@type": "Answer",
+                  text: faq.answer,
+                },
+              })),
+            }),
+          }}
+        />
+      ) : null}
     </>
   );
 }
