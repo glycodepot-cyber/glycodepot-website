@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { UserRound } from "lucide-react";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import {
@@ -12,9 +13,33 @@ import {
 import { CartButton } from "./CartButton";
 import { QuoteButton } from "./QuoteButton";
 import { utilityNav } from "@/lib/content";
+import { setCommerceScope } from "@/lib/commerce/scope";
 
 export function HeaderIcons() {
-  const { isSignedIn, isLoaded } = useAuth();
+  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    return <HeaderIconContents isLoaded={false} isSignedIn={false} />;
+  }
+
+  return <ClerkHeaderIcons />;
+}
+
+function ClerkHeaderIcons() {
+  const { isSignedIn, isLoaded, userId } = useAuth();
+
+  useEffect(() => {
+    if (isLoaded) setCommerceScope(userId);
+  }, [isLoaded, userId]);
+
+  return <HeaderIconContents isLoaded={isLoaded} isSignedIn={isSignedIn} />;
+}
+
+function HeaderIconContents({
+  isLoaded,
+  isSignedIn,
+}: {
+  isLoaded: boolean;
+  isSignedIn: boolean | undefined;
+}) {
 
   return (
     <TooltipProvider delay={300}>
@@ -35,7 +60,12 @@ export function HeaderIcons() {
                 elements: { avatarBox: "size-9" },
                 variables: { colorPrimary: "#1a7a3e" },
               }}
-            />
+            >
+              <UserButton.MenuItems>
+                <UserButton.Link label="Account dashboard" labelIcon={<span aria-hidden>⌂</span>} href="/my-account/dashboard" />
+                <UserButton.Link label="Admin dashboard" labelIcon={<span aria-hidden>⚙</span>} href="/admin" />
+              </UserButton.MenuItems>
+            </UserButton>
           </span>
         ) : (
           <Tooltip>

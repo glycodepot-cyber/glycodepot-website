@@ -6,16 +6,19 @@ import { Container, Section, SectionHeading } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
 import { ProductCard } from "@/components/site/home/ProductCard";
 import { ProductPurchasePanel } from "@/components/site/catalog/ProductPurchasePanel";
+import { AnalyticalCarousel } from "@/components/site/catalog/AnalyticalCarousel";
 import { ProductDwellTracker } from "@/components/analytics/PageEventTrackers";
 import { ProductJsonLd } from "@/components/site/catalog/ProductJsonLd";
 import { RecentlyViewedRail } from "@/components/site/catalog/RecentlyViewedRail";
 import { formatMoney } from "@/lib/format";
-import { SITE_URL } from "@/lib/site-url";
+import { canonicalSiteUrl } from "@/lib/site-url";
 import {
   getCategoryBySlug,
   getProductBySlug,
   listRelatedProducts,
 } from "@/lib/cart/client";
+import { productReferences } from "@/lib/content/product-enrichment";
+import { productDescription, productBreadcrumbs, serializeJsonLd } from "@/lib/seo/product-data";
 import { cn } from "@/lib/utils";
 
 interface PageProps {
@@ -28,15 +31,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     getCategoryBySlug(category),
     getProductBySlug(slug),
   ]);
-  if (!product) return { title: "Product not found" };
+  if (!product || !cat || !product.categories.includes(cat.id)) return { title: "Product not found", robots: { index: false } };
+  const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
+  const description = productDescription(product);
   return {
-    title: product.name,
-    description: product.shortDescription ?? product.description,
-    alternates: { canonical: `/products/${cat?.slug ?? category}/${product.slug}` },
+    title: product.seoTitle || product.name,
+    description,
+    keywords: product.focusKeyword || undefined,
+    alternates: { canonical },
     openGraph: {
-      title: product.name,
-      description: product.shortDescription ?? product.description,
+      title: product.seoTitle || product.name,
+      description,
       type: "website",
+      url: canonical,
       images: product.images[0] ? [{ url: product.images[0].src }] : undefined,
     },
   };
@@ -46,12 +53,14 @@ const badgeStyles = {
   sale: "bg-[var(--color-accent)] text-white",
   new: "bg-[var(--color-brand)] text-white",
   popular: "bg-[var(--color-brand-soft)] text-[var(--color-brand)]",
+  hot: "bg-orange-100 text-orange-800",
 } as const;
 
 const badgeLabel = {
   sale: "Sale",
   new: "New",
   popular: "Popular",
+  hot: "Hot",
 } as const;
 
 export default async function ProductPage({ params }: PageProps) {
@@ -67,6 +76,8 @@ export default async function ProductPage({ params }: PageProps) {
 
   const related = await listRelatedProducts(product, 4);
   const image = product.images[0];
+  const references = productReferences(product.id);
+  const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
 
   return (
     <>
@@ -141,7 +152,7 @@ export default async function ProductPage({ params }: PageProps) {
             <aside className="rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-7">
               <h3 className="type-h3 text-[var(--color-foreground)]">Specifications</h3>
               <dl className="mt-5 divide-y divide-[var(--color-border)] text-[14px]">
-                {Object.entries(product.attributes ?? {}).map(([k, v]) => (
+                {Object.entries({ ...(product.sku ? { SKU: product.sku } : {}), ...product.attributes }).map(([k, v]) => (
                   <div key={k} className="flex items-baseline justify-between gap-4 py-3">
                     <dt className="font-medium text-[var(--color-muted-foreground)]">
                       {k}
@@ -153,6 +164,8 @@ export default async function ProductPage({ params }: PageProps) {
                 ))}
               </dl>
 
+              {references.length > 0 ? <p className="mt-5 text-sm leading-relaxed text-[var(--color-muted-foreground)]">Reference chemical identities are form-specific. Confirm the supplied counterion, hydration and specifications on the lot CoA.</p> : null}
+
               <Link
                 href="/contact"
                 className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)]"
@@ -163,6 +176,40 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </Container>
       </Section>
+
+      {references.length > 0 ? (
+        <Section spacing="default">
+          <Container>
+            <h2 className="type-h2">Chemical identity & research references</h2>
+            <p className="mt-3 max-w-3xl text-[var(--color-muted-foreground)]">These independent sources provide chemical identity or research context. Use the GlycoDepot lot CoA for supplied-product specifications.</p>
+            <ul className="mt-5 space-y-3">{references.map(reference=><li key={reference.url}><a className="font-medium text-[var(--color-brand)] underline underline-offset-4" href={reference.url} target="_blank" rel="noopener noreferrer">{reference.label} ↗</a></li>)}</ul>
+            <Link href="/services/custom-glycan-synthesis" className="mt-6 inline-flex font-semibold text-[var(--color-brand)]">Planning an enzymatic glycan synthesis? Consult our experts →</Link>
+          </Container>
+        </Section>
+      ) : null}
+
+      {product.id === "bprd_12943" ? (
+        <Section spacing="default">
+          <Container>
+            <div id="coa" className="space-y-6">
+              <SectionHeading title="PAPS CoA & analytical data" />
+              <p className="max-w-3xl text-[var(--color-muted-foreground)]">
+                Supplied product data sheet for catalog GTRC-001, lot GTRC-001_250821_ES.
+                The images include the lot specification, HPLC chromatogram, and HRMS spectrum.
+                These results apply to the documented lot; request the documentation for your supplied batch.
+              </p>
+              <AnalyticalCarousel title="PAPS lot GTRC-001_250821_ES" slides={[
+                { src: "/images/science/paps/paps-lot-specification.png", caption: "Lot specification and structure" },
+                { src: "/images/science/paps/paps-hplc.png", caption: "HPLC chromatogram and conditions" },
+                { src: "/images/science/paps/paps-hrms.png", caption: "HRMS spectrum and conditions" },
+              ]} />
+              <a href="/documents/products/GD-PDS-GTRC-001-PAPS.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex rounded-full bg-[var(--color-brand)] px-6 py-3 text-sm font-semibold text-white">
+                Open PAPS product data sheet (PDF) ↗
+              </a>
+            </div>
+          </Container>
+        </Section>
+      ) : null}
 
       {related.length > 0 ? (
         <Section spacing="default">
@@ -190,9 +237,10 @@ export default async function ProductPage({ params }: PageProps) {
         }}
       />
 
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(productBreadcrumbs(cat,product.name,canonical)) }} />
       <ProductJsonLd
         product={product}
-        url={`${SITE_URL}/products/${cat.slug}/${product.slug}`}
+        url={canonical}
       />
     </>
   );

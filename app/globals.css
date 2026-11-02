@@ -262,3 +262,9 @@ body {
   text-transform: uppercase;
   font-weight: 600;
 }
+
+/* Whiten GalNAc source image backgrounds without redrawing chemical bonds. */
+img[src*="galnac-materials"] {
+  background-color: #fff;
+  filter: brightness(1.06);
+}

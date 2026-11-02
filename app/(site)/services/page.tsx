@@ -1,3 +1,4 @@
+import { GlycanCaseStudies } from "@/components/site/catalog/GlycanCaseStudies";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { TriangleAlert } from "lucide-react";
@@ -52,6 +53,7 @@ export default function ServicesPage() {
       <Section spacing="default" tone="surface">
         <Container>
           <Eyebrow>Our Services</Eyebrow>
+          <div className="mt-6 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-7"><h2 className="type-h2">Custom glycan synthesis</h2><p className="my-4 max-w-2xl text-[var(--color-muted-foreground)]">Need a glycan or oligosaccharide outside the catalog? Share your target structure, specifications, and quantity for project review.</p><div className="flex flex-wrap items-center gap-5"><BrandButton href="/services/custom-glycan-synthesis">Explore custom synthesis</BrandButton><a href="#case-studies" className="text-sm font-semibold text-[var(--color-brand)] underline">View case studies</a></div></div>
           <ol className="mt-8 grid gap-5 md:grid-cols-2">
             {services.map((s, i) => (
               <li
@@ -74,6 +76,8 @@ export default function ServicesPage() {
           </ol>
         </Container>
       </Section>
+
+      <Section spacing="default"><Container><GlycanCaseStudies /></Container></Section>
 
       <Section spacing="tight">
         <Container>

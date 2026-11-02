@@ -21,9 +21,10 @@ interface ProductCardQuickActionProps {
  * this button stops propagation so clicking the pill doesn't navigate.
  */
 export function ProductCardQuickAction({ product }: ProductCardQuickActionProps) {
-  const isQuote = product.price === null;
   const variant =
+    product.variants.find((v) => v.inStock && v.price !== null) ??
     product.variants.find((v) => v.inStock) ?? product.variants[0];
+  const isQuote = (variant ? variant.price : product.price) === null;
   const [added, setAdded] = useState(false);
   const [loading, startTransition] = useTransition();
 

@@ -10,11 +10,7 @@
  *    (resolved at the build-catalog level, not here).
  */
 
-import type {
-  BysonCategory,
-  BysonProduct,
-  BysonVariation,
-} from "./bysonhub";
+import type { BysonCategory, BysonProduct, BysonVariation } from "./bysonhub";
 import type {
   Category,
   Money,
@@ -42,33 +38,35 @@ export function toSlug(value: string): string {
  */
 export function stripHtmlToText(html: string | undefined | null): string {
   if (!html) return "";
-  return html
-    // Convert literal escape sequences to real characters FIRST.
-    .replace(/\\r\\n|\\n/g, "\n")
-    .replace(/\\r/g, "\n")
-    .replace(/\\t/g, " ")
-    // Then strip HTML.
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    // Decode HTML entities.
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    // Collapse runs of spaces/tabs but preserve real newlines.
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n{3,}/g, "\n\n")
-    // Trim each line, then the whole string.
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line, i, arr) => line || (i > 0 && arr[i - 1]))
-    .join("\n")
-    .trim();
+  return (
+    html
+      // Convert literal escape sequences to real characters FIRST.
+      .replace(/\\r\\n|\\n/g, "\n")
+      .replace(/\\r/g, "\n")
+      .replace(/\\t/g, " ")
+      // Then strip HTML.
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|h[1-6]|li|tr)>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+      // Decode HTML entities.
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      // Collapse runs of spaces/tabs but preserve real newlines.
+      .replace(/[ \t]+/g, " ")
+      .replace(/\n{3,}/g, "\n\n")
+      // Trim each line, then the whole string.
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line, i, arr) => line || (i > 0 && arr[i - 1]))
+      .join("\n")
+      .trim()
+  );
 }
 
 /** Collapse to a single line for card subtitles + meta tags. */
@@ -76,11 +74,17 @@ export function flattenToSingleLine(text: string): string {
   return text.replace(/\s+/g, " ").trim();
 }
 
+/** Normalize labels imported from legacy/WooCommerce sources. */
+export function cleanCatalogLabel(value: string | undefined | null): string {
+  return flattenToSingleLine(stripHtmlToText(value));
+}
+
 export function categoryFromByson(raw: BysonCategory): Category {
+  const name = cleanCatalogLabel(raw.name) || `Category ${raw.id}`;
   return {
     id: `bcat_${raw.id}`,
-    slug: toSlug(raw.name),
-    name: raw.name,
+    slug: toSlug(name),
+    name,
   };
 }
 
@@ -106,7 +110,7 @@ function variantFromByson(raw: BysonVariation): ProductVariant {
   return {
     id: `bvar_${raw.id}`,
     sku: raw.sku,
-    name: raw.name,
+    name: cleanCatalogLabel(raw.name) || undefined,
     price,
     compareAtPrice: price
       ? compareAtFrom(raw.regular_price, raw.compare_price)
@@ -116,6 +120,7 @@ function variantFromByson(raw: BysonVariation): ProductVariant {
 }
 
 export function productFromByson(raw: BysonProduct): Product {
+  const name = cleanCatalogLabel(raw.name) || `Product ${raw.id}`;
   const variants = (raw.variations ?? []).map(variantFromByson);
 
   // Card price: lowest non-zero variant price; for simple products use product price.
@@ -151,11 +156,13 @@ export function productFromByson(raw: BysonProduct): Product {
         ? compareAtFrom(raw.regular_price, raw.compare_price)
         : null;
 
-  const primaryCategoryId = raw.category ? `bcat_${raw.category.id}` : undefined;
+  const primaryCategoryId = raw.category
+    ? `bcat_${raw.category.id}`
+    : undefined;
 
   const images = raw.images.length
-    ? raw.images.map((src) => ({ src, alt: raw.name }))
-    : [{ src: "/Glycodepot_Logo.jpeg", alt: raw.name }];
+    ? raw.images.map((src) => ({ src, alt: name }))
+    : [{ src: "/Glycodepot_Logo.jpeg", alt: name }];
 
   // Attributes from variation meta_data "Attribute 1 name" pattern.
   const attributes: Record<string, string> = {};
@@ -170,8 +177,8 @@ export function productFromByson(raw: BysonProduct): Product {
 
   return {
     id: `bprd_${raw.id}`,
-    slug: toSlug(raw.name) || `product-${raw.id}`,
-    name: raw.name,
+    slug: toSlug(name) || `product-${raw.id}`,
+    name,
     shortDescription,
     description: descriptionText || undefined,
     categories: primaryCategoryId ? [primaryCategoryId] : [],
@@ -215,7 +222,9 @@ export function bysonProductIdFromDomain(id: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-export function bysonVariantIdFromDomain(id: string | undefined): number | null {
+export function bysonVariantIdFromDomain(
+  id: string | undefined,
+): number | null {
   if (!id) return null;
   const m = /^bvar_(\d+)$/.exec(id);
   return m ? Number(m[1]) : null;

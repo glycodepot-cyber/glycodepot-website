@@ -9,6 +9,7 @@ import {
   GoogleTagManagerNoScript,
 } from "@/components/analytics/GoogleTagManager";
 import { AttributionCapture } from "@/components/analytics/AttributionCapture";
+import { GoogleAds } from "@/components/analytics/GoogleAds";
 import "./globals.css";
 
 const jost = Jost({
@@ -29,7 +30,6 @@ export const metadata: Metadata = {
   },
   description:
     "High-quality glycoscience reagents, glycans, enzymes, and expert services. Building blocks, sugar nucleotides, glycan arrays, custom synthesis — sourced from expert labs to yours.",
-  alternates: { canonical: "/" },
   openGraph: {
     title: "GlycoDepot — Your Trusted Source for Glycoscience Solutions",
     description:
@@ -57,18 +57,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const clerkConfigured = Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
+  );
+
+  const document = (
+    <html lang="en" className={`${jost.variable} h-full antialiased`}>
+      <GoogleAds />
+      <GoogleTagManager />
+      <body className="min-h-full flex flex-col font-sans">
+        <GoogleTagManagerNoScript />
+        <AttributionCapture />
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
+    </html>
+  );
+
+  if (!clerkConfigured) return document;
+
   return (
     <ClerkProvider afterSignOutUrl="/my-account">
-      <html lang="en" className={`${jost.variable} h-full antialiased`}>
-        <GoogleTagManager />
-        <body className="min-h-full flex flex-col font-sans">
-          <GoogleTagManagerNoScript />
-          <AttributionCapture />
-          {children}
-          <Analytics />
-          <SpeedInsights />
-        </body>
-      </html>
+      {document}
     </ClerkProvider>
   );
 }

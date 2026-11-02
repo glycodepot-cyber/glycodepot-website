@@ -11,6 +11,7 @@
  */
 
 import { getAttribution } from "./utm";
+import { trackAdsConversion, QUOTE_CONVERSION, PURCHASE_CONVERSION } from "./googleAds";
 
 export type GtmEventName =
   | "RFQ_Submit"
@@ -53,12 +54,14 @@ export function trackRfqSubmit(input: {
   itemCount: number;
   categories: string[];
   bhQuoteId?: string;
+  requestId: string;
 }): void {
   pushEvent("RFQ_Submit", {
     rfq_item_count: input.itemCount,
     product_categories: input.categories,
     bh_quote_id: input.bhQuoteId,
   });
+  trackAdsConversion(QUOTE_CONVERSION, input.requestId, 0);
 }
 
 /** §4.1 Purchase — order confirmed. */
@@ -74,6 +77,7 @@ export function trackPurchase(input: {
     currency: input.currency ?? "USD",
     item_count: input.itemCount,
   });
+  trackAdsConversion(PURCHASE_CONVERSION, input.orderId, input.value, input.currency ?? "USD");
 }
 
 /** §4.1 High_Intent_Visit — >60s on a product page (GA4 audience). */

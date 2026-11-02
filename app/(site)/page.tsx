@@ -33,6 +33,7 @@ import {
 import { OrganizationJsonLd, FaqJsonLd } from "@/components/site/JsonLd";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/" },
   // Use the absolute form so the root layout's template doesn't append " · GlycoDepot".
   title: {
     absolute: "GlycoDepot — Your Trusted Source for Glycoscience Solutions",
