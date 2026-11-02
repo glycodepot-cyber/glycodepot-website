@@ -86,7 +86,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
   const seo = isUdpGalnaz(product.slug) ? udpGalnazSeo : null;
   const description = seo?.description ?? productDescription(product);
-  const title = seo?.title ?? product.seoTitle || product.name;
+  const title = seo?.title ?? product.seoTitle ?? product.name;
   return {
     title,
     description,
