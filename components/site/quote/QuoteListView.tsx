@@ -29,6 +29,7 @@ import {
 } from "@/lib/quote/store";
 import { QUOTE_FILE_ACCEPT, validateQuoteFiles } from "@/lib/quote/file-policy";
 import { quoteCopy } from "@/lib/content";
+import { MetissuiteQuoteForm } from "./MetissuiteQuoteForm";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -381,6 +382,21 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
 
       {/* Form */}
       <aside className="lg:sticky lg:top-28 lg:self-start">
+        {!service ? (
+          <MetissuiteQuoteForm
+            items={items}
+            onComplete={(submissionId) => {
+              trackRfqSubmit({
+                requestId: submissionId,
+                itemCount: items.length,
+                categories: [],
+              });
+              clearQuote();
+              setStatus("done");
+              toast.success("Quote submitted! We'll be in touch shortly.");
+            }}
+          />
+        ) : (
         <form
           noValidate
           onSubmit={onSubmit}
@@ -529,6 +545,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
             {status === "loading" ? "Sending…" : service ? "Send consultation request" : quoteCopy.submitLabel}
           </BrandButton>
         </form>
+        )}
       </aside>
     </div>
   );
