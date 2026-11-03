@@ -105,7 +105,28 @@ export function MetissuiteQuoteForm({
     script.onerror = () => setState("error");
     mount.appendChild(script);
 
+    // MetisSuiteAI's supplied form-embed script currently omits data-prefill
+    // variables from the generated iframe URL. Keep the vendor script (so its
+    // resize and completion events still work), then copy the variables onto
+    // the iframe URL once the script creates it.
+    const applyPrefillToIframe = () => {
+      const iframe = mount.querySelector("iframe");
+      if (!iframe?.src) return;
+
+      const iframeUrl = new URL(iframe.src);
+      const params = new URLSearchParams(prefill);
+      params.forEach((value, key) => iframeUrl.searchParams.set(key, value));
+
+      const nextSrc = iframeUrl.toString();
+      if (iframe.src !== nextSrc) iframe.src = nextSrc;
+    };
+
+    const observer = new MutationObserver(applyPrefillToIframe);
+    observer.observe(mount, { childList: true, subtree: true });
+    applyPrefillToIframe();
+
     return () => {
+      observer.disconnect();
       window.removeEventListener("endatix:form-loaded", handleLoaded);
       window.removeEventListener("endatix:form-complete", handleComplete);
       window.removeEventListener("endatix:form-error", handleError);
