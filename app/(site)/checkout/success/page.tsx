@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Script from "next/script";
 import { Check } from "lucide-react";
 import { CheckoutSuccessClient } from "@/components/site/cart/CheckoutSuccessClient";
 import { purchaseFromReturn } from "@/lib/payments/purchaseReturn";
@@ -14,6 +15,14 @@ export default async function CheckoutSuccessPage({
   return (
     <main className="mx-auto max-w-xl px-6 py-24 text-center">
       <CheckoutSuccessClient purchase={purchase} />
+      {purchase ? (
+        <Script
+          async
+          src="https://app.nocotel.com/embeds/conversion.js"
+          data-action-type="sale"
+          strategy="afterInteractive"
+        />
+      ) : null}
       <div className="rounded-[var(--radius-xl)] border border-[var(--color-success)] bg-white p-10">
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--color-success)] text-white">
           <Check className="size-6" aria-hidden />
