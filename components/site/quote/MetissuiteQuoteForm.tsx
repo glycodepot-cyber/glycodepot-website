@@ -42,13 +42,17 @@ export function MetissuiteQuoteForm({
   );
 
   const prefill = useMemo(() => {
+    const origin =
+      typeof window === "undefined"
+        ? "https://www.glycodepot.com"
+        : window.location.origin;
     const quoteItems = items.map((item) => ({
       product_id: item.productId,
       variant_id: item.variantId ?? "",
       product_name: item.name,
       variation: item.variantName ?? "",
       quantity: item.quantity,
-      product_url: new URL(item.href, window.location.origin).href,
+      product_url: new URL(item.href, origin).href,
     }));
 
     return new URLSearchParams({
@@ -59,7 +63,10 @@ export function MetissuiteQuoteForm({
       request_type: "RFQ",
       subject: "GlycoDepot quote request",
       source_page: "/quote-request",
-      landing_page_url: window.location.href,
+      landing_page_url:
+        typeof window === "undefined"
+          ? "https://www.glycodepot.com/quote-request"
+          : window.location.href,
     }).toString();
   }, [items, productDetails]);
 
