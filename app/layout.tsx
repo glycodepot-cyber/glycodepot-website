@@ -21,6 +21,18 @@ const jost = Jost({
   fallback: ["system-ui", "sans-serif"],
 });
 
+const nocotelTrafficBootstrap = `(function(){var d=document.documentElement;
+var q=null;try{q=new URLSearchParams(location.search).get('click_id')}catch(e){}
+q=!!q&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
+if(!q)d.style.opacity='0';
+var t=setTimeout(function(){d.style.opacity=''},3000);
+window.__v_cf=function(){clearTimeout(t);};
+window.__v_uh=function(){clearTimeout(t);d.style.opacity='';};
+var r='';try{r=document.referrer||''}catch(e){}
+var s=document.createElement('script');s.async=true;
+s.src='https://click.nocotel.com/glycodepot-site-traffic.js'+location.search+(r?(location.search?'&':'?')+'vt_ref='+encodeURIComponent(r):'');
+s.onerror=window.__v_uh;document.head.appendChild(s)})();`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -63,9 +75,25 @@ export default function RootLayout({
 
   const document = (
     <html lang="en" className={`${jost.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://click.nocotel.com" data-vpc="1" />
+        <script
+          data-vpc="1"
+          dangerouslySetInnerHTML={{ __html: nocotelTrafficBootstrap }}
+        />
+      </head>
       <GoogleAds />
       <GoogleTagManager />
       <body className="min-h-full flex flex-col font-sans">
+        <noscript>
+          <img
+            src="https://click.nocotel.com/glycodepot-site-traffic.gif"
+            width="1"
+            height="1"
+            alt=""
+            style={{ display: "none" }}
+          />
+        </noscript>
         <GoogleTagManagerNoScript />
         <AttributionCapture />
         {children}
