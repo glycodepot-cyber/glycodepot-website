@@ -1,6 +1,6 @@
 export const site = {
   name: "GlycoDepot",
-  legalName: "Escientificsolutions LLC",
+  legalName: "GlycoDepot LLC",
   tagline: "Your Trusted Source for Glycoscience Solutions",
   description:
     "Glycodepot serve all your needs in glycoscience from products, services, networking and announcements. Get the best glycoscience products and services to support your research.",
