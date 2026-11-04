@@ -215,14 +215,14 @@ export const glycosylationLeadMagnet = {
   eyebrow: "Technical brochure",
   title: "Get the full technical brochure",
   description:
-    "Sixteen pages covering the enzyme toolkit, the published case studies in detail, the phase-by-phase work plan, full kit and plasmid pricing, and two worked project quotations. Tell us a little about your project and we will email it to you.",
+    "Sixteen pages covering the enzyme toolkit, the published case studies in detail, the phase-by-phase work plan, kit pricing, and two worked project quotations. Tell us where to send it and we will email it over.",
   points: [
     "Complete kit, plasmid and project pricing",
     "Two worked quotations with timelines and deliverables",
     "Full reference list for every case study cited",
   ],
   privacyNote:
-    "No structures or confidential details needed. We are happy to sign an NDA before you share anything about your molecule.",
+    "Just your contact details — no structures or project detail needed. When you are ready to talk specifics we are happy to sign an NDA first.",
 };
 
 export const glycosylationDisclaimer =
