@@ -6,9 +6,18 @@ export const servicesIntro = [
 export interface Service {
   title: string;
   body: string;
+  /** When set, the card links through to a dedicated service page. */
+  href?: string;
+  linkLabel?: string;
 }
 
 export const services: Service[] = [
+  {
+    title: "Enzymatic Glycosylation of Small Molecules",
+    body: "Screen your small molecule against 380 plant glycosyltransferases to improve solubility, delivery, potency or manufacturability — then scale the winning reaction from milligrams to grams.",
+    href: "/services/enzymatic-glycosylation",
+    linkLabel: "Explore the service",
+  },
   {
     title: "Custom Glycosylation Service",
     body: "GlycoDepot offers tailored glycosylation services for proteins, antibodies, cell membranes, and bacterial membranes to meet your specific requirements.",
