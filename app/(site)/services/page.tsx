@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { TriangleAlert, ArrowRight } from "lucide-react";
 import {
   Container,
   Section,
@@ -69,6 +70,15 @@ export default function ServicesPage() {
                 <p className="text-[15px] leading-relaxed text-[var(--color-muted-foreground)]">
                   {s.body}
                 </p>
+                {s.href ? (
+                  <Link
+                    href={s.href}
+                    className="mt-auto inline-flex items-center gap-1.5 text-[14px] font-medium text-[var(--color-brand)] hover:underline"
+                  >
+                    {s.linkLabel ?? "Learn more"}
+                    <ArrowRight className="size-3.5" aria-hidden />
+                  </Link>
+                ) : null}
               </li>
             ))}
           </ol>
