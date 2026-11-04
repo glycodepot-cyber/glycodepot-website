@@ -217,7 +217,7 @@ export const glycosylationLeadMagnet = {
   description:
     "Sixteen pages covering the enzyme toolkit, the published case studies in detail, the phase-by-phase work plan, kit pricing, and two worked project quotations. Tell us where to send it and we will email it over.",
   points: [
-    "Complete kit, plasmid and project pricing",
+    "Full kit pricing and worked project costings",
     "Two worked quotations with timelines and deliverables",
     "Full reference list for every case study cited",
   ],
