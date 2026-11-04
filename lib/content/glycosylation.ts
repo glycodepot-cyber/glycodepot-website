@@ -208,7 +208,7 @@ export const glycosylationTerms = [
 
 export const glycosylationPricing = {
   headline: "Discovery Kits start at $10,900.",
-  body: "Kits are priced by the number of reactions per well. Full screening and production programmes are quoted per project against your substrate, scope and target quantity. Enzyme identities and E. coli expression plasmids are available separately once a screen returns a positive hit.",
+  body: "Kits are priced by the number of reactions per well. Full screening and production programmes are quoted per project against your substrate, scope and target quantity. Enzyme identities and E. coli expression plasmids are available separately once a screen returns a positive hit, price on request.",
 };
 
 export const glycosylationLeadMagnet = {
