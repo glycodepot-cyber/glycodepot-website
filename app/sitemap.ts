@@ -9,7 +9,8 @@ export const revalidate=3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [catalog,categories]=await Promise.all([listProducts({pageSize:10000}),listCategories()]);
   const staticRoutes: MetadataRoute.Sitemap = [
-    "/", "/about", "/services", "/services/custom-glycan-synthesis", "/blog",
+    "/", "/about", "/services", "/services/custom-glycan-synthesis",
+    "/services/enzymatic-glycosylation", "/blog",
     "/start-selling", "/contact", "/quote-request", "/order-tracking", "/products",
     "/legal/terms", "/legal/privacy", "/legal/cookies",
   ].map(path=>({url:`${SITE_URL}${path}`,changeFrequency:path==="/"?"daily":"monthly",priority:path==="/"?1:0.7}));
