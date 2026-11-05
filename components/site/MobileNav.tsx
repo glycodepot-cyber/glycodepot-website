@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "./SearchBar";
 import { cn } from "@/lib/utils";
-import { mainNav, site, utilityNav } from "@/lib/content";
+import { mainNav, serviceNav, site, utilityNav } from "@/lib/content";
 import type { Category } from "@/lib/cart";
 import { groupCategories } from "@/lib/content/category-groups";
 
@@ -28,6 +28,7 @@ export function MobileNav({ categories }: MobileNavProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -153,6 +154,57 @@ export function MobileNav({ categories }: MobileNavProps) {
                               );
                             },
                           )}
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                }
+
+                if (item.href === "/services") {
+                  return (
+                    <li key={item.href}>
+                      <button
+                        type="button"
+                        onClick={() => setServicesOpen((v) => !v)}
+                        aria-expanded={servicesOpen}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-[var(--radius-md)] px-3 py-3 text-left text-[15px] font-medium",
+                          isActive
+                            ? "text-[var(--color-brand)]"
+                            : "text-[var(--color-foreground)]",
+                        )}
+                      >
+                        {item.label}
+                        <ChevronDown
+                          className={cn(
+                            "size-4 transition-transform",
+                            servicesOpen && "rotate-180",
+                          )}
+                          aria-hidden
+                        />
+                      </button>
+                      {servicesOpen ? (
+                        <div className="mb-1 ml-3 border-l border-[var(--color-border)] pl-3">
+                          <Link
+                            href="/services"
+                            onClick={() => setOpen(false)}
+                            className="block rounded-[var(--radius-sm)] px-3 py-2 text-[14px] font-semibold text-[var(--color-brand)] hover:bg-[var(--color-surface)]"
+                          >
+                            All services →
+                          </Link>
+                          <ul className="mt-0.5">
+                            {serviceNav.map((s) => (
+                              <li key={s.href}>
+                                <Link
+                                  href={s.href}
+                                  onClick={() => setOpen(false)}
+                                  className="block rounded-[var(--radius-sm)] px-3 py-2 text-[13px] text-[var(--color-muted-foreground)] hover:bg-[var(--color-surface)] hover:text-[var(--color-foreground)]"
+                                >
+                                  {s.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
                       ) : null}
                     </li>

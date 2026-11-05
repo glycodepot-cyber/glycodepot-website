@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { mainNav } from "@/lib/content";
+import { mainNav, serviceNav } from "@/lib/content";
 import type { Category } from "@/lib/cart";
 import { useQuoteList, getQuoteCount } from "@/lib/quote/store";
 import { groupCategories } from "@/lib/content/category-groups";
@@ -15,11 +15,14 @@ interface MainNavProps {
 }
 
 const MEGA_KEY = "/products";
+const SERVICES_KEY = "/services";
 
 export function MainNav({ categories }: MainNavProps) {
   const pathname = usePathname();
   const [megaOpen, setMegaOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const closeTimer = useRef<number | null>(null);
+  const servicesTimer = useRef<number | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const quoteCount = getQuoteCount(useQuoteList());
 
@@ -40,13 +43,39 @@ export function MainNav({ categories }: MainNavProps) {
     setMegaOpen(true);
   };
 
+  const clearServicesTimer = () => {
+    if (servicesTimer.current) {
+      window.clearTimeout(servicesTimer.current);
+      servicesTimer.current = null;
+    }
+  };
+
+  const scheduleServicesClose = useCallback(() => {
+    clearServicesTimer();
+    servicesTimer.current = window.setTimeout(
+      () => setServicesOpen(false),
+      140,
+    );
+  }, []);
+
+  const openServices = () => {
+    clearServicesTimer();
+    setServicesOpen(true);
+  };
+
   // Close on Escape, close on outside click, close on route change
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setMegaOpen(false);
+      if (e.key === "Escape") {
+        setMegaOpen(false);
+        setServicesOpen(false);
+      }
     }
     function onDocClick(e: MouseEvent) {
-      if (!navRef.current?.contains(e.target as Node)) setMegaOpen(false);
+      if (!navRef.current?.contains(e.target as Node)) {
+        setMegaOpen(false);
+        setServicesOpen(false);
+      }
     }
     document.addEventListener("keydown", onKey);
     document.addEventListener("mousedown", onDocClick);
@@ -58,6 +87,7 @@ export function MainNav({ categories }: MainNavProps) {
 
   useEffect(() => {
     setMegaOpen(false);
+    setServicesOpen(false);
   }, [pathname]);
 
   return (
@@ -98,6 +128,81 @@ export function MainNav({ categories }: MainNavProps) {
                     aria-hidden
                   />
                 </button>
+              </li>
+            );
+          }
+
+          if (item.href === SERVICES_KEY) {
+            return (
+              <li
+                key={item.href}
+                className="relative"
+                onMouseEnter={openServices}
+                onMouseLeave={scheduleServicesClose}
+              >
+                <Link
+                  href={item.href}
+                  aria-haspopup="true"
+                  aria-expanded={servicesOpen}
+                  onFocus={openServices}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                    isActive || servicesOpen
+                      ? "text-[var(--color-brand)]"
+                      : "text-[var(--color-foreground)] hover:text-[var(--color-brand)]",
+                  )}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {item.label}
+                  <ChevronDown
+                    className={cn(
+                      "size-3.5 transition-transform",
+                      servicesOpen && "rotate-180",
+                    )}
+                    aria-hidden
+                  />
+                </Link>
+
+                <div
+                  className={cn(
+                    "absolute left-0 top-[calc(100%+12px)] w-[340px]",
+                    "z-[var(--z-dropdown)] rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white p-2 shadow-[var(--shadow-lg)]",
+                    "origin-top transition-all duration-150",
+                    servicesOpen
+                      ? "pointer-events-auto translate-y-0 opacity-100"
+                      : "pointer-events-none -translate-y-1 opacity-0",
+                  )}
+                  role="region"
+                  aria-label="Services menu"
+                  aria-hidden={!servicesOpen}
+                >
+                  <ul className="flex flex-col">
+                    {serviceNav.map((s) => (
+                      <li key={s.href}>
+                        <Link
+                          href={s.href}
+                          className="block rounded-[var(--radius-sm)] px-3 py-2.5 transition-colors hover:bg-[var(--color-surface)]"
+                        >
+                          <span className="block text-[14px] font-semibold text-[var(--color-foreground)]">
+                            {s.label}
+                          </span>
+                          <span className="mt-0.5 block text-[12px] leading-snug text-[var(--color-muted-foreground)]">
+                            {s.description}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-1 border-t border-[var(--color-border)] pt-2">
+                    <Link
+                      href="/services"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)]"
+                    >
+                      All services
+                      <ArrowUpRight className="size-3.5" aria-hidden />
+                    </Link>
+                  </div>
+                </div>
               </li>
             );
           }
