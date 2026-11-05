@@ -2,6 +2,7 @@ export * from "./site";
 export * from "./nav";
 export * from "./home";
 export * from "./services";
+export * from "./glycosylation";
 export * from "./about";
 export * from "./startSelling";
 export * from "./contact";
