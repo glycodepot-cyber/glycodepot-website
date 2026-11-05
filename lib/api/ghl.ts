@@ -11,8 +11,11 @@ import "server-only";
  *   GHL_QUOTE_WEBHOOK_URL
  *   GHL_NEWSLETTER_WEBHOOK_URL
  *
- * When a URL is missing we log the payload (so the form still feels
- * connected during demos) but return success so the user UX is unchanged.
+ * When a URL is missing in development we log the payload and return success,
+ * so local work doesn't need live webhooks. In production a missing URL is a
+ * REAL failure and is reported as one: these payloads carry consent records
+ * and opt-out requests, and silently discarding one while telling the visitor
+ * "thanks, you're on the list" is both a broken promise and a compliance gap.
  */
 
 const FETCH_TIMEOUT_MS = 10_000;
@@ -59,8 +62,18 @@ async function sendToGHL(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const url = process.env[envVar];
   if (!url) {
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        `[crm] ${envVar} is not set; refusing to drop a submission silently.`,
+      );
+      return {
+        ok: false,
+        error:
+          "We couldn't record that just now. Please email info@glycodepot.com and we'll handle it directly.",
+      };
+    }
     console.info(
-      `[ghl] ${envVar} not set; would have posted:`,
+      `[crm] ${envVar} not set; would have posted:`,
       JSON.stringify(payload).slice(0, 300),
     );
     return { ok: true };
