@@ -5,13 +5,43 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { QuoteListItem } from "@/lib/quote/store";
 
 const FORM_ID = "kUrj";
-const EMBED_SRC = "https://app.metissuiteai.app/form-embed/v1.js";
+const EMBED_ORIGIN = "https://app.metissuiteai.app";
+const EMBED_SRC = `${EMBED_ORIGIN}/form-embed/v1.js`;
+const READY_TIMEOUT_MS = 10000;
 
-type EmbedEventDetail = {
-  formId?: string;
-  submissionId?: string;
-  error?: { message?: string };
-};
+/**
+ * How this embed actually communicates.
+ *
+ * This component previously listened for `endatix:form-loaded`,
+ * `endatix:form-complete` and `endatix:form-error` on `window`. The vendor
+ * script dispatches none of those: it contains no `dispatchEvent` and no
+ * `CustomEvent` call anywhere, and the string "endatix" does not appear in it.
+ * It communicates only by postMessage. So all three listeners were dead, which
+ * meant the readiness spinner never cleared on the live page, and — far more
+ * expensively — the completion callback never ran, so no Google Ads RFQ
+ * conversion was ever recorded for a submitted quote request.
+ *
+ * Readiness is therefore detected by watching for the iframe the script
+ * injects, rather than by waiting for an event that never arrives.
+ *
+ * Completion is best-effort: the script's only submission-shaped message type
+ * is "submitted". That has been read out of the bundle but NOT yet observed on
+ * a real submission, so treat the client-side conversion as a convenience and
+ * keep server-side conversion forwarding from the CRM as the authoritative
+ * record — it does not depend on this private protocol, an ad blocker, or the
+ * browser staying open.
+ */
+function readSubmissionId(data: unknown): string | null {
+  if (typeof data !== "object" || data === null) return null;
+  const record = data as Record<string, unknown>;
+  if (record.type !== "submitted") return null;
+  for (const key of ["submissionId", "submission_id", "id"]) {
+    const value = record[key];
+    if (typeof value === "string" && value) return value;
+    if (typeof value === "number") return String(value);
+  }
+  return `metissuite-${Date.now()}`;
+}
 
 export function MetissuiteQuoteForm({
   items,
@@ -77,23 +107,12 @@ export function MetissuiteQuoteForm({
     setState("loading");
     mount.replaceChildren();
 
-    const handleLoaded = (event: Event) => {
-      const detail = (event as CustomEvent<EmbedEventDetail>).detail;
-      if (detail?.formId === FORM_ID) setState("ready");
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== EMBED_ORIGIN) return;
+      const submissionId = readSubmissionId(event.data);
+      if (submissionId) onCompleteRef.current(submissionId);
     };
-    const handleComplete = (event: Event) => {
-      const detail = (event as CustomEvent<EmbedEventDetail>).detail;
-      if (detail?.formId !== FORM_ID) return;
-      onCompleteRef.current(detail.submissionId ?? `metissuite-${Date.now()}`);
-    };
-    const handleError = (event: Event) => {
-      const detail = (event as CustomEvent<EmbedEventDetail>).detail;
-      if (detail?.formId === FORM_ID) setState("error");
-    };
-
-    window.addEventListener("endatix:form-loaded", handleLoaded);
-    window.addEventListener("endatix:form-complete", handleComplete);
-    window.addEventListener("endatix:form-error", handleError);
+    window.addEventListener("message", handleMessage);
 
     const script = document.createElement("script");
     script.src = EMBED_SRC;
@@ -121,15 +140,29 @@ export function MetissuiteQuoteForm({
       if (iframe.src !== nextSrc) iframe.src = nextSrc;
     };
 
-    const observer = new MutationObserver(applyPrefillToIframe);
+    // The script dispatches no readiness event, so treat the appearance of the
+    // iframe it injects as "ready" and fall back to the error panel if nothing
+    // has rendered in time.
+    const syncReadyState = () => {
+      if (mount.querySelector("iframe")) setState("ready");
+    };
+
+    const observer = new MutationObserver(() => {
+      applyPrefillToIframe();
+      syncReadyState();
+    });
     observer.observe(mount, { childList: true, subtree: true });
     applyPrefillToIframe();
+    syncReadyState();
+
+    const readyTimer = window.setTimeout(() => {
+      if (!mount.querySelector("iframe")) setState("error");
+    }, READY_TIMEOUT_MS);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener("endatix:form-loaded", handleLoaded);
-      window.removeEventListener("endatix:form-complete", handleComplete);
-      window.removeEventListener("endatix:form-error", handleError);
+      window.clearTimeout(readyTimer);
+      window.removeEventListener("message", handleMessage);
       mount.replaceChildren();
     };
   }, [prefill]);
