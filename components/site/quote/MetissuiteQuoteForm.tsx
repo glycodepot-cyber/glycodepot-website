@@ -24,23 +24,40 @@ const READY_TIMEOUT_MS = 10000;
  * Readiness is therefore detected by watching for the iframe the script
  * injects, rather than by waiting for an event that never arrives.
  *
- * Completion is best-effort: the script's only submission-shaped message type
- * is "submitted". That has been read out of the bundle but NOT yet observed on
- * a real submission, so treat the client-side conversion as a convenience and
- * keep server-side conversion forwarding from the CRM as the authoritative
- * record — it does not depend on this private protocol, an ad blocker, or the
- * browser staying open.
+ * Completion arrives by postMessage. Observed on a real submission of this
+ * form, the payload is exactly:
+ *
+ *   { source: "votel-form-embed", type: "submitted",
+ *     formId: "kUrj", leadId: null, contactToken: null }
+ *
+ * Note what is NOT in it: there is no submission id. `leadId` and
+ * `contactToken` are both null for an anonymous submitter, so there is no
+ * stable identifier to use as the Google Ads `transaction_id`. We fall back to
+ * a timestamp, which means Google cannot deduplicate a conversion if the
+ * message were ever delivered twice. That is the main reason server-side
+ * conversion forwarding from the CRM should remain the authoritative record:
+ * it carries a real record id, and it does not depend on this undocumented
+ * protocol, on an ad blocker, or on the browser staying open.
+ *
+ * Both `source` and `formId` are checked, because every embed on the page
+ * receives these messages and a bare `type` check would fire this form's
+ * conversion for a different form's submission.
  */
+const EMBED_MESSAGE_SOURCE = "votel-form-embed";
+
 function readSubmissionId(data: unknown): string | null {
   if (typeof data !== "object" || data === null) return null;
   const record = data as Record<string, unknown>;
+  if (record.source !== EMBED_MESSAGE_SOURCE) return null;
   if (record.type !== "submitted") return null;
-  for (const key of ["submissionId", "submission_id", "id"]) {
+  if (record.formId !== FORM_ID) return null;
+  // Prefer a real identifier when the submitter was already known to the CRM.
+  for (const key of ["leadId", "submissionId", "submission_id", "id"]) {
     const value = record[key];
     if (typeof value === "string" && value) return value;
     if (typeof value === "number") return String(value);
   }
-  return `metissuite-${Date.now()}`;
+  return `metissuite-${FORM_ID}-${Date.now()}`;
 }
 
 export function MetissuiteQuoteForm({
