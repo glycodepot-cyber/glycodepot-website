@@ -1,3 +1,4 @@
+import { PLACEHOLDER_IMAGE_SRC } from "../cart/client";
 import type { Category, Product } from "../cart/types";
 import { SITE_URL } from "../site-url";
 import { productDescription } from "./product-data";
@@ -90,7 +91,12 @@ export function merchantFeedItems(
     if (!slug) continue;
 
     const link = `${SITE_URL}/products/${encodeURIComponent(slug)}/${encodeURIComponent(product.slug)}`;
+    // The brand placeholder stands in for images that cannot currently be
+    // served. It is a logo, not a product shot: Google treats a generic or
+    // promotional image as grounds for disapproval, so such a product is
+    // left out of the feed entirely rather than submitted to fail.
     const images = product.images
+      .filter((image) => image.src !== PLACEHOLDER_IMAGE_SRC)
       .map((image) => absolute(image.src))
       .filter((src): src is string => src !== null);
     // Google requires an image. No image, no listing — better absent than disapproved.

@@ -45,6 +45,34 @@ import archivedImageMapJson from "@/scripts/blob-url-map.disabled.json";
 
 const archivedImageMap = archivedImageMapJson as Record<string, string>;
 
+/**
+ * The Vercel Blob store holding the archived product images is BLOCKED —
+ * every URL on it returns "Your store is blocked" rather than an image, so
+ * the storefront was rendering broken-image icons on ~770 product pages.
+ * Supabase, the other historical host, returns 404 NoSuchKey; the original
+ * WordPress files are no longer served either. The blob store is therefore
+ * the only surviving copy and nothing can be re-migrated until it is
+ * unblocked (a Vercel plan/quota matter, see scripts/migrate-images-to-r2.mjs
+ * for the intended destination once it is).
+ *
+ * Until then, serving the brand placeholder beats serving a broken icon.
+ *
+ * FLIP THIS BACK TO `true` the moment the blob store is readable again —
+ * that single change restores every archived image.
+ */
+const BLOB_IMAGES_AVAILABLE = false;
+
+const BLOB_IMAGE_HOST = ".public.blob.vercel-storage.com";
+
+/** Brand placeholder shown when a product's real image cannot be served. */
+export const PLACEHOLDER_IMAGE_SRC = "/Glycodepot_Logo.jpeg";
+
+function isUnservableImage(src: string): boolean {
+  if (src.includes(".supabase.co/storage/")) return true;
+  if (!BLOB_IMAGES_AVAILABLE && src.includes(BLOB_IMAGE_HOST)) return true;
+  return false;
+}
+
 function normalizedImageFilename(src: string): string {
   try {
     const filename = decodeURIComponent(
@@ -72,11 +100,11 @@ function restoreProductImages(product: Product): Product {
       archivedImageMap[image.src] ??
       archivedImageByFilename.get(normalizedImageFilename(image.src));
 
-    if (restored) return { ...image, src: restored };
-    if (image.src.includes(".supabase.co/storage/")) {
-      return { ...image, src: "/Glycodepot_Logo.jpeg" };
+    const src = restored ?? image.src;
+    if (isUnservableImage(src)) {
+      return { ...image, src: PLACEHOLDER_IMAGE_SRC };
     }
-    return image;
+    return src === image.src ? image : { ...image, src };
   });
 
   return { ...product, images };
