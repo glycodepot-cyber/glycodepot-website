@@ -39,28 +39,29 @@ import { isDatabaseConfigured } from "@/lib/db";
 import { loadDatabaseCatalog } from "./database";
 import { applyPricePolicy } from "./price-policy";
 import { tagSlug } from "@/lib/seo/legacy-map";
-import archivedImageMapJson from "@/scripts/blob-url-map.disabled.json";
+import archivedImageMapJson from "@/scripts/blob-url-map.json";
 
 /* ----------------- Durable product image recovery ----------------- */
 
 const archivedImageMap = archivedImageMapJson as Record<string, string>;
 
 /**
- * The Vercel Blob store holding the archived product images is BLOCKED —
- * every URL on it returns "Your store is blocked" rather than an image, so
- * the storefront was rendering broken-image icons on ~770 product pages.
- * Supabase, the other historical host, returns 404 NoSuchKey; the original
- * WordPress files are no longer served either. The blob store is therefore
- * the only surviving copy and nothing can be re-migrated until it is
- * unblocked (a Vercel plan/quota matter, see scripts/migrate-images-to-r2.mjs
- * for the intended destination once it is).
+ * Product images are served from the `image-glycodepot` Vercel Blob store,
+ * which belongs to the glycodepot team.
  *
- * Until then, serving the brand placeholder beats serving a broken icon.
+ * History worth keeping, because this broke twice: the catalogue's own image
+ * URLs point at BysonHub's Supabase bucket, whose objects were deleted (404
+ * NoSuchKey). A rescue copy was taken from the WordPress uploads folder into
+ * a Vercel Blob store that was NOT in this team — and when that store went
+ * away, every product page broke. The WordPress folder was the only surviving
+ * copy; all 2,995 images were re-uploaded from it on 2026-11-06 into a store
+ * the team owns outright, so no host outside this Vercel team is in the path
+ * any more.
  *
- * FLIP THIS BACK TO `true` the moment the blob store is readable again —
- * that single change restores every archived image.
+ * Set this to `false` to fall back to the brand placeholder if the store ever
+ * becomes unreachable again — that is strictly better than broken-image icons.
  */
-const BLOB_IMAGES_AVAILABLE = false;
+const BLOB_IMAGES_AVAILABLE = true;
 
 const BLOB_IMAGE_HOST = ".public.blob.vercel-storage.com";
 
