@@ -21,6 +21,21 @@ import { productReferences } from "@/lib/content/product-enrichment";
 import { productDescription, productBreadcrumbs, serializeJsonLd } from "@/lib/seo/product-data";
 import { cn } from "@/lib/utils";
 
+/**
+ * Serve product pages from the ISR cache rather than rendering each request.
+ *
+ * There are ~3,600 of these and they are the bulk of what crawlers hit. The
+ * page takes no searchParams and reads no cookies or auth, so it is safe to
+ * cache; rendering it per request meant a function invocation and a catalogue
+ * read for every crawl of every product, which is how Neon's outbound
+ * transfer reached 2,360 GB in October.
+ *
+ * No generateStaticParams on purpose: pre-rendering 3,600 pages would move the
+ * cost into billed build minutes. Pages are rendered on first request and
+ * cached from then on.
+ */
+export const revalidate = 3600;
+
 interface PageProps {
   params: Promise<{ category: string; slug: string }>;
 }

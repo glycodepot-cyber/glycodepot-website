@@ -51,11 +51,32 @@ type ProductCategoryRow = { product_id: string; category_id: string };
 const money = (cents: number | null) =>
   cents === null ? null : { amount: cents / 100, currency: "USD" as const };
 
-export const loadDatabaseCatalog = cache(
-  async (): Promise<{
-    products: Product[];
-    categories: Category[];
-  }> => {
+type CatalogResult = { products: Product[]; categories: Category[] };
+
+/**
+ * How long a loaded catalogue is reused within one server instance.
+ *
+ * This exists because of a real bill. React's `cache()` below dedupes only
+ * within a single render pass, so before this memo every request that touched
+ * the catalogue — including the category nav on every page — ran the five
+ * table scans below and pulled the whole catalogue out of Neon. Neon charges
+ * for outbound transfer, and the October invoice was $202.78, of which
+ * $186.09 was 2,360 GB of egress against a database holding 0.04 GB.
+ *
+ * Five minutes is a deliberate trade: catalogue edits made in the admin take
+ * up to that long to appear on the storefront. Lower it if that matters more
+ * than the transfer cost; do not remove it.
+ */
+const CATALOG_TTL_MS = 5 * 60_000;
+
+let memo: { loadedAt: number; result: Promise<CatalogResult> } | null = null;
+
+/** Clears the in-process catalogue memo (use after an admin write). */
+export function invalidateDatabaseCatalog(): void {
+  memo = null;
+}
+
+const loadDatabaseCatalogUncached = async (): Promise<CatalogResult> => {
     const sql = getDb();
     const results = await Promise.all([
       sql`SELECT id, slug, name, description FROM categories ORDER BY name`,
@@ -158,5 +179,26 @@ export const loadDatabaseCatalog = cache(
     });
 
     return { products, categories };
-  },
-);
+};
+
+/**
+ * `cache()` dedupes concurrent calls inside one render; the memo above keeps
+ * the result across requests on this instance. The in-flight promise is stored
+ * rather than the resolved value, so a burst of requests on a cold instance
+ * shares one database read instead of starting one each.
+ */
+export const loadDatabaseCatalog = cache(async (): Promise<CatalogResult> => {
+  const now = Date.now();
+  if (memo && now - memo.loadedAt < CATALOG_TTL_MS) return memo.result;
+
+  const result = loadDatabaseCatalogUncached();
+  memo = { loadedAt: now, result };
+  try {
+    return await result;
+  } catch (err) {
+    // Never cache a failure: the next request should retry rather than serve
+    // the transition fallback for the rest of this instance's life.
+    memo = null;
+    throw err;
+  }
+});

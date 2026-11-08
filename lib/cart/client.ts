@@ -39,11 +39,40 @@ import { isDatabaseConfigured } from "@/lib/db";
 import { loadDatabaseCatalog } from "./database";
 import { applyPricePolicy } from "./price-policy";
 import { tagSlug } from "@/lib/seo/legacy-map";
-import archivedImageMapJson from "@/scripts/blob-url-map.disabled.json";
+import archivedImageMapJson from "@/scripts/blob-url-map.json";
 
 /* ----------------- Durable product image recovery ----------------- */
 
 const archivedImageMap = archivedImageMapJson as Record<string, string>;
+
+/**
+ * Product images are served from the `image-glycodepot` Vercel Blob store,
+ * which belongs to the glycodepot team.
+ *
+ * History worth keeping, because this broke twice: the catalogue's own image
+ * URLs point at BysonHub's Supabase bucket, whose objects were deleted (404
+ * NoSuchKey). A rescue copy was taken from the WordPress uploads folder into
+ * a Vercel Blob store that was NOT in this team — and when that store went
+ * away, every product page broke. The WordPress folder was the only surviving
+ * copy; all 2,995 images were re-uploaded from it on 2026-11-06 into a store
+ * the team owns outright, so no host outside this Vercel team is in the path
+ * any more.
+ *
+ * Set this to `false` to fall back to the brand placeholder if the store ever
+ * becomes unreachable again — that is strictly better than broken-image icons.
+ */
+const BLOB_IMAGES_AVAILABLE = true;
+
+const BLOB_IMAGE_HOST = ".public.blob.vercel-storage.com";
+
+/** Brand placeholder shown when a product's real image cannot be served. */
+export const PLACEHOLDER_IMAGE_SRC = "/Glycodepot_Logo.jpeg";
+
+function isUnservableImage(src: string): boolean {
+  if (src.includes(".supabase.co/storage/")) return true;
+  if (!BLOB_IMAGES_AVAILABLE && src.includes(BLOB_IMAGE_HOST)) return true;
+  return false;
+}
 
 function normalizedImageFilename(src: string): string {
   try {
@@ -72,11 +101,11 @@ function restoreProductImages(product: Product): Product {
       archivedImageMap[image.src] ??
       archivedImageByFilename.get(normalizedImageFilename(image.src));
 
-    if (restored) return { ...image, src: restored };
-    if (image.src.includes(".supabase.co/storage/")) {
-      return { ...image, src: "/Glycodepot_Logo.jpeg" };
+    const src = restored ?? image.src;
+    if (isUnservableImage(src)) {
+      return { ...image, src: PLACEHOLDER_IMAGE_SRC };
     }
-    return image;
+    return src === image.src ? image : { ...image, src };
   });
 
   return { ...product, images };
