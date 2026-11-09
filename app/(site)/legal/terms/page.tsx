@@ -12,7 +12,7 @@ export default function TermsPage() {
       <header className="space-y-2">
         <h1 className="type-h1">Terms of Service</h1>
         <p className="text-[14px] text-[var(--color-muted)]">
-          Last updated: 2026-06-18
+          Last updated: 2026-11-08
         </p>
       </header>
 
@@ -39,9 +39,50 @@ export default function TermsPage() {
         <h2 className="type-h3">3. Shipping and returns</h2>
         <p>
           Shipping costs and timelines vary by product, lot, and destination.
-          Returns are limited to manufacturing defects and only when reported
-          within the warranty window specified for that product. Custom
-          synthesis orders are non-refundable once production has started.
+        </p>
+        <p>
+          <strong>Returns are accepted for defective products only.</strong> We
+          will replace or refund a product that does not meet its stated quality
+          standards — material that does not conform to the specifications on
+          its certificate of analysis — and a shipment that is damaged or
+          mishandled by the carrier.
+        </p>
+        <p>
+          We do not accept returns for non-defective products. These are
+          research chemicals whose identity, purity, and storage history cannot
+          be verified once they have left our control, so a returned item cannot
+          be resold.
+        </p>
+        <p>
+          <strong>
+            We cannot be responsible for delays in customs clearance.
+          </strong>{" "}
+          Customs processing times are outside our control and are not grounds
+          for a claim. This matters most for cold-chain shipments: where a
+          consignment is held in customs beyond its validated shipping duration,
+          the temperature excursion that follows is a consequence of that delay
+          and not a defect in the material we shipped. Where an import licence,
+          permit, or customs documentation is required at the destination,
+          obtaining it is the customer&rsquo;s responsibility.
+        </p>
+        <p>
+          Report a claim to{" "}
+          <a
+            className="font-semibold text-[var(--color-brand)] underline"
+            href="mailto:info@glycodepot.com"
+          >
+            info@glycodepot.com
+          </a>{" "}
+          within the warranty window specified for that product, quoting your
+          order number and lot number. Where we accept a claim,{" "}
+          <strong>GlycoDepot pays the return shipping</strong>, and you may
+          choose a replacement of the same item or a full refund. Replacements
+          ship once the returned material is received, or sooner at our
+          discretion where the fault is evident.
+        </p>
+        <p>
+          Custom synthesis orders are non-refundable once production has
+          started.
         </p>
       </section>
 
