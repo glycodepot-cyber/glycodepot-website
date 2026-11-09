@@ -286,6 +286,28 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return products.find((p) => p.slug === slug) ?? null;
 }
 
+/**
+ * Resolve a product from the identifier published to Google Merchant Center.
+ *
+ * This is the exact inverse of the feed's `g:id` (see lib/seo/merchant-feed.ts,
+ * which emits `product.sku || product.id`). Google substitutes that value into
+ * the cart link template, so if the two ever disagree the add-to-cart link in
+ * Shopping goes nowhere. Matching is case-insensitive because SKUs are quoted
+ * inconsistently in supplier paperwork.
+ */
+export async function getProductByFeedId(
+  feedId: string,
+): Promise<Product | null> {
+  const wanted = feedId.trim().toLowerCase();
+  if (!wanted) return null;
+  const { products } = await loadCatalog();
+  return (
+    products.find((p) => p.sku?.toLowerCase() === wanted) ??
+    products.find((p) => p.id.toLowerCase() === wanted) ??
+    null
+  );
+}
+
 export async function listRelatedProducts(
   product: Product,
   limit = 4,
