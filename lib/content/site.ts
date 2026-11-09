@@ -5,8 +5,9 @@ export const site = {
   description:
     "Glycodepot serve all your needs in glycoscience from products, services, networking and announcements. Get the best glycoscience products and services to support your research.",
   contact: {
-    phone: "+1 956 695 3603",
-    phoneHref: "tel:+19566953603",
+    phone: "+1 903 304 5926",
+    phoneE164: "+19033045926",
+    phoneHref: "tel:+19033045926",
     mobile: "+1 404 468 3219",
     mobileHref: "tel:+14044683219",
     email: "info@glycodepot.com",

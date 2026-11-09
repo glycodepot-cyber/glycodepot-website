@@ -1,4 +1,5 @@
 import type { SalesPayload, QuoteAddress } from "./client";
+import { site } from "@/lib/content/site";
 
 export function quoteEstimateName(reference:string) {
   return `RFQ ${reference.replace(/-/g,"").slice(0,16)}`;
@@ -24,7 +25,10 @@ export function draftEstimateBody(payload:SalesPayload,locationId:string,contact
     altId:locationId,altType:"location",liveMode:true,
     name:quoteEstimateName(payload.reference),title:"GLYCODEPOT ESTIMATE",currency:"USD",
     issueDate:issued.toISOString().slice(0,10),expiryDate:expires.toISOString().slice(0,10),
-    businessDetails:{name:"Glycodepot LLC",phoneNo:"+19566953603",website:"https://glycodepot.com",logoUrl:"https://glycodepot.com/Glycodepot_Logo.jpeg",customValues:[],address:{addressLine1:"1445 Woodmont Ln NW Suite 183",city:"Atlanta",state:"GA",postalCode:"30318",countryCode:"US"}},
+    // Business details come from lib/content/site.ts so the estimate PDF can
+    // never disagree with the website. They were duplicated here until the
+    // phone number changed on 2026-11-09 and had to be fixed in two places.
+    businessDetails:{name:site.legalName,phoneNo:site.contact.phoneE164,website:"https://glycodepot.com",logoUrl:"https://glycodepot.com/Glycodepot_Logo.jpeg",customValues:[],address:{addressLine1:`${site.contact.address.line1} ${site.contact.address.line2}`,city:site.contact.address.city,state:site.contact.address.state,postalCode:site.contact.address.postal,countryCode:"US"}},
     contactDetails:{id:contactId,name:q.billing.name,email:payload.email,companyName:q.billing.company,...payload.phone?{phoneNo:payload.phone}:{},address:address(q.billing)},
     sentTo:{email:[payload.email],emailCc:[],emailBcc:[],phoneNo:[]},attachments:[],estimateNumberPrefix:"Quote-",
     items:q.items.map(item=>({name:item.name,description:[item.sku?`SKU: ${item.sku}`:undefined,item.url,item.unitPriceCents===null?"Price requires manual review before sending":undefined].filter(Boolean).join("\n"),currency:"USD",amount:(item.unitPriceCents??0)/100,qty:item.quantity,taxes:[],type:"one_time",taxInclusive:false})),
