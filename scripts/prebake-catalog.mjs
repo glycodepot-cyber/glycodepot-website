@@ -23,7 +23,7 @@ const R2_URL_MAP_FILE = path.join(__dirname, "r2-url-map.json");
 // The archived Vercel Blob map remains the durable source for legacy product
 // images. It was previously disabled when the optimization quota was exhausted,
 // but these are direct public Blob URLs and do not use Next Image Optimization.
-const BLOB_URL_MAP_FILE = path.join(__dirname, "blob-url-map.disabled.json");
+const BLOB_URL_MAP_FILE = path.join(__dirname, "blob-url-map.json");
 
 // Load the image URL map: prefer R2 (free), fall back to Vercel Blob.
 // Either map rewrites product image URLs so images survive the DNS cutover.
