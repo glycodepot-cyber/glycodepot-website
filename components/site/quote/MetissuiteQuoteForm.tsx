@@ -5,13 +5,60 @@ import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import type { QuoteListItem } from "@/lib/quote/store";
 
 const FORM_ID = "kUrj";
-const EMBED_SRC = "https://app.metissuiteai.app/form-embed/v1.js";
+const EMBED_ORIGIN = "https://app.metissuiteai.app";
+const EMBED_SRC = `${EMBED_ORIGIN}/form-embed/v1.js`;
+const READY_TIMEOUT_MS = 10000;
 
-type EmbedEventDetail = {
-  formId?: string;
-  submissionId?: string;
-  error?: { message?: string };
-};
+/**
+ * How this embed actually communicates.
+ *
+ * This component previously listened for `endatix:form-loaded`,
+ * `endatix:form-complete` and `endatix:form-error` on `window`. The vendor
+ * script dispatches none of those: it contains no `dispatchEvent` and no
+ * `CustomEvent` call anywhere, and the string "endatix" does not appear in it.
+ * It communicates only by postMessage. So all three listeners were dead, which
+ * meant the readiness spinner never cleared on the live page, and — far more
+ * expensively — the completion callback never ran, so no Google Ads RFQ
+ * conversion was ever recorded for a submitted quote request.
+ *
+ * Readiness is therefore detected by watching for the iframe the script
+ * injects, rather than by waiting for an event that never arrives.
+ *
+ * Completion arrives by postMessage. Observed on a real submission of this
+ * form, the payload is exactly:
+ *
+ *   { source: "votel-form-embed", type: "submitted",
+ *     formId: "kUrj", leadId: null, contactToken: null }
+ *
+ * Note what is NOT in it: there is no submission id. `leadId` and
+ * `contactToken` are both null for an anonymous submitter, so there is no
+ * stable identifier to use as the Google Ads `transaction_id`. We fall back to
+ * a timestamp, which means Google cannot deduplicate a conversion if the
+ * message were ever delivered twice. That is the main reason server-side
+ * conversion forwarding from the CRM should remain the authoritative record:
+ * it carries a real record id, and it does not depend on this undocumented
+ * protocol, on an ad blocker, or on the browser staying open.
+ *
+ * Both `source` and `formId` are checked, because every embed on the page
+ * receives these messages and a bare `type` check would fire this form's
+ * conversion for a different form's submission.
+ */
+const EMBED_MESSAGE_SOURCE = "votel-form-embed";
+
+function readSubmissionId(data: unknown): string | null {
+  if (typeof data !== "object" || data === null) return null;
+  const record = data as Record<string, unknown>;
+  if (record.source !== EMBED_MESSAGE_SOURCE) return null;
+  if (record.type !== "submitted") return null;
+  if (record.formId !== FORM_ID) return null;
+  // Prefer a real identifier when the submitter was already known to the CRM.
+  for (const key of ["leadId", "submissionId", "submission_id", "id"]) {
+    const value = record[key];
+    if (typeof value === "string" && value) return value;
+    if (typeof value === "number") return String(value);
+  }
+  return `metissuite-${FORM_ID}-${Date.now()}`;
+}
 
 export function MetissuiteQuoteForm({
   items,
@@ -77,23 +124,12 @@ export function MetissuiteQuoteForm({
     setState("loading");
     mount.replaceChildren();
 
-    const handleLoaded = (event: Event) => {
-      const detail = (event as CustomEvent<EmbedEventDetail>).detail;
-      if (detail?.formId === FORM_ID) setState("ready");
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== EMBED_ORIGIN) return;
+      const submissionId = readSubmissionId(event.data);
+      if (submissionId) onCompleteRef.current(submissionId);
     };
-    const handleComplete = (event: Event) => {
-      const detail = (event as CustomEvent<EmbedEventDetail>).detail;
-      if (detail?.formId !== FORM_ID) return;
-      onCompleteRef.current(detail.submissionId ?? `metissuite-${Date.now()}`);
-    };
-    const handleError = (event: Event) => {
-      const detail = (event as CustomEvent<EmbedEventDetail>).detail;
-      if (detail?.formId === FORM_ID) setState("error");
-    };
-
-    window.addEventListener("endatix:form-loaded", handleLoaded);
-    window.addEventListener("endatix:form-complete", handleComplete);
-    window.addEventListener("endatix:form-error", handleError);
+    window.addEventListener("message", handleMessage);
 
     const script = document.createElement("script");
     script.src = EMBED_SRC;
@@ -121,15 +157,29 @@ export function MetissuiteQuoteForm({
       if (iframe.src !== nextSrc) iframe.src = nextSrc;
     };
 
-    const observer = new MutationObserver(applyPrefillToIframe);
+    // The script dispatches no readiness event, so treat the appearance of the
+    // iframe it injects as "ready" and fall back to the error panel if nothing
+    // has rendered in time.
+    const syncReadyState = () => {
+      if (mount.querySelector("iframe")) setState("ready");
+    };
+
+    const observer = new MutationObserver(() => {
+      applyPrefillToIframe();
+      syncReadyState();
+    });
     observer.observe(mount, { childList: true, subtree: true });
     applyPrefillToIframe();
+    syncReadyState();
+
+    const readyTimer = window.setTimeout(() => {
+      if (!mount.querySelector("iframe")) setState("error");
+    }, READY_TIMEOUT_MS);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener("endatix:form-loaded", handleLoaded);
-      window.removeEventListener("endatix:form-complete", handleComplete);
-      window.removeEventListener("endatix:form-error", handleError);
+      window.clearTimeout(readyTimer);
+      window.removeEventListener("message", handleMessage);
       mount.replaceChildren();
     };
   }, [prefill]);
