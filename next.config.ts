@@ -53,6 +53,23 @@ const nextConfig: NextConfig = {
         destination: "/products/sugar-nucleotides/udp-galnaz",
         permanent: true,
       },
+      // The WordPress store used WooCommerce's /checkout/?add-to-cart=<id>
+      // pattern, and it was still configured as the cart link template in
+      // Google Merchant Center. Only requests carrying the parameter are
+      // redirected, so an ordinary visit to /checkout is untouched. Next
+      // passes the query string through to the destination.
+      {
+        source: "/checkout",
+        has: [{ type: "query", key: "add-to-cart" }],
+        destination: "/cart/add",
+        permanent: false,
+      },
+      {
+        source: "/checkout/",
+        has: [{ type: "query", key: "add-to-cart" }],
+        destination: "/cart/add",
+        permanent: false,
+      },
     ];
   },
   async headers() {
