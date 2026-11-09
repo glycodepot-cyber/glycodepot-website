@@ -1,4 +1,29 @@
-import type { Money, Product } from "./types";
+import type { Money, Product, ProductVariant } from "./types";
+
+/**
+ * The variant a product is priced by: the cheapest one carrying a real price.
+ *
+ * Three things must agree on this or Google suspends the account, so they all
+ * call this one function:
+ *
+ *   1. `applyPricePolicy` below, which puts its price in `product.price`
+ *   2. the Google Merchant feed, which advertises `product.price`
+ *   3. `ProductPurchasePanel`, which opens on this variant, so the price a
+ *      visitor sees on arrival is the price that was advertised
+ *
+ * They disagreed until 2026-11-08: the panel opened on the first in-stock
+ * priced variant, so UDP-GalNAz advertised $220 and then showed $1,800 on
+ * arrival. Stock is deliberately not considered here — the feed reports
+ * availability from this same variant, so price and availability stay
+ * consistent with each other.
+ */
+export function pricedVariant(
+  variants: ProductVariant[],
+): ProductVariant | undefined {
+  return variants
+    .filter((variant) => variant.price !== null)
+    .sort((a, b) => a.price!.amount - b.price!.amount)[0];
+}
 
 /** A stored .99 price is an internal RFQ marker, never a checkout price. */
 export function isQuotePriceCents(cents: number | null): boolean {
@@ -14,8 +39,7 @@ export function applyPricePolicy(product: Product): Product {
     const price = publicPrice(variant.price);
     return { ...variant, price, compareAtPrice: price ? publicPrice(variant.compareAtPrice ?? null) : null };
   });
-  const cardVariant = variants.filter(variant => variant.price !== null)
-    .sort((a,b) => a.price!.amount-b.price!.amount)[0];
+  const cardVariant = pricedVariant(variants);
   const price = cardVariant?.price ?? publicPrice(product.price);
   return {
     ...product,

@@ -5,6 +5,7 @@ import { Minus, Plus, ShieldCheck, Truck, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/format";
 import { canSelectVariant } from "@/lib/cart/variant-availability";
+import { pricedVariant } from "@/lib/cart/price-policy";
 import type { Product, ProductVariant } from "@/lib/cart";
 import { AddToCartButton } from "./AddToCartButton";
 import { AddToQuoteButton } from "./AddToQuoteButton";
@@ -15,10 +16,13 @@ interface PurchasePanelProps {
 
 export function ProductPurchasePanel({ product }: PurchasePanelProps) {
   const variants = product.variants;
+  /**
+   * Open on the variant the product is priced by, so the price on arrival is
+   * the price the Merchant feed advertised. See `pricedVariant` for why these
+   * must not be chosen by different rules.
+   */
   const initial =
-    variants.find((v) => v.inStock && v.price !== null) ??
-    variants.find((v) => v.inStock) ??
-    variants[0];
+    pricedVariant(variants) ?? variants.find((v) => v.inStock) ?? variants[0];
   const [variantId, setVariantId] = useState<string | undefined>(initial?.id);
   const [qty, setQty] = useState(1);
 
