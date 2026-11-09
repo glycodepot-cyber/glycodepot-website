@@ -12,7 +12,7 @@ export default function TermsPage() {
       <header className="space-y-2">
         <h1 className="type-h1">Terms of Service</h1>
         <p className="text-[14px] text-[var(--color-muted)]">
-          Last updated: 2026-06-18
+          Last updated: 2026-11-08
         </p>
       </header>
 
@@ -39,9 +39,34 @@ export default function TermsPage() {
         <h2 className="type-h3">3. Shipping and returns</h2>
         <p>
           Shipping costs and timelines vary by product, lot, and destination.
-          Returns are limited to manufacturing defects and only when reported
-          within the warranty window specified for that product. Custom
-          synthesis orders are non-refundable once production has started.
+        </p>
+        <p>
+          <strong>Returns are accepted for defective products only.</strong> A
+          product is defective if it does not conform to the specifications on
+          its certificate of analysis or arrives damaged in transit. We do not
+          accept returns for non-defective products: these are research
+          chemicals whose identity, purity, and storage history cannot be
+          verified once they have left our control, so a returned item cannot be
+          resold.
+        </p>
+        <p>
+          Report a defect to{" "}
+          <a
+            className="font-semibold text-[var(--color-brand)] underline"
+            href="mailto:info@glycodepot.com"
+          >
+            info@glycodepot.com
+          </a>{" "}
+          within the warranty window specified for that product, quoting your
+          order number and lot number. Where we accept a defect claim,{" "}
+          <strong>GlycoDepot pays the return shipping</strong>, and you may
+          choose a replacement of the same item or a full refund. Replacements
+          ship once the returned material is received, or sooner at our
+          discretion where the defect is evident.
+        </p>
+        <p>
+          Custom synthesis orders are non-refundable once production has
+          started.
         </p>
       </section>
 
