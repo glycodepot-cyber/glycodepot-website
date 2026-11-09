@@ -23,12 +23,20 @@ import { productDescription } from "./product-data";
  *    and Google enforces price accuracy across feed, landing page, structured
  *    data and checkout, with account suspension as the endpoint.
  *
- * 2. ONE ITEM PER PRODUCT, priced at `product.price`. `applyPricePolicy` sets
- *    that to the cheapest real variant price, which is exactly the figure the
- *    product page shows. Submitting each variant separately would advertise
- *    prices that are not the prominent price on the landing page unless the
- *    variant were preselected there, which it is not. Google's guidance for a
- *    price range is to submit the cheapest value; that is what this does.
+ * 2. ONE ITEM PER PRODUCT, priced at `product.price` — the price of
+ *    `pricedVariant`, the cheapest variant carrying a real price.
+ *
+ *    This must stay the variant `ProductPurchasePanel` opens on, or the feed
+ *    advertises one price and the landing page shows another. That is exactly
+ *    what happened between this feed shipping and 2026-11-08: the panel opened
+ *    on the first in-stock priced variant, so UDP-GalNAz was advertised at
+ *    $220 and rendered at $1,800. Both now call `pricedVariant`, which is the
+ *    single definition; do not inline the rule in either place.
+ *
+ *    Submitting each variant separately would advertise prices that are not
+ *    the price on arrival, because the landing page cannot yet preselect a
+ *    variant from the URL. Add that first and this rule can be revisited —
+ *    per-variant items would let every size be advertised at its real price.
  */
 
 const MAX_ADDITIONAL_IMAGES = 10;
