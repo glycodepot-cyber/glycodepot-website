@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Container, Section } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
 import { CartAddFromUrl } from "@/components/site/cart/CartAddFromUrl";
-import { getProductByFeedId } from "@/lib/cart/client";
+import { redirect } from "next/navigation";
+import { getProductByFeedId, listCategories } from "@/lib/cart/client";
 import { pricedVariant } from "@/lib/cart/price-policy";
 
 /**
@@ -83,6 +84,21 @@ export default async function CartAddPage({
     (requestedVariant
       ? product.variants.find((v) => v.id === requestedVariant)
       : undefined) ?? pricedVariant(product.variants);
+
+  // A quote-only product has no price anywhere, so there is nothing to put in
+  // a cart: a line for it renders as "$0.00" and would be carried into
+  // checkout, which prices server-side and has no figure to use. The product
+  // page is the right destination — it offers "Request a quote" instead of
+  // "Add to cart", which is exactly the guard this route would otherwise skip.
+  // Google's own cart-URL test samples the RFQ products it crawled from the
+  // site, so this path gets exercised in review, not only by shoppers.
+  if (!variant || variant.price === null) {
+    const categories = await listCategories();
+    const categoryId = product.primaryCategoryId ?? product.categories[0];
+    const categorySlug =
+      categories.find((c) => c.id === categoryId)?.slug ?? "all";
+    redirect(`/products/${categorySlug}/${product.slug}`);
+  }
 
   return (
     <>
