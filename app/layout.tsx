@@ -81,6 +81,29 @@ export default function RootLayout({
           data-vpc="1"
           dangerouslySetInnerHTML={{ __html: nocotelTrafficBootstrap }}
         />
+        {/*
+          MetisSuite visitor identity. data-stid is the GlycoDepot tenant id.
+          The script derives its API base from its own src, so it must be
+          loaded from app.metissuiteai.app — that origin is already in
+          script-src and connect-src. Do NOT swap in the vendor's canonical
+          api.votel.ai snippet without adding that host to the CSP first.
+
+          React 19 hoists this into <head> wherever it is declared; that is
+          harmless here because the script falls back to scanning for its own
+          <script src> when document.currentScript is null.
+
+          Worth knowing when debugging: this script swallows every error in
+          empty catch blocks by design ("fail silent — never break the host
+          page"), so a CSP block or a bad stid produces no console output at
+          all. Verify with window.__votel_visitor_id_loaded and the
+          __v_vid_<stid> localStorage key instead.
+        */}
+        <link rel="preconnect" href="https://app.metissuiteai.app" />
+        <script
+          async
+          src="https://app.metissuiteai.app/embeds/visitor-id.js"
+          data-stid="988eaf4c-68f3-47b8-90a3-9fd5c0143bcb"
+        />
       </head>
       <GoogleAds />
       <GoogleTagManager />
