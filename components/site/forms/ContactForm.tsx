@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
+import Link from "next/link";
 import { Check, AlertCircle, Send } from "lucide-react";
 import { BrandButton } from "@/components/primitives";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { contactPage } from "@/lib/content";
+import { CONTACT_MARKETING_CONSENT_TEXT } from "@/lib/content/consent";
 import { submitContact } from "@/lib/cart/actions";
 
 const fields = contactPage.form.fields;
@@ -27,16 +29,19 @@ interface FormErrors {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ContactForm() {
+  const consentId = useId();
   const [values, setValues] = useState<FormState>({
     name: "",
     email: "",
     subject: fields.subject.options[0],
     message: "",
   });
+  const [marketingConsent, setMarketingConsent] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle",
   );
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   function update<K extends keyof FormState>(key: K, val: FormState[K]) {
     setValues((v) => ({ ...v, [key]: val }));
@@ -59,13 +64,20 @@ export function ContactForm() {
     e.preventDefault();
     if (!validate()) return;
     setStatus("loading");
+    setSubmitError(null);
     const result = await submitContact({
       name: values.name,
       email: values.email,
       subject: values.subject,
       message: values.message,
+      marketingConsent,
     });
-    setStatus(result.ok ? "done" : "error");
+    if (result.ok) {
+      setStatus("done");
+    } else {
+      setStatus("error");
+      setSubmitError(result.error);
+    }
   }
 
   if (status === "done") {
@@ -162,6 +174,36 @@ export function ContactForm() {
         />
       </Field>
 
+      <div className="space-y-3 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-muted-background,transparent)] p-4">
+        <div className="flex gap-2.5">
+          <input
+            id={consentId}
+            type="checkbox"
+            checked={marketingConsent}
+            onChange={(e) => setMarketingConsent(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 accent-[var(--color-brand)]"
+          />
+          <label
+            htmlFor={consentId}
+            className="text-[13px] leading-relaxed text-[var(--color-muted-foreground)]"
+          >
+            {CONTACT_MARKETING_CONSENT_TEXT}
+          </label>
+        </div>
+        <p className="text-[12px] leading-relaxed text-[var(--color-muted)]">
+          You don&rsquo;t need to tick this for us to answer you — we&rsquo;ll
+          reply either way. We use your details to handle your enquiry and keep
+          a record of it; see our{" "}
+          <Link
+            href="/legal/privacy"
+            className="underline underline-offset-2 hover:text-[var(--color-brand)]"
+          >
+            privacy notice
+          </Link>{" "}
+          for how long we keep it and how to ask for a copy or its deletion.
+        </p>
+      </div>
+
       <div className="flex items-center gap-4">
         <BrandButton type="submit" disabled={status === "loading"}>
           <Send className="size-4" />
@@ -171,6 +213,16 @@ export function ContactForm() {
           We reply within one business day.
         </p>
       </div>
+
+      {submitError ? (
+        <p
+          role="alert"
+          className="flex items-start gap-1.5 text-[13px] text-[var(--color-danger)]"
+        >
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          {submitError}
+        </p>
+      ) : null}
     </form>
   );
 }

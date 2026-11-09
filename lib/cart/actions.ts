@@ -16,6 +16,10 @@ import {
   type BysonOrderPayload,
 } from "@/lib/api/bysonhub";
 import { ghlContact, ghlNewsletter, ghlQuote } from "@/lib/api/ghl";
+import {
+  CONTACT_MARKETING_CONSENT_TEXT,
+  NEWSLETTER_CONSENT_TEXT,
+} from "@/lib/content/consent";
 import { sendSalesNotification } from "@/lib/email/notifications";
 import {
   createInternalCheckout,
@@ -337,6 +341,12 @@ export interface SubmitContactInput {
   email: string;
   subject?: string;
   message: string;
+  /**
+   * Optional, separate opt-in for marketing email. Answering the enquiry
+   * itself needs no consent — that is the whole point of writing to us — so
+   * this is only about whether we may mail them about anything else.
+   */
+  marketingConsent?: boolean;
 }
 
 export async function submitContact(
@@ -347,6 +357,16 @@ export async function submitContact(
     email: input.email,
     subject: input.subject,
     message: input.message,
+    fields: input.marketingConsent
+      ? {
+          consent_marketing_email: "yes",
+          consent_text: CONTACT_MARKETING_CONSENT_TEXT,
+          consent_given_at: new Date().toISOString(),
+          consent_source: "glycodepot.com contact form",
+          consent_method:
+            "web form, explicit tick box, pending email confirmation",
+        }
+      : { consent_marketing_email: "no" },
   });
 }
 
@@ -354,14 +374,31 @@ export async function submitContact(
 
 export async function subscribeNewsletter(
   email: string,
+  consent: boolean,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, error: "Please enter a valid email address." };
+  }
+  // Consent must be an affirmative act. Without the tick there is no lawful
+  // basis to mail this address, so the signup is refused outright rather than
+  // recorded as a lead for someone to mail later.
+  if (!consent) {
+    return {
+      ok: false,
+      error: "Please tick the consent box so we know you want these emails.",
+    };
   }
   return ghlNewsletter({
     name: email.split("@")[0],
     email,
     message: "Newsletter subscription",
+    fields: {
+      consent_marketing_email: "yes",
+      consent_text: NEWSLETTER_CONSENT_TEXT,
+      consent_given_at: new Date().toISOString(),
+      consent_source: "glycodepot.com footer newsletter form",
+      consent_method: "web form, explicit tick box, pending email confirmation",
+    },
   });
 }
 

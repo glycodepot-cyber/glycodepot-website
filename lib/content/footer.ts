@@ -27,6 +27,7 @@ export const footerContent = {
       { label: "Terms and Conditions", href: "/legal/terms" },
       { label: "Privacy Policy", href: "/legal/privacy" },
       { label: "Cookie Policy", href: "/legal/cookies" },
+      { label: "Unsubscribe", href: "/unsubscribe" },
     ] satisfies NavLink[],
   },
 };
