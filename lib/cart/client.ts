@@ -39,24 +39,31 @@ import { isDatabaseConfigured } from "@/lib/db";
 import { loadDatabaseCatalog } from "./database";
 import { applyPricePolicy } from "./price-policy";
 import { tagSlug } from "@/lib/seo/legacy-map";
-import archivedImageMapJson from "@/scripts/blob-url-map.json";
 
-/* ----------------- Durable product image recovery ----------------- */
-
-const archivedImageMap = archivedImageMapJson as Record<string, string>;
+/* ----------------- Product image serving guard ----------------- */
 
 /**
  * Product images are served from the `image-glycodepot` Vercel Blob store,
  * which belongs to the glycodepot team.
  *
  * History worth keeping, because this broke twice: the catalogue's own image
- * URLs point at BysonHub's Supabase bucket, whose objects were deleted (404
+ * URLs pointed at BysonHub's Supabase bucket, whose objects were deleted (404
  * NoSuchKey). A rescue copy was taken from the WordPress uploads folder into
  * a Vercel Blob store that was NOT in this team — and when that store went
  * away, every product page broke. The WordPress folder was the only surviving
  * copy; all 2,995 images were re-uploaded from it on 2026-11-06 into a store
  * the team owns outright, so no host outside this Vercel team is in the path
  * any more.
+ *
+ * Until 2026-11-08 this module also rewrote each dead Supabase URL to its Blob
+ * equivalent at render time, using scripts/blob-url-map.json. That map has now
+ * been written into the database (scripts/repoint-product-images.mjs), so 3,452
+ * rows carry the correct URL and the rewrite is gone — along with the 554 KB of
+ * JSON it dragged into every serverless bundle.
+ *
+ * What remains is the guard below. 47 rows still point at Supabase because
+ * their images did not survive anywhere; those render the brand placeholder,
+ * which is correct until new photography replaces them.
  *
  * Set this to `false` to fall back to the brand placeholder if the store ever
  * becomes unreachable again — that is strictly better than broken-image icons.
@@ -74,41 +81,18 @@ function isUnservableImage(src: string): boolean {
   return false;
 }
 
-function normalizedImageFilename(src: string): string {
-  try {
-    const filename = decodeURIComponent(
-      new URL(src, "https://glycodepot.com").pathname,
-    )
-      .split("/")
-      .pop();
-    return filename?.replace(/^\d+_main_/i, "").toLowerCase() ?? "";
-  } catch {
-    return "";
+function guardProductImages(product: Product): Product {
+  if (!product.images.some((image) => isUnservableImage(image.src))) {
+    return product;
   }
-}
-
-const archivedImageByFilename = new Map<string, string>();
-for (const destination of Object.values(archivedImageMap)) {
-  const filename = normalizedImageFilename(destination);
-  if (filename && !archivedImageByFilename.has(filename)) {
-    archivedImageByFilename.set(filename, destination);
-  }
-}
-
-function restoreProductImages(product: Product): Product {
-  const images = product.images.map((image) => {
-    const restored =
-      archivedImageMap[image.src] ??
-      archivedImageByFilename.get(normalizedImageFilename(image.src));
-
-    const src = restored ?? image.src;
-    if (isUnservableImage(src)) {
-      return { ...image, src: PLACEHOLDER_IMAGE_SRC };
-    }
-    return src === image.src ? image : { ...image, src };
-  });
-
-  return { ...product, images };
+  return {
+    ...product,
+    images: product.images.map((image) =>
+      isUnservableImage(image.src)
+        ? { ...image, src: PLACEHOLDER_IMAGE_SRC }
+        : image,
+    ),
+  };
 }
 
 /* ----------------- Prebake (build-time JSON) ----------------- */
@@ -210,7 +194,7 @@ async function loadCatalog(): Promise<{ products: Product[]; categories: Categor
   const catalog = await loadRawCatalog();
   return {
     ...catalog,
-    products: catalog.products.map(restoreProductImages).map(applyPricePolicy),
+    products: catalog.products.map(guardProductImages).map(applyPricePolicy),
   };
 }
 
