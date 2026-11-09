@@ -61,7 +61,10 @@ export function trackRfqSubmit(input: {
     product_categories: input.categories,
     bh_quote_id: input.bhQuoteId,
   });
-  trackAdsConversion(QUOTE_CONVERSION, input.requestId, 0);
+  // No value: an RFQ's worth is not known at submission, so Google Ads applies
+  // the conversion action's own fallback. Passing 0 here booked every lead as
+  // worthless to Smart Bidding.
+  trackAdsConversion(QUOTE_CONVERSION, input.requestId);
 }
 
 /** §4.1 Purchase — order confirmed. */
