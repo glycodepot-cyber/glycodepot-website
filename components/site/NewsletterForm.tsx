@@ -6,11 +6,13 @@ import { ArrowRight, Check } from "lucide-react";
 import { footerContent } from "@/lib/content";
 import { NEWSLETTER_CONSENT_TEXT } from "@/lib/content/consent";
 import { subscribeNewsletter } from "@/lib/cart/actions";
+import { HoneypotField, useFormGuard } from "@/components/site/forms/FormGuard";
 
 export function NewsletterForm() {
   const consentId = useId();
   const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
+  const formGuard = useFormGuard();
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle",
   );
@@ -25,7 +27,7 @@ export function NewsletterForm() {
     }
     setStatus("loading");
     setError(null);
-    const result = await subscribeNewsletter(email, consent);
+    const result = await subscribeNewsletter(email, consent, formGuard.read());
     if (result.ok) {
       setStatus("done");
     } else {
@@ -53,7 +55,8 @@ export function NewsletterForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3">
+    <form onSubmit={onSubmit} className="relative space-y-3">
+      <HoneypotField inputRef={formGuard.hpRef} />
       <label className="sr-only" htmlFor="newsletter-email">
         Email address
       </label>

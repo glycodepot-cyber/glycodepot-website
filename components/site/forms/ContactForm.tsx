@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { contactPage } from "@/lib/content";
 import { CONTACT_MARKETING_CONSENT_TEXT } from "@/lib/content/consent";
 import { submitContact } from "@/lib/cart/actions";
+import { HoneypotField, useFormGuard } from "@/components/site/forms/FormGuard";
 
 const fields = contactPage.form.fields;
 
@@ -37,6 +38,7 @@ export function ContactForm() {
     message: "",
   });
   const [marketingConsent, setMarketingConsent] = useState(false);
+  const formGuard = useFormGuard();
   const [errors, setErrors] = useState<FormErrors>({});
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">(
     "idle",
@@ -71,6 +73,7 @@ export function ContactForm() {
       subject: values.subject,
       message: values.message,
       marketingConsent,
+      guard: formGuard.read(),
     });
     if (result.ok) {
       setStatus("done");
@@ -100,7 +103,8 @@ export function ContactForm() {
   }
 
   return (
-    <form noValidate onSubmit={onSubmit} className="space-y-5">
+    <form noValidate onSubmit={onSubmit} className="relative space-y-5">
+      <HoneypotField inputRef={formGuard.hpRef} />
       <div className="grid gap-5 sm:grid-cols-2">
         <Field
           id="name"
