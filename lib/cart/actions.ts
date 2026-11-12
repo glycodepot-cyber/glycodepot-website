@@ -21,6 +21,7 @@ import {
   NEWSLETTER_CONSENT_TEXT,
 } from "@/lib/content/consent";
 import { sendSalesNotification } from "@/lib/email/notifications";
+import { logBlocked, spamReason, type FormGuard } from "@/lib/spam/guard";
 import {
   createInternalCheckout,
   isInternalCheckoutEnabled,
@@ -200,6 +201,17 @@ export async function submitQuote(
   request: QuoteRequest,
   files?: FormData,
 ): Promise<QuoteResponse> {
+  const blocked = spamReason({
+    guard: request.guard,
+    email: request.customer?.email,
+    names: [request.customer?.name, request.customer?.company, request.customer?.city, request.customer?.state],
+    message: request.customer?.notes,
+  });
+  if (blocked) {
+    logBlocked("quote", blocked, request.customer?.email);
+    // Look like a normal success so the bot has nothing to learn from.
+    return { id: `quote_${Date.now()}`, receivedAt: new Date().toISOString() };
+  }
   if (files?.getAll("files").length && request.service !== "custom-glycan-synthesis") throw new Error("Uploads are available for custom synthesis requests.");
   if (directSalesEnabled()) {
     const uploaded = await prepareQuoteFiles(files);
@@ -347,11 +359,23 @@ export interface SubmitContactInput {
    * this is only about whether we may mail them about anything else.
    */
   marketingConsent?: boolean;
+  /** Anti-bot honeypot + timing stamp (lib/spam/guard). */
+  guard?: FormGuard;
 }
 
 export async function submitContact(
   input: SubmitContactInput,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const blocked = spamReason({
+    guard: input.guard,
+    email: input.email,
+    names: [input.name, input.subject],
+    message: input.message,
+  });
+  if (blocked) {
+    logBlocked("contact", blocked, input.email);
+    return { ok: true };
+  }
   return ghlContact({
     name: input.name,
     email: input.email,
@@ -375,7 +399,13 @@ export async function submitContact(
 export async function subscribeNewsletter(
   email: string,
   consent: boolean,
+  guard?: FormGuard,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
+  const blocked = spamReason({ guard, email });
+  if (blocked) {
+    logBlocked("newsletter", blocked, email);
+    return { ok: true };
+  }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { ok: false, error: "Please enter a valid email address." };
   }

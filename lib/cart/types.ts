@@ -109,6 +109,8 @@ export interface QuoteLine {
 
 export interface QuoteRequest {
   service?: "custom-glycan-synthesis";
+  /** Anti-bot honeypot + timing stamp, checked server-side (lib/spam/guard). */
+  guard?: import("@/lib/spam/guard").FormGuard;
   lines: QuoteLine[];
   customer: {
     name: string;

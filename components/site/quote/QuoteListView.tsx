@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { QtyStepper } from "@/components/site/cart/QtyStepper";
 import { submitQuote } from "@/lib/cart/actions";
+import { HoneypotField, useFormGuard } from "@/components/site/forms/FormGuard";
 import type { QuoteLine } from "@/lib/cart";
 import { attributionForWebhook } from "@/lib/analytics/utm";
 import { trackRfqSubmit } from "@/lib/analytics/dataLayer";
@@ -160,6 +161,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
   const [billingSame,setBillingSame]=useState(true);
   const [billing,setBilling]=useState<BillingAddress>({firstName:"",lastName:"",company:"",address1:"",city:"",state:"",postal:"",country:"US"});
   const [status, setStatus] = useState<"idle" | "loading" | "done">("idle");
+  const formGuard = useFormGuard();
 
   function update<K extends keyof CustomerState>(k: K, v: CustomerState[K]) {
     setCustomer((c) => ({ ...c, [k]: v }));
@@ -212,6 +214,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
       if (service) files.forEach(file => uploaded.append("files", file));
       const res = await submitQuote({
         ...(service ? { service: "custom-glycan-synthesis" as const } : {}),
+        guard: formGuard.read(),
         lines,
         customer: {
           name: `${customer.firstName} ${customer.lastName}`.trim(),
@@ -400,8 +403,9 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
         <form
           noValidate
           onSubmit={onSubmit}
-          className="space-y-4 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-6 lg:p-7"
+          className="relative space-y-4 rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-6 lg:p-7"
         >
+          <HoneypotField inputRef={formGuard.hpRef} />
           <h2 className="type-h3 text-[var(--color-foreground)]">
             Your details
           </h2>
