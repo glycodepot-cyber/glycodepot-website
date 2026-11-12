@@ -8,6 +8,8 @@ const spam = {
   "real RFQ spam (Nov 2026)": { email: "k.c.s.i.e.f.f@gmail.com", names: ["YonccviNLYuFKuXBSmzf SNihiWKYYhgypiaiw", "Uhgaluuhmd LLC"], message: "TYvfyraRDDXADTgENjLndALT" },
   "gibberish name, clean email": { email: "x@foo.com", names: ["YonccviNLYuFKuXBSmzf SNihiWKYYhgypiaiw"] },
   "gibberish in second word": { email: "a@b.com", names: ["Ann YonccviNLYuFKuXBSmzf"] },
+  "real RFQ spam #2 (Nov 2026)": { email: "sfein@sfeinlaw.com", names: ["VkzygfFfggEdlyNq LnVUavyOdEDFXAZb", "Wqqxsi LLC"], message: "HLkFaDmozlCVRcxhbYhXsywR" },
+  "gibberish message #2 alone": { email: "a@b.com", names: ["Ann Lee"], message: "HLkFaDmozlCVRcxhbYhXsywR" },
   "gibberish one-word message": { email: "x@foo.com", names: ["Ann Lee"], message: "TYvfyraRDDXADTgENjLndALT" },
 };
 const real = {
@@ -17,6 +19,7 @@ const real = {
   "dotted but normal gmail": { email: "s.k.nair@gmail.com", names: ["Shukkoor Kondengaden"] },
   "all caps": { email: "a@b.com", names: ["ANN LEE", "NIH NCATS", "BETHESDA"] },
   "glycan shorthand messages": { email: "a@b.com", names: ["Ann"], message: "STolGlcNAcFmoc" },
+  "long glycan shorthand": { email: "a@b.com", names: ["Ann"], message: "GalNAcGlcNAcManGlcNAcFuc" },
   "glycan linkage": { email: "a@b.com", names: ["Ann"], message: "GlcNAcβ1-4GlcNAc" },
   "SMILES": { email: "a@b.com", names: ["Ann"], message: "CC(=O)N[C@@H]1[C@@H](O)[C@H](O)[C@@H](CO)O[C@H]1O" },
 };

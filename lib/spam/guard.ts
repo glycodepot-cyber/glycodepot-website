@@ -50,6 +50,9 @@ function looksRandom(word: string, strict = false): boolean {
   // A run of 4+ capitals right after a lowercase letter ("raRDDXADT",
   // "hiWKYY") does not occur in names or in carbohydrate shorthand.
   if (/[a-z][A-Z]{4,}/.test(w)) return true;
+  // 7+ consonants in a row ("zlCVRcxhb") — sugar abbreviations top out at 5
+  // ("GalNAcGlcNAc" → "cglcn"), so this is safe for glycan shorthand.
+  if (/[bcdfghjklmnpqrstvwxyz]{7,}/i.test(w)) return true;
   if (strict) return false;
   // Names/companies: 3+ lower→upper flips inside one word.
   // "McDonald", "GlycoWorks", "BioGlycoTech" stay under the bar.
