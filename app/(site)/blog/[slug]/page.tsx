@@ -82,6 +82,22 @@ function renderBlock(block: ContentBlock, i: number) {
           ))}
         </ul>
       );
+    case "image":
+      return (
+        <figure key={i} className="mt-8">
+          <img
+            src={block.src}
+            alt={block.alt}
+            loading="lazy"
+            className="w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white"
+          />
+          {block.caption ? (
+            <figcaption className="mt-3 text-center text-xs leading-relaxed text-[var(--color-muted)]">
+              {block.caption}
+            </figcaption>
+          ) : null}
+        </figure>
+      );
     case "callout":
       return (
         <div
