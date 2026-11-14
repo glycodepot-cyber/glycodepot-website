@@ -39,6 +39,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.r2.dev" },
       // BysonHub product images are stored in Supabase storage
       { protocol: "https", hostname: "*.supabase.co" },
+      // Editorial assets (blog figures) are authored in Marblism and served
+      // from its CDN. Allowed here so next/image can be used for them later.
+      { protocol: "https", hostname: "cdn.marblism.com" },
     ],
   },
   async redirects() {
@@ -112,7 +115,9 @@ const nextConfig: NextConfig = {
               "worker-src 'self' blob:",
               "style-src 'self' 'unsafe-inline'",
               // Google marketing pixels: GTM, GA4, Google Ads / DoubleClick.
-              "img-src 'self' data: blob: https://q.stripe.com https://glycodepot.com https://www.glycodepot.com https://placehold.co https://*.bysonhub.com https://api.bysonhub.com https://*.public.blob.vercel-storage.com https://*.r2.dev https://img.clerk.com https://*.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.google.com https://*.g.doubleclick.net https://googleads.g.doubleclick.net https://www.googleadservices.com https://pagead2.googlesyndication.com https://click.nocotel.com",
+              // cdn.marblism.com = blog figure CDN; without it the editorial
+              // images are blocked and the post renders alt text instead.
+              "img-src 'self' data: blob: https://q.stripe.com https://glycodepot.com https://www.glycodepot.com https://placehold.co https://*.bysonhub.com https://api.bysonhub.com https://*.public.blob.vercel-storage.com https://*.r2.dev https://img.clerk.com https://*.supabase.co https://cdn.marblism.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.google.com https://*.g.doubleclick.net https://googleads.g.doubleclick.net https://www.googleadservices.com https://pagead2.googlesyndication.com https://click.nocotel.com",
               "font-src 'self' data:",
               // GA4 / Google Ads beacons post to analytics + doubleclick endpoints.
               "connect-src 'self' https://api.stripe.com https://r.stripe.com https://m.stripe.network https://api.bysonhub.com https://va.vercel-scripts.com https://vitals.vercel-insights.com https://*.clerk.accounts.dev https://*.clerk.com https://clerk.glycodepot.com https://accounts.glycodepot.com https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.g.doubleclick.net https://www.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://ad.doubleclick.net https://app.metissuiteai.app https://click.nocotel.com https://app.nocotel.com",
