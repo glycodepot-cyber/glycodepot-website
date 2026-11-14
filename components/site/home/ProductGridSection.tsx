@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Container, Section, SectionHeading } from "@/components/primitives";
 import { ProductCard } from "./ProductCard";
+import { HomeProductCard } from "./HomeProductCard";
 import { listProducts } from "@/lib/cart/client";
-import { HomeProductGrid } from "./HomeProductGrid";
 
 interface ProductGridSectionProps {
   eyebrow?: string;
@@ -59,15 +59,13 @@ export async function ProductGridSection({
             </Link>
           ) : null}
         </div>
-        {categorySlug === "sugar-nucleotides" ? (
-          <HomeProductGrid products={displayedItems} categorySlug={categorySlug} />
-        ) : (
-          <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
-            {displayedItems.map((product) => (
-              <ProductCard key={product.id} product={product} categorySlug={categorySlug} />
-            ))}
-          </div>
-        )}
+        <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
+          {displayedItems.map((product) => categorySlug === "sugar-nucleotides" ? (
+            <HomeProductCard key={product.id} product={product} categorySlug={categorySlug} />
+          ) : (
+            <ProductCard key={product.id} product={product} categorySlug={categorySlug} />
+          ))}
+        </div>
       </Container>
     </Section>
   );

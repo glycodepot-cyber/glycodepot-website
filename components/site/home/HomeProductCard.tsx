@@ -5,19 +5,20 @@ import type { Product } from "@/lib/cart";
 import { formatMoney } from "@/lib/format";
 
 const productImageUrls: Record<string, string> = {
-  "cmp-c9-azido-neu5ac-cmp-c9-azido-sialic-acid": "/images/home-products/cmp-c9-azido-neu5ac-cmp-c9-azido-sialic-acid.jpg",
-  "cmp-neu5ac-2na-cmp-sialic-acid-3063-71-6": "/images/home-products/cmp-neu5ac-2na-cmp-sialic-acid-3063-71-6.jpg",
-  "cmp-neu5az-cmp-azido-sialic-acid": "/images/home-products/cmp-neu5az-cmp-azido-sialic-acid.jpg",
-  "cmp-neu5gc-2na-cytidine-5-monophospho-n-glycolylneuraminic-acid-98396-76-0": "/images/home-products/cmp-neu5gc-2na-cytidine-5-monophospho-n-glycolylneuraminic-acid-98396-76-0.jpg",
-  "gdp-6-azido-fucose-gdp-6-n3-fuc": "/images/home-products/gdp-6-azido-fucose-gdp-6-n3-fuc.png",
-  "gdp-l-fucose-gdp-l-fuc-148296-47-3": "/images/home-products/gdp-l-fucose-gdp-l-fuc-148296-47-3.png",
-  "gdp-man": "/images/home-products/gdp-man.png",
-  "udp-2-alkyne-galnac": "/images/home-products/udp-2-alkyne-galnac.png",
+  "cmp-c9-azido-neu5ac-cmp-c9-azido-sialic-acid": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/CMP-C9-Azido-Neu5Ac.jpg",
+  "cmp-neu5ac-2na-cmp-sialic-acid-3063-71-6": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/CMP-N-acetylneuraminicacid.jpg",
+  "cmp-neu5az-cmp-azido-sialic-acid": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/CMP-Neu5Az.jpg",
+  "cmp-neu5gc-2na-cytidine-5-monophospho-n-glycolylneuraminic-acid-98396-76-0": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/CMP-Neu5Gc.jpg",
+  "gdp-6-azido-fucose-gdp-6-n3-fuc": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/GDP-6-N3-Fuc.png",
+  "gdp-l-fucose-gdp-l-fuc-148296-47-3": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/GDP-L-Fuc.png",
+  "gdp-man": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/GDP-Man.png",
+  "udp-2-alkyne-galnac": "https://laoycnbsattw3wiy.public.blob.vercel-storage.com/products/Screenshot-2024-04-23-195052.png",
 };
 
 export function HomeProductCard({ product, categorySlug }: { product: Product; categorySlug?: string }) {
   const href = `/products/${categorySlug ?? product.categories[0] ?? "all"}/${product.slug}`;
   const image = product.images[0];
+  const imageSrc = productImageUrls[product.slug] ?? image?.src;
   const isQuote = product.price === null;
   const inStockVariants = product.variants.filter((variant) => variant.inStock).length;
   const totalVariants = product.variants.length;
@@ -34,7 +35,7 @@ export function HomeProductCard({ product, categorySlug }: { product: Product; c
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-[#e1e8dc] bg-white shadow-sm transition-all duration-200 hover:-translate-y-1.5 hover:border-[#16844e]/40 hover:shadow-[var(--shadow-lg)]">
       <Link href={href} className="relative block aspect-square overflow-hidden bg-[#f2f7ed]" aria-label={`View ${product.name}`}>
-        {image ? <Image src={image.src} alt={image.alt || product.name} width={image.width ?? 600} height={image.height ?? 600} sizes="(min-width: 1280px) 280px, (min-width: 640px) 34vw, 46vw" className="h-full w-full object-contain p-5 transition-transform duration-500 group-hover:scale-105" /> : null}
+        {imageSrc ? <Image src={imageSrc} alt={image?.alt || product.name} width={image?.width ?? 600} height={image?.height ?? 600} sizes="(min-width: 1280px) 280px, (min-width: 640px) 34vw, 46vw" className="h-full w-full object-contain p-5 transition-transform duration-500 group-hover:scale-105" /> : null}
         {product.badge ? <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-extrabold uppercase tracking-wider text-[#12613e]">{product.badge}</span> : null}
       </Link>
       <ProductCardQuickAction product={product} />
