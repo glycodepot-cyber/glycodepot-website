@@ -20,32 +20,31 @@ export function HeroSlider() {
     }),
   );
   const [emblaRef, emblaApi] = useEmblaCarousel(
-    { loop: true, align: "start", duration: 32 },
+    { loop: true, align: "start", duration: 34 },
     [autoplay.current],
   );
   const [selected, setSelected] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
 
   const scrollTo = useCallback(
-    (i: number) => emblaApi?.scrollTo(i),
+    (index: number) => emblaApi?.scrollTo(index),
     [emblaApi],
   );
 
   useEffect(() => {
     if (!emblaApi) return;
     const onSelect = () => setSelected(emblaApi.selectedScrollSnap());
-    setScrollSnaps(emblaApi.scrollSnapList());
+    const updateSnaps = () => setScrollSnaps(emblaApi.scrollSnapList());
     emblaApi.on("select", onSelect);
-    emblaApi.on("reInit", onSelect);
-    onSelect();
+    emblaApi.on("reInit", updateSnaps);
+    updateSnaps();
     return () => {
       emblaApi.off("select", onSelect);
-      emblaApi.off("reInit", onSelect);
+      emblaApi.off("reInit", updateSnaps);
     };
   }, [emblaApi]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (mq.matches) autoplay.current.stop();
   }, []);
@@ -53,40 +52,27 @@ export function HeroSlider() {
   return (
     <section
       aria-label="Hero"
-      className="relative isolate overflow-hidden bg-[var(--color-brand)] text-white"
+      className="hero-slider relative isolate overflow-hidden bg-[#075536] text-white"
     >
-      {/* Layered gradient backdrop — matches WP visual feel */}
+      {/* Bold emerald backdrop with lime glow, pink accent and fine grid. */}
       <div
-        aria-hidden
+        aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(1100px 600px at 8% 12%, rgba(255,255,255,0.18), transparent 55%), radial-gradient(900px 600px at 92% 88%, rgba(247,107,106,0.28), transparent 60%), linear-gradient(135deg, #1a7a3e 0%, #145f31 55%, #0e4924 100%)",
-        }}
-      />
-
-      {/* Decorative orbs */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-24 top-1/3 -z-10 size-72 rounded-full bg-white/8 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-[-120px] top-[-80px] -z-10 size-[420px] rounded-full bg-[var(--color-accent)]/25 blur-3xl"
+        style={{ background: "radial-gradient(1100px 620px at 7% 10%, rgba(197,242,26,.2), transparent 56%), radial-gradient(1000px 560px at 92% 90%, rgba(239,101,118,.22), transparent 60%), linear-gradient(135deg,#11774b 0%,#075536 53%,#123e31 100%)" }}
       />
 
       {/* Fine grid pattern overlay */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.08]"
+        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.13]"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.4) 1px, transparent 1px)",
-          backgroundSize: "44px 44px",
+            "linear-gradient(rgba(255,255,255,.34) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.34) 1px, transparent 1px)",
+          backgroundSize: "46px 46px",
           maskImage:
-            "radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 80%)",
+            "radial-gradient(ellipse 82% 65% at 50% 48%, black 35%, transparent 85%)",
           WebkitMaskImage:
-            "radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 80%)",
+            "radial-gradient(ellipse 82% 65% at 50% 48%, black 35%, transparent 85%)",
         }}
       />
 
@@ -97,15 +83,16 @@ export function HeroSlider() {
               <div
                 key={i}
                 className="min-w-0 flex-[0_0_100%]"
+                aria-hidden={i !== selected}
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`${i + 1} of ${heroSlides.length}`}
               >
-                <div className="mx-auto grid max-w-[var(--container-max)] items-center gap-6 px-5 py-8 pb-16 sm:gap-10 sm:px-8 sm:py-14 sm:pb-14 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-10 lg:py-24">
+                <div className="mx-auto grid max-w-[var(--container-max)] items-center gap-8 px-5 py-11 pb-20 sm:gap-10 sm:px-8 sm:py-16 sm:pb-16 lg:min-h-[600px] lg:grid-cols-[1.04fr_.96fr] lg:gap-14 lg:px-10 lg:py-[76px]">
                   {/* Left — copy */}
-                  <div className="max-w-2xl text-center sm:text-left">
+                  <div className="max-w-2xl text-left">
                     <span className="type-overline inline-flex items-center gap-2 text-white/75">
-                      <span className="inline-block size-1.5 rounded-full bg-[var(--color-accent)]" />
+                      <span className="inline-block size-1.5 rounded-full bg-[#ff6878]" />
                       {String(i + 1).padStart(2, "0")} /{" "}
                       {String(heroSlides.length).padStart(2, "0")}
                     </span>
@@ -115,50 +102,51 @@ export function HeroSlider() {
                         one slide at a time so users see one big headline
                         either way. */}
                     {i === 0 ? (
-                      <h1 className="type-display mt-5 text-balance text-white">
+                      <h1 className="type-display mt-5 max-w-[14ch] text-balance text-white">
                         {slide.headline}
                       </h1>
                     ) : (
-                      <h2 className="type-display mt-5 text-balance text-white">
+                      <h2 className="type-display mt-5 max-w-[14ch] text-balance text-white">
                         {slide.headline}
                       </h2>
                     )}
                     <p className="type-body-lg mt-6 max-w-xl text-pretty text-white/85">
                       {slide.body}
                     </p>
-                    <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:mt-9 sm:justify-start">
+                    <div className="mt-8 flex flex-wrap items-center gap-5 sm:mt-9">
                       <BrandButton tone="light" size="lg" href={slide.ctaHref}>
                         {slide.ctaLabel}
                       </BrandButton>
                       <a
                         href="/quote-request"
-                        className="group/link inline-flex items-center gap-1.5 text-sm font-semibold text-white/85 underline-offset-4 transition-colors duration-150 hover:text-white hover:underline"
+                        className="group/link inline-flex items-center gap-1.5 text-sm font-semibold text-white/90 underline decoration-white/35 underline-offset-4 transition-colors hover:text-[#d5f860]"
                       >
                         Request a Quote
                         <span className="inline-block transition-transform duration-150 group-hover/link:translate-x-1">→</span>
                       </a>
                     </div>
+                    <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs font-bold uppercase tracking-[0.12em] text-white/70 sm:mt-10">
+                      <span>Research-grade materials</span>
+                      <span>Lot-specific documentation</span>
+                    </div>
                   </div>
 
                   {/* Right — image card */}
                   <div className="relative mx-auto w-full max-w-[85%] sm:max-w-[520px] lg:mx-0 lg:ml-auto">
-                    {/* Soft glow behind image */}
-                    <div
-                      aria-hidden
-                      className="absolute -inset-6 -z-10 rounded-[28px] bg-white/10 blur-2xl"
-                    />
+                    {/* Raised lime frame anchors the scientific artwork. */}
+                    <div aria-hidden="true" className="absolute -inset-2 -z-10 rotate-[-2deg] rounded-[28px] bg-[#c5f21a] shadow-[0_0_0_1px_rgba(255,255,255,.22)]" />
                     {/* Accent dot */}
                     <div
                       aria-hidden
-                      className="absolute -left-3 -top-3 z-10 size-6 rounded-full bg-[var(--color-accent)] shadow-[0_0_0_4px_rgba(255,255,255,0.18)]"
+                      className="absolute -left-3 -top-3 z-10 size-6 rounded-full bg-[#ff6878] shadow-[0_0_0_4px_rgba(255,255,255,.18)]"
                     />
                     {/* Accent ring */}
                     <div
                       aria-hidden
-                      className="absolute -right-4 -bottom-4 z-10 hidden size-20 rounded-full border-2 border-dashed border-white/40 lg:block"
+                      className="absolute -right-4 -bottom-4 z-10 hidden size-20 rounded-full border-2 border-dashed border-white/70 lg:block"
                     />
 
-                    <div className="relative overflow-hidden rounded-[24px] bg-white shadow-[0_30px_80px_-20px_rgba(0,0,0,0.45)] ring-1 ring-white/20">
+                    <div className="relative overflow-hidden rounded-[24px] bg-[#eef3ee] shadow-[0_30px_80px_-20px_rgba(0,0,0,.48)] ring-[7px] ring-[#c5f21a]">
                       <Image
                         src={slide.image.src}
                         alt={slide.image.alt}
@@ -166,7 +154,7 @@ export function HeroSlider() {
                         height={1024}
                         priority={i === 0}
                         sizes="(min-width: 1024px) 520px, (min-width: 640px) 70vw, 90vw"
-                        className={`aspect-square h-auto w-full ${slide.image.fit === "cover" ? "object-cover" : "object-contain p-4"}`}
+                        className={`aspect-square h-auto w-full ${slide.image.fit === "cover" ? "object-cover" : "object-contain p-5 sm:p-7"}`}
                       />
                       {/* Soft inner highlight */}
                       <div
@@ -190,7 +178,7 @@ export function HeroSlider() {
           type="button"
           aria-label="Previous slide"
           onClick={() => emblaApi?.scrollPrev()}
-          className="absolute left-3 top-1/2 hidden size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20 lg:grid"
+          className="absolute left-3 top-1/2 hidden size-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-[#c5f21a] hover:bg-white/20 lg:grid"
         >
           <ChevronLeft className="size-5" />
         </button>
@@ -198,7 +186,7 @@ export function HeroSlider() {
           type="button"
           aria-label="Next slide"
           onClick={() => emblaApi?.scrollNext()}
-          className="absolute right-3 top-1/2 hidden size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-white backdrop-blur transition-colors hover:bg-white/20 lg:grid"
+          className="absolute right-3 top-1/2 hidden size-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-white/10 text-white backdrop-blur transition hover:border-[#c5f21a] hover:bg-white/20 lg:grid"
         >
           <ChevronRight className="size-5" />
         </button>
@@ -207,23 +195,25 @@ export function HeroSlider() {
         <div
           role="tablist"
           aria-label="Slides"
-          className="absolute inset-x-0 bottom-6 flex items-center justify-center gap-2"
+          className="absolute inset-x-0 bottom-6 flex items-center justify-center gap-2.5"
         >
           {scrollSnaps.map((_, i) => (
             <button
               key={i}
+              type="button"
               role="tab"
-              aria-selected={selected === i}
               aria-label={`Go to slide ${i + 1}`}
+              aria-selected={selected === i}
               onClick={() => scrollTo(i)}
               className={cn(
                 "h-1.5 rounded-full transition-all",
                 selected === i
-                  ? "w-8 bg-white"
-                  : "w-2 bg-white/40 hover:bg-white/60",
+                  ? "w-8 bg-[#c5f21a]"
+                  : "w-2 bg-white/45 hover:bg-white/80",
               )}
             />
           ))}
+          <span className="ml-2 text-xs font-bold tabular-nums text-white/75">{String(selected + 1).padStart(2, "0")} / {String(heroSlides.length).padStart(2, "0")}</span>
         </div>
       </div>
     </section>

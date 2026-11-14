@@ -34,14 +34,43 @@ import { OrganizationJsonLd, FaqJsonLd } from "@/components/site/JsonLd";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
-  // Use the absolute form so the root layout's template doesn't append " · GlycoDepot".
   title: {
-    absolute: "GlycoDepot — Your Trusted Source for Glycoscience Solutions",
+    absolute: "GlycoDepot | Glycoscience Reagents, Sugar Nucleotides & Expert Services",
   },
   description:
-    "Sugar nucleotides, glycoenzymes, oligosaccharides, glycan arrays, and expert services — sourced from expert labs to yours. ISO-certified, PhD-level expertise.",
-  // openGraph + twitter metadata fully inherited from app/layout.tsx so the
-  // auto-discovered app/opengraph-image.tsx is included.
+    "Shop high-purity sugar nucleotides, glycoenzymes and glycoanalysis standards, or explore custom glycan synthesis and LC-MS/MS glycosylation analysis from GlycoDepot.",
+  keywords: [
+    "glycoscience reagents",
+    "sugar nucleotides",
+    "CMP-Neu5Ac",
+    "GDP-fucose",
+    "glycan analysis",
+    "custom glycan synthesis",
+    "glycosylation analysis",
+  ],
+  openGraph: {
+    title: "GlycoDepot | Glycoscience Reagents & Expert Services",
+    description:
+      "High-purity glycoscience reagents, specialty glycans and custom laboratory services for research and industry.",
+    url: "/",
+    siteName: "GlycoDepot",
+    type: "website",
+    locale: "en_US",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "GlycoDepot glycoscience reagents and expert services",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GlycoDepot | Glycoscience Reagents & Expert Services",
+    description:
+      "Research-grade glycoscience reagents, specialty glycans and custom services.",
+  },
 };
 
 export default function HomePage() {
@@ -90,7 +119,7 @@ export default function HomePage() {
       {/* 7 — Applications */}
       <Applications />
 
-      {/* 8 — Contact CTA */}
+      {/* 8 — Contact call-to-action */}
       <ContactCTA />
 
       {/* 9 — What is Glycoscience? + disciplines */}

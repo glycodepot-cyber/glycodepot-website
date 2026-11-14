@@ -17,7 +17,7 @@ export default async function Image() {
           justifyContent: "space-between",
           padding: "80px",
           background:
-            "linear-gradient(135deg, #16a34a 0%, #15803d 50%, #0f766e 100%)",
+            "linear-gradient(135deg, #11774b 0%, #075536 56%, #123e31 100%)",
           color: "white",
           fontFamily: "sans-serif",
         }}
@@ -28,6 +28,7 @@ export default async function Image() {
               fontSize: 32,
               fontWeight: 700,
               letterSpacing: "0.15em",
+              color: "#c5f21a",
               textTransform: "uppercase",
               opacity: 0.85,
             }}
@@ -38,12 +39,13 @@ export default async function Image() {
             style={{
               fontSize: 72,
               fontWeight: 700,
+              color: "#c5f21a",
               marginTop: 40,
               lineHeight: 1.1,
               maxWidth: 900,
             }}
           >
-            Your trusted source for glycoscience solutions
+            Sugar nucleotides, without the guesswork.
           </div>
         </div>
         <div
@@ -55,7 +57,7 @@ export default async function Image() {
             alignItems: "center",
           }}
         >
-          <span>3,500+ reagents · Custom synthesis · Expert services</span>
+          <span>Research-grade reagents · Custom synthesis · Expert services</span>
           <span style={{ fontWeight: 700 }}>glycodepot.com</span>
         </div>
       </div>
