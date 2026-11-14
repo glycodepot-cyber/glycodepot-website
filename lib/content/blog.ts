@@ -3,6 +3,7 @@ export type ContentBlock =
   | { type: "h2"; text: string }
   | { type: "h3"; text: string }
   | { type: "ul"; items: string[] }
+  | { type: "image"; src: string; alt: string; caption?: string }
   | { type: "callout"; text: string };
 
 export interface BlogPost {
@@ -367,6 +368,232 @@ export const blogPosts: BlogPost[] = [
           "Over-interpreting weak positives — clusters of structurally related glycan positives are more meaningful than isolated weak hits.",
           "Ignoring glycan orientation — some immobilization chemistries can bury the binding epitope; test both reducing-end and non-reducing-end coupling where possible.",
         ],
+      },
+    ],
+  },
+  {
+    slug: "what-is-glycosylation",
+    title: "What Is Glycosylation? A Practical Guide for Researchers",
+    excerpt:
+      "Glycosylation is the enzymatic attachment of a carbohydrate to a protein, lipid, or small molecule. Here is how the main types differ, what the enzymes and sugar donors are, and how to analyze glycosylation at the bench.",
+    category: "Glycobiology Basics",
+    tags: [
+      "glycosylation",
+      "N-linked glycosylation",
+      "O-glycosylation",
+      "glycosyltransferases",
+      "sialylation",
+      "glycomics",
+    ],
+    publishedAt: "2026-11-14",
+    readTime: 9,
+    author: "GlycoDepot Editorial",
+    body: [
+      {
+        type: "image",
+        src: "https://cdn.marblism.com/P11mYDeZufE.png",
+        alt: "A biantennary, core-fucosylated, disialylated N-glycan attached to a membrane protein, drawn in CFG symbol notation",
+        caption:
+          "A biantennary N-glycan with core fucose (α1-6) and two α2-3 sialic acids, as it would appear on a cell-surface glycoprotein. Structure drawn from GlyTouCan G17689DH.",
+      },
+      {
+        type: "p",
+        text: "Glycosylation is the enzymatic attachment of a carbohydrate, or sugar, to a protein, lipid, or small molecule. The attached carbohydrate, often a single sugar or a more complex structure called a glycan, can change how that molecule folds, behaves, moves through a cell, or interacts with other molecules. Glycosylation is a family of processes, not one fixed modification: the resulting structures depend on the enzymes, sugar donors, cell type, and conditions involved.",
+      },
+      {
+        type: "h2",
+        text: "Why is glycosylation important?",
+      },
+      {
+        type: "p",
+        text: "For proteins, glycans can support folding and quality control, affect stability and trafficking, and influence cell signaling and immune recognition. They can also affect a protein's interactions with other molecules. The outcome depends on the protein and the glycan; adding a sugar does not always have the same effect.",
+      },
+      {
+        type: "p",
+        text: "Protein glycosylation is also a key consideration in biologic research and manufacturing. Glycan features such as branching, fucosylation, and sialylation can influence a biologic's properties, including how long it circulates in the body. These effects are molecule-specific, so glycan characterization helps researchers understand and compare a protein rather than assume a particular glycan will produce a particular outcome.",
+      },
+      {
+        type: "p",
+        text: "Unlike a sequence-defined modification, many glycans are not built from a direct template. They are assembled and remodeled by enzymes, so one protein may occur as a mixture of related glycoforms.",
+      },
+      {
+        type: "h2",
+        text: "Where are glycans built?",
+      },
+      {
+        type: "p",
+        text: "For proteins entering the secretory pathway, glycosylation begins mainly in the endoplasmic reticulum (ER) and continues in the Golgi apparatus. N-linked glycans are initiated in the ER, where a preassembled sugar structure is transferred to a protein. The glycan is then trimmed and processed; the Golgi adds or modifies sugars to produce a range of mature structures.",
+      },
+      {
+        type: "p",
+        text: "Other types have different locations. Mucin-type O-glycans are mainly built stepwise in the Golgi, while O-GlcNAc is added to intracellular proteins in the cytoplasm and nucleus. GPI anchors are assembled in the ER and can be remodeled later in the Golgi.",
+      },
+      {
+        type: "image",
+        src: "https://cdn.marblism.com/FP2S3gI2fck.png",
+        alt: "Pathway showing a high-mannose precursor glycan in the ER, stepwise processing in the Golgi, and a mature sialylated glycoprotein at the cell surface",
+        caption:
+          "In the secretory pathway, the ER initiates N-glycosylation with a high-mannose precursor and the Golgi processes it further. Structures drawn from GlyTouCan G00028MO (Man5) and G17689DH.",
+      },
+      {
+        type: "h2",
+        text: "Types of glycosylation",
+      },
+      {
+        type: "p",
+        text: "The names describe, in part, how a sugar attaches to its target. The most familiar forms include:",
+      },
+      {
+        type: "ul",
+        items: [
+          "N-linked glycosylation: A glycan attaches to the nitrogen atom in the side chain of asparagine (Asn). A common recognition sequence is Asn-X-Ser/Thr, where X is any amino acid except proline. This sequence is called a sequon, but its presence does not guarantee that the site will be occupied.",
+          "O-linked, or mucin-type, glycosylation: Sugars attach to the oxygen atom in the side chain of serine (Ser) or threonine (Thr). Mucin-type O-glycosylation usually begins with GalNAc and is extended step by step, mainly in the Golgi.",
+          "O-GlcNAcylation: A single N-acetylglucosamine (GlcNAc) is attached to Ser or Thr on intracellular proteins. It is dynamically added and removed, rather than extended into a large glycan.",
+          "C-linked glycosylation: A sugar forms a carbon-carbon bond to an amino acid. C-mannosylation of tryptophan is a less common example.",
+          "GPI anchors: A glycan-containing glycolipid anchor attaches to a protein's C-terminus and helps tether the protein to a membrane.",
+          "Glycolipids: Glycans attach to lipids rather than proteins. These molecules are components of cell membranes.",
+          "Enzymatic glycosylation of small molecules: Glycosyltransferases can transfer sugars onto small-molecule acceptors, often called aglycones. Researchers use this approach to make and study glycosylated compounds.",
+        ],
+      },
+      {
+        type: "p",
+        text: "The main N-linked and mucin-type O-linked pathways differ in their attachment site and how their glycans are assembled.",
+      },
+      {
+        type: "image",
+        src: "https://cdn.marblism.com/0t_XijXEA-j.png",
+        alt: "Side-by-side comparison of an N-linked glycan on asparagine and a sialyl-T O-glycan on serine or threonine",
+        caption:
+          "Both panels use CFG symbol notation. The N-glycan is the biantennary, core-fucosylated, disialylated structure GlyTouCan G17689DH; the O-glycan is the sialyl-T antigen, Neu5Acα2-3Galβ1-3GalNAcα1-Ser/Thr (G65562ZE).",
+      },
+      {
+        type: "ul",
+        items: [
+          "Attachment residue: asparagine for N-linked; serine or threonine for mucin-type O-linked.",
+          "Sequence feature: the Asn-X-Ser/Thr sequon for N-linked (X is not proline); no single universal consensus sequon for O-linked.",
+          "Where it begins: the ER for N-linked, with further processing in the Golgi; mainly the Golgi for O-linked.",
+          "Assembly: a precursor glycan is transferred as a unit and then processed for N-linked; sugars are added step by step for O-linked.",
+          "Typical role: folding and quality control plus protein properties and interactions for N-linked; common on mucins and other secreted or cell-surface proteins for O-linked.",
+        ],
+      },
+      {
+        type: "p",
+        text: "The comparison describes common pathways; other forms of O-linked glycosylation have distinct starting sugars and locations.",
+      },
+      {
+        type: "h2",
+        text: "The molecular players: enzymes and sugar donors",
+      },
+      {
+        type: "p",
+        text: "Glycosyltransferases build glycans by transferring a sugar from a donor molecule to an acceptor, such as a growing glycan or a protein. Different transferases favor different sugar donors, acceptor structures, and linkages. Glycosidases remove sugars or trim glycans, helping shape structures as they mature.",
+      },
+      {
+        type: "p",
+        text: "Many glycosyltransferases use activated sugar donors called nucleotide sugars. Examples include UDP-GlcNAc for GlcNAc transfer, GDP-fucose for fucosylation, and CMP-Neu5Ac for sialylation. The donor must match the enzyme and reaction.",
+      },
+      {
+        type: "p",
+        text: "Two terms you may encounter are fucosylation, the addition of fucose, and sialylation, the addition of sialic acid, often at the ends of glycan branches. Their effects depend on the glycan structure and biological context.",
+      },
+      {
+        type: "h2",
+        text: "At the bench: how do researchers analyze glycosylation?",
+      },
+      {
+        type: "p",
+        text: "No single method answers every question. Choose the approach based on whether you need to know which sites are occupied, what glycan structures are present, or how a sample compares with a control.",
+      },
+      {
+        type: "ul",
+        items: [
+          "LC-MS/MS: mass spectrometry can be used to study intact glycopeptides, linking glycan information to a protein site, or to analyze released glycans. The workflow and fragmentation strategy affect how much structural detail can be assigned.",
+          "Released-glycan profiling: enzymes such as PNGase F can release many N-linked glycans from proteins for profiling. This can help compare glycan distributions, but by itself it does not retain the original protein-site information.",
+          "HILIC: hydrophilic interaction liquid chromatography can separate or enrich glycans and glycopeptides based on their hydrophilic properties. It is often paired with mass spectrometry.",
+          "Lectin blots: lectins bind selected glycan features. A lectin blot can provide a useful motif-focused comparison, but binding is not a complete structural identification. Interpret the result alongside appropriate controls or an orthogonal method.",
+        ],
+      },
+      {
+        type: "h3",
+        text: "What can go wrong in expression systems?",
+      },
+      {
+        type: "p",
+        text: "A host cell's glycosylation machinery helps determine the glycans produced. Different cell types may generate different patterns, and culture conditions or process changes can shift glycan distributions. Yeast and plant systems, for example, may produce glycan features that differ from those commonly found in mammalian cells. Engineered systems can alter these patterns, so the host and engineering details matter.",
+      },
+      {
+        type: "p",
+        text: "Even within one system, glycosylation can be incomplete or heterogeneous. A potential N-glycosylation site may not be occupied, and processing may vary across molecules in the same sample. If the question concerns a particular protein or product, measure the sample rather than infer its glycan structures from the expression host alone.",
+      },
+      {
+        type: "h3",
+        text: "What should you control for?",
+      },
+      {
+        type: "p",
+        text: "Start by defining the question: site occupancy, glycan composition, a specific motif, or a change between conditions. Then plan controls around the method and sample:",
+      },
+      {
+        type: "ul",
+        items: [
+          "Keep expression, harvest, storage, and sample preparation consistent across compared groups.",
+          "Normalize protein input and include biological replicates where appropriate.",
+          "Use enzyme-treated samples or suitable standards to support assignments; include untreated controls when they clarify the result.",
+          "Consider whether your preparation or instrument method could lose or alter features of interest, especially labile groups.",
+          "Pair broad profiling with site-specific or motif-focused analysis when the interpretation requires it.",
+        ],
+      },
+      {
+        type: "p",
+        text: "A clear sample plan makes it easier to distinguish real biological differences from variation introduced by handling or measurement.",
+      },
+      {
+        type: "h2",
+        text: "Glycosylation FAQ",
+      },
+      {
+        type: "h3",
+        text: "Is glycosylation the same as glycation?",
+      },
+      {
+        type: "p",
+        text: "No. Glycosylation is an enzyme-directed process in which a sugar is attached to a target molecule. Glycation is a non-enzymatic reaction between a reducing sugar and a molecule such as a protein. The two processes differ in mechanism and in the structures they produce.",
+      },
+      {
+        type: "h3",
+        text: "What is the difference between glycosylation and a glycosidic bond?",
+      },
+      {
+        type: "p",
+        text: "Glycosylation is the process of adding a sugar to another molecule. A glycosidic bond is the chemical linkage that connects sugars to each other, or a sugar to another part of a molecule. A glycosylation reaction forms a bond as part of the attachment.",
+      },
+      {
+        type: "h3",
+        text: "Are all N-linked glycans the same?",
+      },
+      {
+        type: "p",
+        text: "No. Proteins can carry different N-glycan structures at different sites, and occupancy or processing can vary. The final pattern depends on factors such as the protein, host cell, and cellular processing.",
+      },
+      {
+        type: "h3",
+        text: "What does it mean when a protein is sialylated or fucosylated?",
+      },
+      {
+        type: "p",
+        text: "It means that sialic acid or fucose, respectively, is present as part of the protein's glycan structures. These terms describe glycan features, not a complete structure; the location and linkage of each sugar can matter.",
+      },
+      {
+        type: "h2",
+        text: "A useful starting point for glycosylation research",
+      },
+      {
+        type: "p",
+        text: "Glycosylation describes many enzyme-driven processes that attach sugars to proteins, lipids, and small molecules. Understanding the type, site, and structure of a glycan, and how the sample was produced and analyzed, helps researchers interpret its role without treating all glycosylation as equivalent.",
+      },
+      {
+        type: "callout",
+        text: "GlycoDepot supplies research-grade sugar nucleotides, glycoenzymes, and glycan standards, and runs glycosylation analysis and custom glycan synthesis projects with lot-specific documentation. Products and services are for research use only.",
       },
     ],
   },
