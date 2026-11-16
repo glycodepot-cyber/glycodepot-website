@@ -14,6 +14,18 @@ export type SalesPayload = {
     shipping: QuoteAddress;
     items: Array<{productId:string;variantId?:string;name:string;sku?:string;quantity:number;unitPriceCents:number|null;url?:string;requiresDryIce:boolean}>;
   };
+  orderDetails?: {
+    orderNumber: string;
+    currency: string;
+    items: Array<{ name: string; sku?: string; quantity: number; unitPriceCents: number }>;
+    shippingCents: number;
+    taxCents: number;
+    totalCents: number;
+    billing: QuoteAddress & { address2?: string };
+    shipping: QuoteAddress & { address2?: string };
+    paymentReference?: string;
+    paidAt?: string;
+  };
 };
 
 export type QuoteAddress = {name:string;company?:string;address1:string;city:string;state:string;postal:string;country:string;phone?:string};

@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { getDb, isDatabaseConfigured } from "@/lib/db";
 import { getStripe, isStripeConfigured } from "@/lib/payments/stripe";
 import { sendSalesNotification } from "@/lib/email/notifications";
-import { captureWebsiteOrder, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
+import { captureWebsiteOrder, salesSyncEnabled, drainWebsiteSales } from "@/lib/crm/sales";
 import { after } from "next/server";
 
 export const runtime = "nodejs";
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       const sql = getDb();
       await sql`UPDATE orders SET status = ${status}, stripe_payment_intent_id = ${paymentIntent},
                 updated_at = now() WHERE id = ${orderId}::uuid AND (status != 'paid' OR ${paid})`;
-      if (paid && directSalesEnabled()) await captureWebsiteOrder(orderId, true);
+      if (paid && salesSyncEnabled()) await captureWebsiteOrder(orderId, true);
     }
   }
 
@@ -47,8 +47,8 @@ export async function POST(request: Request) {
       const sql = getDb();
       await sql`UPDATE orders SET status = ${status}, stripe_payment_intent_id = ${intent.id},
                 updated_at = now() WHERE id = ${orderId}::uuid AND (status != 'paid' OR ${status} = 'paid')`;
-      if (status === "paid" && directSalesEnabled()) await captureWebsiteOrder(orderId, true);
-      if (event.type === "payment_intent.succeeded" && !directSalesEnabled()) {
+      if (status === "paid" && salesSyncEnabled()) await captureWebsiteOrder(orderId, true);
+      if (event.type === "payment_intent.succeeded" && !salesSyncEnabled()) {
         const orders = await sql`SELECT customer_name, customer_email FROM orders WHERE id = ${orderId}::uuid`;
         const order = (orders as unknown as Array<{ customer_name: string; customer_email: string }>)[0];
         const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" })
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     }
   }
 
-  if (directSalesEnabled()) after(async () => {
+  if (salesSyncEnabled()) after(async () => {
     try { await drainWebsiteSales(); }
     catch { console.error("[ghl] Paid order is saved; CRM delivery is pending"); }
   });
