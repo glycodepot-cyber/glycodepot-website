@@ -5,10 +5,10 @@ import { getDb, isDatabaseConfigured } from "@/lib/db";
 import { getStripe, isStripeConfigured } from "./stripe";
 import { hasDryIceTag, shippingFeeCents } from "./shipping";
 import { after } from "next/server";
-import { captureWebsiteOrder, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
+import { captureWebsiteOrder, salesSyncEnabled, drainWebsiteSales } from "@/lib/crm/sales";
 
 function scheduleOrderSync(orderId: string) {
-  if (!directSalesEnabled()) return;
+  if (!salesSyncEnabled()) return;
   after(async () => {
     try { await captureWebsiteOrder(orderId); await drainWebsiteSales(); }
     catch { console.error("[ghl] Order is saved; CRM delivery is pending"); }

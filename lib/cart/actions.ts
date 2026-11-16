@@ -9,7 +9,7 @@
 import { prepareQuoteFiles } from "@/lib/quote/files";
 import { createHash } from "node:crypto";
 import { after } from "next/server";
-import { captureWebsiteQuote, directSalesEnabled, drainWebsiteSales } from "@/lib/crm/sales";
+import { captureWebsiteQuote, salesSyncEnabled, drainWebsiteSales } from "@/lib/crm/sales";
 import {
   BYSON_CONFIGURED,
   placeOrder,
@@ -213,7 +213,7 @@ export async function submitQuote(
     return { id: `quote_${Date.now()}`, receivedAt: new Date().toISOString() };
   }
   if (files?.getAll("files").length && request.service !== "custom-glycan-synthesis") throw new Error("Uploads are available for custom synthesis requests.");
-  if (directSalesEnabled()) {
+  if (salesSyncEnabled()) {
     const uploaded = await prepareQuoteFiles(files);
     const response = await captureWebsiteQuote(request, uploaded);
     after(async () => {
