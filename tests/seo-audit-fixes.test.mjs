@@ -6,7 +6,7 @@ import { registerHooks } from 'node:module';
 registerHooks({ resolve(specifier, context, nextResolve) {
   return nextResolve(['../content/chemistry-reference'].includes(specifier) ? `${specifier}.ts` : specifier, context);
 }});
-const { isValidCas, productCasNumber, productTitle, productDescription, productSpecs } = await import('../lib/seo/product-text.ts');
+const { isValidCas, productCasNumber, productTitle, productBaseName, productDescription, productSpecs } = await import('../lib/seo/product-text.ts');
 const { resolveLegacyPath } = await import('../lib/seo/legacy-map.ts');
 
 const base = { id: 'p', categories: ['c'], images: [], price: null };
@@ -67,4 +67,14 @@ test('a CAS with no verified record adds no chemistry anywhere', () => {
   assert.equal(specs['Molecular formula'], undefined);
   assert.equal(specs['Molecular weight'], undefined);
   assert.doesNotMatch(productDescription(p), /MW/);
+});
+
+test('the about copy does not repeat a CAS number the name already carries', () => {
+  const p = { ...base, slug: 'x-cas-73174-38-6', name: '6-Azido-6-deoxy-a-D-galactose, CAS:73174-38-6', variants: [] };
+  assert.equal(productBaseName(p), '6-Azido-6-deoxy-a-D-galactose');
+  // A name with no CAS is untouched, and so is one whose CAS is only in the slug.
+  assert.equal(productBaseName({ ...base, slug: 's', name: 'Xylitol', variants: [] }), 'Xylitol');
+  assert.equal(productBaseName({ ...base, slug: 'x-cas-87-99-0', name: 'Xylitol', variants: [] }), 'Xylitol');
+  // A bracketed CAS must not leave a dangling paren behind.
+  assert.equal(productBaseName({ ...base, slug: 's', name: 'Beta-D-Glucose (CAS 28905-12-6)', variants: [] }), 'Beta-D-Glucose');
 });

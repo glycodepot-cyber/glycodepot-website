@@ -3,8 +3,8 @@ import { chemistryForCas } from "../content/chemistry-reference";
 
 /**
  * Text helpers for product pages: CAS number, title, specification rows and
- * meta description. Pure functions over catalogue data, with no runtime imports,
- * so they can be unit-tested directly.
+ * meta description. Pure functions over catalogue data, so they can be
+ * unit-tested directly.
  */
 
 /** True when the last digit of a CAS Registry Number matches its checksum. */
@@ -54,10 +54,27 @@ export function productSpecs(product: Product): Record<string, string> {
         }
       : {}),
     ...product.attributes,
-    // SKU goes last in the page table: the structured data already carries it as
-    // its own `sku` field, so it does not need to lead the property list.
+    // SKU goes last: the structured data already carries it as its own `sku`
+    // field, so it need not lead the property list.
     ...(product.sku ? { SKU: product.sku } : {}),
   };
+}
+
+/**
+ * The product name with any CAS number stripped out. Catalogue names often
+ * already end in ", CAS:83-87-4", which reads as a stutter once the About copy
+ * says "is listed under CAS 83-87-4" right after it. Display only: the title and
+ * structured data keep the full name, because the CAS in the name is what a
+ * reader searching the number needs to see.
+ */
+export function productBaseName(product: Product): string {
+  return product.name
+    .replace(/[\s,;–-]*\bCAS\s*(?:No\.?|Number|RN|#)?\s*[:#]?\s*\d{2,7}-\d{2}-\d\b\)?/gi, "")
+    .replace(/\s*[(\[]\s*[)\]]\s*$/, "")
+    // A bracketed CAS leaves a dangling opener once the number is gone.
+    .replace(/\s*[(\[]\s*$/, "")
+    .replace(/[\s,;–-]+$/, "")
+    .trim() || product.name;
 }
 
 /** Page title: the editor's SEO title, else the name with its CAS number when known. */

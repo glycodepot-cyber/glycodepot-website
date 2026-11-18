@@ -9,6 +9,7 @@ export {
   productChemistry,
   productSpecs,
   productTitle,
+  productBaseName,
   productDescription,
 } from "./product-text";
 
@@ -30,8 +31,8 @@ export function productStructuredData(product: Product, url: string) {
     sku: product.sku || product.attributes?.SKU || product.id,
     image: product.images.map(image=>new URL(image.src, SITE_URL).href),
     brand: { "@type": "Brand", name: "GlycoDepot" },
-    // Verified chemistry goes into additionalProperty so the CAS, formula and MW
-    // are machine-readable, the same way the priced sugar nucleotides already are.
+    // productSpecs already carries the verified CAS, formula and MW, so the
+    // structured data matches what a reader sees in the table on the page.
     additionalProperty: Object.entries(productSpecs(product)).map(([name,value])=>({"@type":"PropertyValue",name,value})),
     ...(offers ? { offers } : {}),
   };
