@@ -10,6 +10,11 @@ const productAliases: Record<string, string> = {
   "methyl2346-tetra-o-acetyl-b-d-glucopyranoside": "bprd_13350",
 };
 
+// Retired WordPress tags that are still indexed, mapped to the closest current page.
+const tagAliases: Record<string, string> = {
+  "bulk-supply-of-glycans": "/products/n-glycans-bulk-supply",
+};
+
 const groupAliases: Record<string,string> = {
   glycochemistry: "glycochemistry", glycobiology: "glycobiology",
   glycoanalysis: "glycoanalysis", "glyco-analysis": "glycoanalysis",
@@ -48,7 +53,9 @@ export function resolveLegacyPath(pathname: string, products: Product[], categor
     const leaf = parts.at(-1);
     if (!leaf) return null;
     let destination: string | null = null;
-    if (path[0] === "product-tag" && products.some(p => p.tags?.some(t => tagSlug(t) === leaf))) {
+    if (path[0] === "product-tag" && tagAliases[leaf]) {
+      destination = tagAliases[leaf];
+    } else if (path[0] === "product-tag" && products.some(p => p.tags?.some(t => tagSlug(t) === leaf))) {
       destination = `/tags/${leaf}`;
     } else if (groupAliases[leaf]) {
       destination = `/products?group=${groupAliases[leaf]}`;
@@ -89,6 +96,7 @@ export function buildLegacyRedirectMap(products: Product[], categories: Category
   Object.keys(groupAliases).forEach(slug=>sources.add(`/product-category/${slug}/`));
   products.forEach(p=>p.tags?.forEach(tag=>sources.add(`/product-tag/${tagSlug(tag)}/`)));
   sources.add("/product-category/glycochemistry/building-blocks/monosaccharides/galactosamine/");
+  Object.keys(tagAliases).forEach(slug=>sources.add(`/product-tag/${slug}/`));
   return [...sources].sort().flatMap(source=>{
     const destination=resolveLegacyPath(source,products,categories);
     return destination ? [{source,destination,status:301}] : [];
