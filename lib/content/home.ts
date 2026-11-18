@@ -8,7 +8,7 @@ export interface HeroSlide {
 
 export const heroSlides: HeroSlide[] = [
   {
-    headline: "Your Trusted Source for Glycoscience Solutions",
+    headline: "Sugar Nucleotides, Glycans & Glycoscience Reagents",
     body: "We're committed to delivering high-quality reagents and raw materials, from expert labs to yours. Experience the highest service at its core.",
     ctaLabel: "Shop All Products",
     ctaHref: "/products",

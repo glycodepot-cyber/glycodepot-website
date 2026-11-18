@@ -8,6 +8,7 @@ import {
   BrandButton,
 } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
+import { SITE_URL } from "@/lib/site-url";
 import { BrochureRequestForm } from "@/components/site/forms/BrochureRequestForm";
 import {
   glycosylationHero,
@@ -25,15 +26,30 @@ import {
 } from "@/lib/content";
 
 export const metadata: Metadata = {
-  title: "Enzymatic Glycosylation Services",
+  title: "Enzymatic Glycosylation of Small Molecules",
   description:
-    "Screen your small molecule against 380 plant glycosyltransferases to improve solubility, delivery, potency or manufacturability — then scale the winning reaction from milligrams to grams.",
+    "Screen your small molecule against 380 plant glycosyltransferases, then scale the best hit from milligrams to grams. No protecting groups. Request a quote.",
   alternates: { canonical: "/services/enzymatic-glycosylation" },
 };
 
 export default function EnzymaticGlycosylationPage() {
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Enzymatic Glycosylation of Small Molecules",
+    serviceType: "Enzymatic glycosylation screening and scale-up",
+    url: `${SITE_URL}/services/enzymatic-glycosylation`,
+    provider: { "@id": `${SITE_URL}/#organization`, "@type": "Organization", name: "GlycoDepot" },
+    areaServed: "Worldwide",
+    description:
+      "Screening of a small molecule against a library of 380 plant Family-1 UDP-glycosyltransferases and 145 di-glycosyltransferases to find regio- and stereo-specific glycosylation, then scale-up of the selected reaction from milligrams to grams, with UHPLC-MS/MS analytics.",
+  };
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceSchema).replace(/</g, "\\u003c") }}
+      />
       <PageHero
         title="Enzymatic Glycosylation"
         description={glycosylationHero.title}

@@ -10,9 +10,9 @@ import { LinkedInIcon, YouTubeIcon } from "@/components/site/SocialIcons";
 import { contactPage, site } from "@/lib/content";
 
 export const metadata: Metadata = {
-  title: contactPage.metaTitle,
+  title: { absolute: contactPage.metaTitle },
   description:
-    "Questions, bulk quotes, custom synthesis, or technical support — get in touch with the GlycoDepot team.",
+    `Ask about a product, request a bulk or custom synthesis quote, or get technical support. We reply within one business day. Atlanta, GA · ${site.contact.phone}.`,
   alternates: { canonical: "/contact" },
 };
 

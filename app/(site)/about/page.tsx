@@ -10,9 +10,9 @@ import { PageHero } from "@/components/site/PageHero";
 import { aboutWhyChoose, aboutPlatformBlurb, foundersLetter } from "@/lib/content";
 
 export const metadata: Metadata = {
-  title: "About",
+  title: { absolute: "About GlycoDepot | Founder-Led Glycoscience Supplier" },
   description:
-    "GlycoDepot is a glycoscience marketplace — connecting researchers with high-quality reagents, tools, and collaborative opportunities. A letter from our founder.",
+    "GlycoDepot was founded by glycoscientist Shukkoor M Kondengaden, PhD, to give labs direct access to glycoscience reagents without 300% reseller markups.",
   alternates: { canonical: "/about" },
 };
 

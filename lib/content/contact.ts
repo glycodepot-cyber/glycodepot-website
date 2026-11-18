@@ -1,7 +1,7 @@
 /** Verbatim from live /contact (plus typo "fell" → "feel"). */
 export const contactPage = {
-  metaTitle: "Contact GlycoDepot | Get Support & Research Assistance",
-  heading: "Drop Us A Line",
+  metaTitle: "Contact GlycoDepot | Quotes, Bulk Orders & Support",
+  heading: "Contact GlycoDepot",
   intro:
     "If you have any questions, please feel free to get in touch with us. We will reply to you as soon as possible. Thank you!",
   form: {

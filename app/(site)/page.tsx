@@ -35,10 +35,10 @@ import { OrganizationJsonLd, FaqJsonLd } from "@/components/site/JsonLd";
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
   title: {
-    absolute: "GlycoDepot | Glycoscience Reagents, Sugar Nucleotides & Expert Services",
+    absolute: "GlycoDepot | Sugar Nucleotides & Glycoscience Reagents",
   },
   description:
-    "Shop high-purity sugar nucleotides, glycoenzymes and glycoanalysis standards, or explore custom glycan synthesis and LC-MS/MS glycosylation analysis from GlycoDepot.",
+    "Buy in-stock sugar nucleotides online, or quote 3,500+ glycans, glycoenzymes and building blocks. Enzymatic glycosylation and custom glycan synthesis.",
   keywords: [
     "glycoscience reagents",
     "sugar nucleotides",
