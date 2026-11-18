@@ -2,8 +2,10 @@ export const site = {
   name: "GlycoDepot",
   legalName: "GlycoDepot LLC",
   tagline: "Your Trusted Source for Glycoscience Solutions",
+  // This sentence is the one assistants most often quote about the company.
+  // Keep it factual, grammatical, and explicit about what we sell.
   description:
-    "Glycodepot serve all your needs in glycoscience from products, services, networking and announcements. Get the best glycoscience products and services to support your research.",
+    "GlycoDepot supplies glycoscience research reagents, including sugar nucleotides, glycans, glycoenzymes, carbohydrate building blocks and glycoanalysis standards, and offers enzymatic glycosylation and custom glycan synthesis services.",
   contact: {
     phone: "+1 903 304 5926",
     phoneE164: "+19033045926",
@@ -23,6 +25,11 @@ export const site = {
       country: "USA",
       full: "1445 Woodmont Ln NW Suite 183, Atlanta GA 30318",
     },
+  },
+  founder: {
+    name: "Shukkoor M Kondengaden",
+    honorificSuffix: "PhD",
+    jobTitle: "Founder & CEO",
   },
   social: {
     linkedin: "https://www.linkedin.com/company/glycodepot",
