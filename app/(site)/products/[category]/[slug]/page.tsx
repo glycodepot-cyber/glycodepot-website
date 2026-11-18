@@ -18,7 +18,7 @@ import {
   listRelatedProducts,
 } from "@/lib/cart/client";
 import { productReferences } from "@/lib/content/product-enrichment";
-import { productChemistry, productDescription, productBreadcrumbs, productSpecs, productTitle, serializeJsonLd } from "@/lib/seo/product-data";
+import { productBaseName, productChemistry, productDescription, productBreadcrumbs, productSpecs, productTitle, serializeJsonLd } from "@/lib/seo/product-data";
 import { cn } from "@/lib/utils";
 
 /**
@@ -260,7 +260,7 @@ export default async function ProductPage({ params }: PageProps) {
               ) : (
                 <div className="space-y-5 text-[16px] leading-relaxed text-[var(--color-muted-foreground)] lg:text-[17px]">
                   <p>
-                    {product.name}
+                    {productBaseName(product)}
                     {chemistry
                       ? ` is listed under CAS ${chemistry.cas}, with the molecular formula ${chemistry.formula} and a molecular weight of ${chemistry.molecularWeight} g/mol. These are reference identifiers for the compound; the counterion, hydration and assay of the supplied material are stated on the lot-specific certificate of analysis.`
                       : " is supplied to order from the GlycoDepot catalogue."}
