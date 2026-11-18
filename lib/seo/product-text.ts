@@ -1,4 +1,5 @@
 import type { Product } from "../cart/types";
+import { chemistryForCas } from "../content/chemistry-reference";
 
 /**
  * Text helpers for product pages: CAS number, title, specification rows and
@@ -30,13 +31,32 @@ export function productCasNumber(product: Product): string | null {
   return cas && isValidCas(cas) ? cas : null;
 }
 
+/**
+ * PubChem identity for the product's CAS, when we hold one. This is what turns a
+ * page that said only "name + pack sizes" into something a researcher searching
+ * a CAS number, or an assistant quoting one, can actually use. Null stays null:
+ * a product whose chemistry we have not verified shows no chemistry rows at all.
+ */
+export function productChemistry(product: Product) {
+  return chemistryForCas(productCasNumber(product));
+}
+
 /** Specification rows shown on the page and in Product structured data. */
 export function productSpecs(product: Product): Record<string, string> {
   const cas = productCasNumber(product);
+  const chemistry = chemistryForCas(cas);
   return {
-    ...(product.sku ? { SKU: product.sku } : {}),
     ...(cas ? { "CAS number": cas } : {}),
+    ...(chemistry
+      ? {
+          "Molecular formula": chemistry.formula,
+          "Molecular weight": `${chemistry.molecularWeight} g/mol`,
+        }
+      : {}),
     ...product.attributes,
+    // SKU goes last in the page table: the structured data already carries it as
+    // its own `sku` field, so it does not need to lead the property list.
+    ...(product.sku ? { SKU: product.sku } : {}),
   };
 }
 
@@ -55,11 +75,14 @@ function packSizes(product: Product): string[] {
 
 export function productDescription(product: Product): string {
   const cas = productCasNumber(product);
+  const chemistry = chemistryForCas(cas);
   const sku = product.sku || product.attributes?.SKU;
   const sizes = packSizes(product);
-  // Factual fallback for products with no description: only name, CAS, catalogue
-  // number and pack sizes from our own catalogue, never invented chemistry.
-  const fallback = `${product.name}${cas ? ` (CAS ${cas})` : ""}${sku ? `, catalog no. ${sku}` : ""}, for laboratory research.` +
+  // Factual fallback for products with no description: name, verified chemistry,
+  // catalogue number and pack sizes, all from our own data. Nothing invented.
+  const fallback = `${product.name}${cas ? ` (CAS ${cas})` : ""}` +
+    `${chemistry ? `, ${chemistry.formula}, MW ${chemistry.molecularWeight}` : ""}` +
+    `${sku ? `, catalog no. ${sku}` : ""}, for laboratory research.` +
     `${sizes.length ? ` Available in ${sizes.join(", ")}.` : ""} Request a quote with lot-specific CoA from GlycoDepot.`;
   const text = (product.seoDescription || product.shortDescription || product.description || fallback)
     .replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();

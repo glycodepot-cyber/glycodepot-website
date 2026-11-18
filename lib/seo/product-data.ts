@@ -1,9 +1,16 @@
 import type { Product } from "../cart/types";
 import { SITE_URL } from "../site-url";
 import { isQuotePriceCents } from "../cart/price-policy";
-import { productCasNumber, productDescription } from "./product-text";
+import { productDescription, productSpecs } from "./product-text";
 
-export { isValidCas, productCasNumber, productSpecs, productTitle, productDescription } from "./product-text";
+export {
+  isValidCas,
+  productCasNumber,
+  productChemistry,
+  productSpecs,
+  productTitle,
+  productDescription,
+} from "./product-text";
 
 export function productStructuredData(product: Product, url: string) {
   // Every priced pack is a separate offer. RFQ markers must never become prices.
@@ -23,10 +30,9 @@ export function productStructuredData(product: Product, url: string) {
     sku: product.sku || product.attributes?.SKU || product.id,
     image: product.images.map(image=>new URL(image.src, SITE_URL).href),
     brand: { "@type": "Brand", name: "GlycoDepot" },
-    additionalProperty: Object.entries({
-      ...(productCasNumber(product) ? { "CAS number": productCasNumber(product)! } : {}),
-      ...product.attributes,
-    }).map(([name,value])=>({"@type":"PropertyValue",name,value})),
+    // Verified chemistry goes into additionalProperty so the CAS, formula and MW
+    // are machine-readable, the same way the priced sugar nucleotides already are.
+    additionalProperty: Object.entries(productSpecs(product)).map(([name,value])=>({"@type":"PropertyValue",name,value})),
     ...(offers ? { offers } : {}),
   };
 }

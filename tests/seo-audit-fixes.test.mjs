@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isValidCas, productCasNumber, productTitle, productDescription, productSpecs } from '../lib/seo/product-text.ts';
-import { resolveLegacyPath } from '../lib/seo/legacy-map.ts';
+import { registerHooks } from 'node:module';
+// product-text.ts imports ../content/chemistry-reference without an extension
+// (the Next way); teach the test resolver the same convention.
+registerHooks({ resolve(specifier, context, nextResolve) {
+  return nextResolve(['../content/chemistry-reference'].includes(specifier) ? `${specifier}.ts` : specifier, context);
+}});
+const { isValidCas, productCasNumber, productTitle, productDescription, productSpecs } = await import('../lib/seo/product-text.ts');
+const { resolveLegacyPath } = await import('../lib/seo/legacy-map.ts');
 
 const base = { id: 'p', categories: ['c'], images: [], price: null };
 
@@ -40,4 +46,25 @@ test('empty products get a factual description built only from catalogue data', 
 
 test('the indexed retired bulk-glycans tag redirects to its category', () => {
   assert.equal(resolveLegacyPath('/product-tag/bulk-supply-of-glycans/', [], []), '/products/n-glycans-bulk-supply');
+});
+
+test('verified chemistry fills the specs, the title and the description', () => {
+  // Xylitol, CAS 87-99-0: present in the verified PubChem table.
+  const p = { ...base, slug: 'xylitol-cas-87-99-0', name: 'Xylitol', variants: [], attributes: {} };
+  const specs = productSpecs(p);
+  assert.equal(specs['CAS number'], '87-99-0');
+  assert.equal(specs['Molecular formula'], 'C5H12O5');
+  assert.equal(specs['Molecular weight'], '152.15 g/mol');
+  assert.equal(productTitle(p), 'Xylitol (CAS 87-99-0)');
+  assert.match(productDescription(p), /C5H12O5/);
+});
+
+test('a CAS with no verified record adds no chemistry anywhere', () => {
+  // Valid checksum, but not in the table: the page must stay silent.
+  const p = { ...base, slug: 'mystery-cas-50-00-0', name: 'Mystery', variants: [], attributes: {} };
+  const specs = productSpecs(p);
+  assert.equal(specs['CAS number'], '50-00-0');
+  assert.equal(specs['Molecular formula'], undefined);
+  assert.equal(specs['Molecular weight'], undefined);
+  assert.doesNotMatch(productDescription(p), /MW/);
 });
