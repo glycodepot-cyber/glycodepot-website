@@ -18,7 +18,7 @@ import {
   listRelatedProducts,
 } from "@/lib/cart/client";
 import { productReferences } from "@/lib/content/product-enrichment";
-import { productDescription, productBreadcrumbs, serializeJsonLd } from "@/lib/seo/product-data";
+import { productDescription, productBreadcrumbs, productSpecs, productTitle, serializeJsonLd } from "@/lib/seo/product-data";
 import { cn } from "@/lib/utils";
 
 /**
@@ -101,7 +101,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
   const seo = isUdpGalnaz(product.slug) ? udpGalnazSeo : null;
   const description = seo?.description ?? productDescription(product);
-  const title = seo?.title ?? product.seoTitle ?? product.name;
+  const title = seo?.title ?? productTitle(product);
   return {
     title,
     description,
@@ -246,10 +246,9 @@ export default async function ProductPage({ params }: PageProps) {
                   {product.description}
                 </div>
               ) : (
-                <p className="text-[16px] italic leading-relaxed text-[var(--color-muted)] lg:text-[17px]">
-                  Detailed product information available on request. Contact us
-                  for specifications, certificates of analysis, and bulk
-                  pricing.
+                <p className="text-[16px] leading-relaxed text-[var(--color-muted-foreground)] lg:text-[17px]">
+                  {productDescription(product)} Contact us for specifications,
+                  certificates of analysis, and bulk pricing.
                 </p>
               )}
             </div>
@@ -258,7 +257,7 @@ export default async function ProductPage({ params }: PageProps) {
             <aside className="rounded-[var(--radius-xl)] border border-[var(--color-border)] bg-white p-7">
               <h3 className="type-h3 text-[var(--color-foreground)]">Specifications</h3>
               <dl className="mt-5 divide-y divide-[var(--color-border)] text-[14px]">
-                {Object.entries({ ...(product.sku ? { SKU: product.sku } : {}), ...product.attributes }).map(([k, v]) => (
+                {Object.entries(productSpecs(product)).map(([k, v]) => (
                   <div key={k} className="flex items-baseline justify-between gap-4 py-3">
                     <dt className="font-medium text-[var(--color-muted-foreground)]">
                       {k}

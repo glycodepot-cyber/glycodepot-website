@@ -1,13 +1,9 @@
 import type { Product } from "../cart/types";
 import { SITE_URL } from "../site-url";
 import { isQuotePriceCents } from "../cart/price-policy";
+import { productCasNumber, productDescription } from "./product-text";
 
-export function productDescription(product: Product): string {
-  const text = (product.seoDescription || product.shortDescription || product.description ||
-    `${product.name}: request product specifications and lot documentation from GlycoDepot.`)
-    .replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-  return text.length > 170 ? `${text.slice(0, 167).trimEnd()}…` : text;
-}
+export { isValidCas, productCasNumber, productSpecs, productTitle, productDescription } from "./product-text";
 
 export function productStructuredData(product: Product, url: string) {
   // Every priced pack is a separate offer. RFQ markers must never become prices.
@@ -27,7 +23,10 @@ export function productStructuredData(product: Product, url: string) {
     sku: product.sku || product.attributes?.SKU || product.id,
     image: product.images.map(image=>new URL(image.src, SITE_URL).href),
     brand: { "@type": "Brand", name: "GlycoDepot" },
-    additionalProperty: Object.entries(product.attributes ?? {}).map(([name,value])=>({"@type":"PropertyValue",name,value})),
+    additionalProperty: Object.entries({
+      ...(productCasNumber(product) ? { "CAS number": productCasNumber(product)! } : {}),
+      ...product.attributes,
+    }).map(([name,value])=>({"@type":"PropertyValue",name,value})),
     ...(offers ? { offers } : {}),
   };
 }

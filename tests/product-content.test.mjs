@@ -4,7 +4,7 @@ import { PRODUCT_ENRICHMENTS, productReferences } from '../lib/content/product-e
 import { PROTECTED_SUGAR_NUCLEOTIDE_IDS } from '../lib/cart/price-policy.ts';
 import { registerHooks } from 'node:module';
 registerHooks({resolve(specifier,context,nextResolve){
-  return nextResolve(['../site-url','../cart/price-policy'].includes(specifier) ? `${specifier}.ts` : specifier,context);
+  return nextResolve(['../site-url','../cart/price-policy','./product-text'].includes(specifier) ? `${specifier}.ts` : specifier,context);
 }});
 const { productStructuredData, productDescription, serializeJsonLd, productBreadcrumbs } = await import('../lib/seo/product-data.ts');
 const product={id:'test',sku:'GTRC-001',name:'Test',slug:'test',categories:['other'],images:[{src:'/test.png',alt:'Test'}],attributes:{'CAS reference (free acid)':'133-89-1'},price:null,variants:[]};
