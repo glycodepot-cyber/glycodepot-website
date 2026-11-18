@@ -18,7 +18,7 @@ import {
   listRelatedProducts,
 } from "@/lib/cart/client";
 import { productReferences } from "@/lib/content/product-enrichment";
-import { productDescription, productBreadcrumbs, productSpecs, productTitle, serializeJsonLd } from "@/lib/seo/product-data";
+import { productChemistry, productDescription, productBreadcrumbs, productSpecs, productTitle, serializeJsonLd } from "@/lib/seo/product-data";
 import { cn } from "@/lib/utils";
 
 /**
@@ -166,13 +166,25 @@ export default async function ProductPage({ params }: PageProps) {
   const references = productReferences(product.id);
   const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
   const seo = isUdpGalnaz(product.slug) ? udpGalnazSeo : null;
+  // Verified PubChem identity for the CAS in this product's own catalogue data.
+  const chemistry = productChemistry(product);
+
+  // Thin quote-only entries often have no short description at all, which left
+  // the hero blank under the title. Fall back to the verified chemistry, then to
+  // a plain supply line; never state a number we cannot source.
+  const heroDescription =
+    seo?.description ??
+    product.shortDescription ??
+    (chemistry
+      ? `CAS ${chemistry.cas} · ${chemistry.formula} · MW ${chemistry.molecularWeight} g/mol. Supplied to order with lot-specific documentation on request.`
+      : "Supplied to order by GlycoDepot. Request a quote for pack sizes, pricing and lot documentation.");
 
   return (
     <>
       <ProductDwellTracker productId={product.id} productName={product.name} />
       <PageHero
         title={product.name}
-        description={seo?.description ?? product.shortDescription}
+        description={heroDescription}
         breadcrumbs={[
           { label: "Products", href: "/products" },
           { label: cat.name, href: `/products/${cat.slug}` },
@@ -246,10 +258,19 @@ export default async function ProductPage({ params }: PageProps) {
                   {product.description}
                 </div>
               ) : (
-                <p className="text-[16px] leading-relaxed text-[var(--color-muted-foreground)] lg:text-[17px]">
-                  {productDescription(product)} Contact us for specifications,
-                  certificates of analysis, and bulk pricing.
-                </p>
+                <div className="space-y-5 text-[16px] leading-relaxed text-[var(--color-muted-foreground)] lg:text-[17px]">
+                  <p>
+                    {product.name}
+                    {chemistry
+                      ? ` is listed under CAS ${chemistry.cas}, with the molecular formula ${chemistry.formula} and a molecular weight of ${chemistry.molecularWeight} g/mol. These are reference identifiers for the compound; the counterion, hydration and assay of the supplied material are stated on the lot-specific certificate of analysis.`
+                      : " is supplied to order from the GlycoDepot catalogue."}
+                  </p>
+                  <p>
+                    {chemistry
+                      ? "Supplied in the pack sizes shown. Request a quote for current pricing, lead time and lot documentation, or tell us the specification your experiment requires."
+                      : "We publish a CAS number, molecular formula and molecular weight only where the compound has been confirmed against a public chemistry record. For this entry we have not verified that data, so we would rather ask than print a number we cannot stand behind. Request a quote and we will confirm it for the grade you need."}
+                  </p>
+                </div>
               )}
             </div>
 
