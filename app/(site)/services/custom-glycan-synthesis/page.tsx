@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 
 export default function CustomGlycanSynthesisPage() {
-  const schema = { "@context": "https://schema.org", "@type": "Service", name: "Custom glycan synthesis", serviceType: "Custom glycan and oligosaccharide synthesis", provider: { "@type": "Organization", name: "GlycoDepot" }, url: `${SITE_URL}/services/custom-glycan-synthesis` };
+  const schema = { "@context": "https://schema.org", "@type": "Service", name: "Custom glycan synthesis", serviceType: "Custom glycan and oligosaccharide synthesis", provider: { "@id": `${SITE_URL}/#organization`, "@type": "Organization", name: "GlycoDepot" }, areaServed: "Worldwide", url: `${SITE_URL}/services/custom-glycan-synthesis` };
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema).replace(/</g, "\\u003c") }} />
     <PageHero title="Custom Glycan Synthesis" description="From a target structure to a project-specific quote. Tell us the glycan, amount, and specifications your research requires." breadcrumbs={[{label:"Services",href:"/services"},{label:"Custom glycan synthesis"}]} />
