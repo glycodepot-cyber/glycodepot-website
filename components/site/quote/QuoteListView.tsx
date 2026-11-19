@@ -30,7 +30,6 @@ import {
 } from "@/lib/quote/store";
 import { QUOTE_FILE_ACCEPT, validateQuoteFiles } from "@/lib/quote/file-policy";
 import { quoteCopy } from "@/lib/content";
-import { MetissuiteQuoteForm } from "./MetissuiteQuoteForm";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -175,8 +174,10 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
     if (!customer.lastName.trim()) next.lastName = "Required.";
     if (!customer.company.trim()) next.company = "Required.";
     if (service && customer.notes.trim().length < 20) next.notes = "Describe the target structure, quantity, and project requirements.";
-    for(const field of ["address1","city","state","postal"] as const) if(!customer[field].trim()) next[field]="Required.";
-    if(!billingSame) for(const field of ["firstName","lastName","company","address1","city","state","postal"] as const) if(!billing[field].trim()) next[`billing.${field}`]="Required.";
+    // Product quotes ask only for who is asking; the address is collected when
+    // they order. Custom synthesis still needs it to scope shipping up front.
+    if (service) for(const field of ["address1","city","state","postal"] as const) if(!customer[field].trim()) next[field]="Required.";
+    if(service && !billingSame) for(const field of ["firstName","lastName","company","address1","city","state","postal"] as const) if(!billing[field].trim()) next[`billing.${field}`]="Required.";
     const fileError = validateQuoteFiles(files);
     if (fileError) next.files = fileError;
     setErrors(next);
@@ -227,7 +228,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
           postal: customer.postal.trim(),
           country: customer.country,
           notes: customer.notes.trim() || undefined,
-          billingAddress: billingSame ? {firstName:customer.firstName,lastName:customer.lastName,company:customer.company,address1:customer.address1,city:customer.city,state:customer.state,postal:customer.postal,country:customer.country} : billing,
+          billingAddress: !service ? undefined : billingSame ? {firstName:customer.firstName,lastName:customer.lastName,company:customer.company,address1:customer.address1,city:customer.city,state:customer.state,postal:customer.postal,country:customer.country} : billing,
         },
         meta: {
           productCategories: categoryNames,
@@ -385,21 +386,6 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
 
       {/* Form */}
       <aside className="lg:sticky lg:top-28 lg:self-start">
-        {!service ? (
-          <MetissuiteQuoteForm
-            items={items}
-            onComplete={(submissionId) => {
-              trackRfqSubmit({
-                requestId: submissionId,
-                itemCount: items.length,
-                categories: [],
-              });
-              clearQuote();
-              setStatus("done");
-              toast.success("Quote submitted! We'll be in touch shortly.");
-            }}
-          />
-        ) : (
         <form
           noValidate
           onSubmit={onSubmit}
@@ -462,7 +448,8 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
               aria-invalid={!!errors.company}
             />
           </Field>
-          <Field id="q-address" label="Address" error={errors.address1}>
+          {service ? (<>
+          <Field id="q-address" label="Address *" error={errors.address1}>
             <Input
               id="q-address"
               autoComplete="address-line1"
@@ -472,7 +459,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
             />
           </Field>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="q-city" label="City" error={errors.city}>
+            <Field id="q-city" label="City *" error={errors.city}>
               <Input
                 id="q-city"
                 autoComplete="address-level2"
@@ -481,7 +468,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
                 aria-invalid={!!errors.city}
               />
             </Field>
-            <Field id="q-state" label="State / Region" error={errors.state}>
+            <Field id="q-state" label="State / Region *" error={errors.state}>
               <Input
                 id="q-state"
                 autoComplete="address-level1"
@@ -492,7 +479,7 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
             </Field>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field id="q-postal" label="Postal code" error={errors.postal}>
+            <Field id="q-postal" label="Postal code *" error={errors.postal}>
               <Input
                 id="q-postal"
                 autoComplete="postal-code"
@@ -517,6 +504,22 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
             </Field>
           </div>
           <fieldset className="space-y-4 border-t pt-5"><legend className="type-h4">Billing address</legend><label className="flex items-center gap-3 text-sm font-medium"><input type="checkbox" checked={billingSame} onChange={e=>setBillingSame(e.target.checked)}/>Billing address is the same as shipping</label>{!billingSame?<><div className="grid gap-4 sm:grid-cols-2"><Field id="qb-first" label="First name *" error={errors["billing.firstName"]}><Input id="qb-first" value={billing.firstName} onChange={e=>setBilling(b=>({...b,firstName:e.target.value}))}/></Field><Field id="qb-last" label="Last name *" error={errors["billing.lastName"]}><Input id="qb-last" value={billing.lastName} onChange={e=>setBilling(b=>({...b,lastName:e.target.value}))}/></Field></div><Field id="qb-company" label="Organization *" error={errors["billing.company"]}><Input id="qb-company" value={billing.company} onChange={e=>setBilling(b=>({...b,company:e.target.value}))}/></Field><Field id="qb-address" label="Address *" error={errors["billing.address1"]}><Input id="qb-address" value={billing.address1} onChange={e=>setBilling(b=>({...b,address1:e.target.value}))}/></Field><div className="grid gap-4 sm:grid-cols-2"><Field id="qb-city" label="City *" error={errors["billing.city"]}><Input id="qb-city" value={billing.city} onChange={e=>setBilling(b=>({...b,city:e.target.value}))}/></Field><Field id="qb-state" label="State / Region *" error={errors["billing.state"]}><Input id="qb-state" value={billing.state} onChange={e=>setBilling(b=>({...b,state:e.target.value}))}/></Field></div><div className="grid gap-4 sm:grid-cols-2"><Field id="qb-postal" label="Postal code *" error={errors["billing.postal"]}><Input id="qb-postal" value={billing.postal} onChange={e=>setBilling(b=>({...b,postal:e.target.value}))}/></Field><Field id="qb-country" label="Country"><select id="qb-country" value={billing.country} onChange={e=>setBilling(b=>({...b,country:e.target.value}))} className="h-10 w-full rounded-[var(--radius-md)] border bg-white px-3 text-sm">{COUNTRIES.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select></Field></div></>:null}</fieldset>
+          </>) : (
+          <Field id="q-country-short" label="Country">
+            <select
+              id="q-country-short"
+              value={customer.country}
+              onChange={(e) => update("country", e.target.value)}
+              className="h-10 w-full rounded-[var(--radius-md)] border border-[var(--color-border)] bg-white px-3 text-sm focus:border-[var(--color-brand)] focus:outline-none"
+            >
+              {COUNTRIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          )}
           <Field id="q-notes" label={service ? "Project details *" : "Notes (optional)"} error={errors.notes}>
             <textarea
               id="q-notes"
@@ -549,7 +552,6 @@ export function QuoteListView({ service = false }: { service?: boolean }) {
             {status === "loading" ? "Sending…" : service ? "Send consultation request" : quoteCopy.submitLabel}
           </BrandButton>
         </form>
-        )}
       </aside>
     </div>
   );
