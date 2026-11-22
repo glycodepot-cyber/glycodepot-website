@@ -597,6 +597,249 @@ export const blogPosts: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "glycosylation-of-proteins",
+    title: "Glycosylation of Proteins: N-Linked, O-Linked, and How They Differ",
+    excerpt:
+      "N-linked glycans attach through GlcNAc to asparagine; mucin-type O-glycans begin with GalNAc on serine or threonine. How the two differ, and what that means at the bench.",
+    category: "Glycobiology Basics",
+    tags: [
+      "protein glycosylation",
+      "N-linked glycosylation",
+      "O-glycosylation",
+      "glycoproteomics",
+      "glycosyltransferases",
+    ],
+    publishedAt: "2026-11-20",
+    readTime: 9,
+    author: "GlycoDepot Editorial",
+    body: [
+      {
+        type: "image",
+        src: "https://cdn.marblism.com/Pc76_DEYT5W.png",
+        alt: "Two cell-surface glycoproteins side by side: an N-glycan attached through GlcNAc to asparagine, and a mucin-type O-glycan attached through GalNAc to serine or threonine",
+        caption:
+          "Both structures were drawn from GlyTouCan entries, in CFG symbol notation. Left: the biantennary, core-fucosylated (α1-6), disialylated (α2-3) N-glycan G17689DH, linked through GlcNAc to Asn. Right: sialyl-T antigen, Neu5Acα2-3Galβ1-3GalNAcα1-Ser/Thr, G65562ZE. Linkages are labelled on each bond; blue square = GlcNAc, yellow square = GalNAc, green circle = mannose, yellow circle = galactose, red triangle = fucose, purple diamond = sialic acid.",
+      },
+      {
+        type: "p",
+        text: "When you have a glycoprotein in hand, the first practical question is often whether its glycans are N-linked or O-linked. N-linked glycans attach through GlcNAc to asparagine at a common sequence motif, while mucin-type O-glycans usually begin with GalNAc attached to serine or threonine and have no single consensus sequon. That difference shapes where the glycans are assembled, how predictable their sites are, and which analytical methods work.",
+      },
+      {
+        type: "p",
+        text: "This post focuses on identifying and analyzing the major protein-linked types, rather than surveying every glycosylation family. For a broader introduction, see our companion guide, What Is Glycosylation? A Practical Guide for Researchers.",
+      },
+      {
+        type: "h2",
+        text: "What makes N-linked and O-linked glycosylation different?",
+      },
+      {
+        type: "p",
+        text: "The N and O refer to the atom on the amino acid side chain that connects to the first sugar.",
+      },
+      {
+        type: "p",
+        text: "In N-linked glycosylation, the innermost N-acetylglucosamine (GlcNAc) forms a β-linkage to the amide nitrogen of asparagine (Asn). In mucin-type O-linked glycosylation, N-acetylgalactosamine (GalNAc) forms an α-linkage to the oxygen of serine (Ser) or threonine (Thr). These are different chemical attachments and different biosynthetic pathways, not interchangeable labels for a glycan structure.",
+      },
+      {
+        type: "p",
+        text: "Two other modifications are worth distinguishing. O-GlcNAcylation adds a single GlcNAc to Ser or Thr on many nuclear and cytoplasmic proteins; it is installed by O-GlcNAc transferase (OGT) using UDP-GlcNAc and removed by O-GlcNAcase (OGA), rather than being extended like a typical mucin-type O-glycan. C-mannosylation links mannose by a carbon-carbon bond to tryptophan. It is a distinct modification, not an O-linked glycan.",
+      },
+      {
+        type: "h2",
+        text: "Can you predict the site from the protein sequence?",
+      },
+      {
+        type: "p",
+        text: "For N-linked glycosylation, scan for the canonical Asn-X-Ser/Thr sequon, where X can be any amino acid except proline. This motif is a useful candidate-site marker, not proof that the Asn is glycosylated. Local protein structure, folding, site accessibility, translation and processing context can all affect occupancy. N-X-T sites are often more frequently occupied than N-X-S sites, but neither motif guarantees a glycan.",
+      },
+      {
+        type: "p",
+        text: "Mucin-type O-glycosylation has no single consensus sequon. Polypeptide GalNAc-transferase enzymes (GalNAc-Ts) recognize local peptide features, and different GalNAc-T isoforms have distinct but overlapping preferences. Ser/Thr-rich stretches and some proline-rich regions can be favorable contexts, but they do not define a universal rule. Several nearby residues may be modified, producing clusters of O-glycosylation sites that can be difficult to resolve individually.",
+      },
+      {
+        type: "p",
+        text: "In both pathways, the presence of a potential site is not the same as measured occupancy. A sequence prediction can guide experiments, but it cannot establish how much of the protein is glycosylated at a site.",
+      },
+      {
+        type: "h2",
+        text: "Where are the glycans assembled, and which enzymes act?",
+      },
+      {
+        type: "h3",
+        text: "N-linked: transfer first, then processing",
+      },
+      {
+        type: "p",
+        text: "Most N-glycosylation begins in the endoplasmic reticulum (ER). A lipid-linked oligosaccharide precursor (Glc3Man9GlcNAc2, assembled on dolichol) is transferred as a unit to an Asn in a suitable sequon by the oligosaccharyltransferase (OST) complex. The attached glycan is trimmed in the ER and undergoes further trimming and elaboration in the Golgi.",
+      },
+      {
+        type: "p",
+        text: "Golgi glycosyltransferases then help build and modify N-glycan branches. MGAT enzymes use UDP-GlcNAc to add GlcNAc and form branches; FUT8 uses GDP-fucose to add core α1-6 fucose to the innermost GlcNAc. Sialyltransferases use CMP-Neu5Ac to add terminal sialic acid: ST6GAL1, for example, forms α2-6 linkages to galactose, while ST3GAL-family enzymes form α2-3 linkages.",
+      },
+      {
+        type: "h3",
+        text: "Mucin-type O-linked: add sugars step by step",
+      },
+      {
+        type: "p",
+        text: "Mucin-type O-glycosylation is initiated mainly in the Golgi. GalNAc-T isoforms transfer GalNAc from UDP-GalNAc directly to Ser or Thr. Unlike the N-linked pathway, the first sugar is added to the protein step by step rather than transferred as part of a preassembled precursor.",
+      },
+      {
+        type: "p",
+        text: "The core-1 structure, Galβ1-3GalNAcα1-Ser/Thr, is made by C1GalT1 (also called T-synthase), which uses UDP-Gal. Core-1 glycans can then be extended, branched or capped. Sialyltransferases use CMP-Neu5Ac to add sialic acid; the G65562ZE example above has Neu5Acα2-3Galβ1-3GalNAcα1-Ser/Thr. Other common donor sugars include UDP-GlcNAc and GDP-Fuc, used by the corresponding transferases.",
+      },
+      {
+        type: "p",
+        text: "Exact structures depend on the protein, the enzymes present and the reaction conditions. For structural references, compare the GlyTouCan entries for the N-glycan G17689DH and the O-glycan G65562ZE. Our N-glycan standards and sugar nucleotide collections are relevant when planning profiling or enzyme-based experiments.",
+      },
+      {
+        type: "image",
+        src: "https://cdn.marblism.com/X-Oszh-HLYd.png",
+        alt: "The two assembly routes: a dolichol-linked precursor transferred en bloc by OST in the ER, and stepwise GalNAc addition by GalNAc-T in the Golgi followed by extension and sialylation",
+        caption:
+          "Left: in the ER, the dolichol-linked Glc3Man9GlcNAc2 precursor is transferred to Asn as a single unit by oligosaccharyltransferase, giving Man5GlcNAc2 after trimming (shown as G00028MO). Right: in the Golgi, GalNAc-T adds GalNAc to Ser/Thr from UDP-GalNAc, C1GalT1 adds galactose from UDP-Gal, and ST3GAL caps with sialic acid from CMP-Neu5Ac, giving sialyl-T (G65562ZE). Nothing is transferred as a preassembled block on the O-linked side.",
+      },
+      {
+        type: "h2",
+        text: "N-linked vs. mucin-type O-linked glycosylation",
+      },
+      {
+        type: "p",
+        text: "These are the points that most often change experimental design.",
+      },
+      {
+        type: "ul",
+        items: [
+          "Attachment residue: Asn for N-linked, with the innermost GlcNAc β-linked to the side-chain nitrogen; Ser or Thr for O-linked, with GalNAc α-linked to the side-chain oxygen.",
+          "Sequon: the canonical Asn-X-Ser/Thr motif for N-linked, where X is not proline, and presence does not guarantee occupancy; no single consensus sequon for O-linked, where local peptide context and GalNAc-T isoform matter.",
+          "Starting structure: a dolichol-linked Glc3Man9GlcNAc2 precursor transferred en bloc for N-linked; GalNAc added directly to Ser/Thr and then extended step by step for O-linked.",
+          "Site of assembly: initiated in the ER and elaborated in the ER and Golgi for N-linked; initiated and extended mainly in the Golgi for O-linked.",
+          "Common enzymes: OST, MGATs, FUT8 and sialyltransferases such as ST6GAL1 for N-linked; GalNAc-T isoforms, C1GalT1 and sialyltransferases for O-linked.",
+          "Release: PNGase F releases most N-glycans, though core α1-3-fucosylated structures resist it; there is no PNGase-F-like enzyme for O-glycans, so reductive β-elimination releases glycans and OpeRATOR cleaves selected O-glycopeptides.",
+          "Predictable from sequence: candidate N-linked sites can be predicted from sequons but occupancy must be measured; O-linked site prediction is less direct, and sequence alone does not specify the modified residues.",
+        ],
+      },
+      {
+        type: "h2",
+        text: "What does the difference mean at the bench?",
+      },
+      {
+        type: "h3",
+        text: "Choose a release method for the glycan type",
+      },
+      {
+        type: "p",
+        text: "PNGase F releases most N-linked glycans, not mucin-type O-glycans. It cleaves the bond between the innermost GlcNAc and Asn, converting the Asn residue to Asp. An important exception is N-glycans with core α1-3 fucose, which are resistant to PNGase F. If distinguishing enzymatic deglycosylation from spontaneous Asn deamidation matters, an appropriate control or an isotopically labeled-water strategy can help.",
+      },
+      {
+        type: "image",
+        src: "https://cdn.marblism.com/Mve0OpF1ERr.png",
+        alt: "PNGase F cleaves the GlcNAc-Asn bond on an N-glycan, but has no cleavage site on a GalNAc-Ser/Thr O-glycan",
+        caption:
+          "Why the same enzyme cannot do both jobs. PNGase F hydrolyses the bond between the innermost GlcNAc and the asparagine side chain, so the released N-glycan keeps its GlcNAc and the peptide residue becomes aspartate. An O-glycan is attached through GalNAc to the oxygen of Ser or Thr, which is not a substrate for PNGase F, so O-glycans need reductive β-elimination or an O-glycoprotease such as OpeRATOR.",
+      },
+      {
+        type: "p",
+        text: "There is no single universal enzyme for releasing mucin-type O-glycans intact. Reductive β-elimination is a common chemical release method, but conditions need to be chosen carefully because degradation can complicate interpretation. O-glycoproteases such as OpeRATOR are useful for releasing or generating O-glycopeptides at defined sites; they cleave N-terminal to O-glycosylated Ser/Thr under suitable substrate conditions. They are not a general substitute for PNGase F to release a complete pool of intact O-glycans.",
+      },
+      {
+        type: "h3",
+        text: "Localize sites with suitable MS/MS methods",
+      },
+      {
+        type: "p",
+        text: "O-glycopeptides are often harder to map because they can contain several nearby modified Ser/Thr residues, lack a simple sequence motif, and fragment in ways that lose glycan information. Many routine workflows are optimized for N-glycopeptides or rely on PNGase F, so they can systematically under-report O-glycosylation.",
+      },
+      {
+        type: "p",
+        text: "For site localization, ETD or EThcD can produce peptide-backbone fragments that retain glycan information. Stepped-HCD can also help by combining fragmentation conditions that provide glycan and peptide evidence; interpret results with the method's fragmentation behavior in mind. O-glycoproteomics methods are an active area of development.",
+      },
+      {
+        type: "p",
+        text: "Sialic acids can be labile during MS analysis, including in MALDI workflows, and may be lost during ionization or fragmentation. If sialylation is central to the question, use suitable sample preparation and acquisition conditions, and consider whether derivatization or an orthogonal method is needed to preserve or confirm the signal.",
+      },
+      {
+        type: "h3",
+        text: "Measure occupancy and heterogeneity",
+      },
+      {
+        type: "p",
+        text: "A sequon does not tell you whether a site is fully occupied, partly occupied or unoccupied. Likewise, knowing the host cell does not reveal the exact glycan distribution on a particular protein. Occupancy and glycan heterogeneity are measured, not inferred from the host.",
+      },
+      {
+        type: "p",
+        text: "Choose a method that addresses the question directly: site-specific occupancy, released-glycan composition, or intact glycopeptide profiling. Before starting, confirm enzyme specificity, protein input, controls and the analytical endpoint. For reagents, check lot-specific identity, purity, salt form and storage instructions; aliquoting donor stocks can help limit repeated freeze-thaw cycles.",
+      },
+      {
+        type: "h2",
+        text: "Researcher's quick checklist",
+      },
+      {
+        type: "ul",
+        items: [
+          "Look for an N-X-S/T sequon to identify candidate N-linked sites; do not assume it is occupied.",
+          "Treat Ser/Thr-rich regions as O-glycosylation candidates, not confirmed sites.",
+          "Use PNGase F for most N-glycans, not O-glycans, and account for its core α1-3-fucose limitation.",
+          "Plan O-glycan release or mapping separately, using a method suited to the question.",
+          "Select MS/MS conditions for site localization, especially when O-glycosites are clustered or sialylated.",
+          "Measure the sample's occupancy and glycoform distribution rather than predicting them from the expression host.",
+        ],
+      },
+      {
+        type: "h2",
+        text: "FAQs about protein glycosylation",
+      },
+      {
+        type: "h3",
+        text: "Can PNGase F remove O-glycans?",
+      },
+      {
+        type: "p",
+        text: "No. PNGase F cleaves most N-linked glycans from Asn; it does not remove mucin-type O-glycans attached to Ser or Thr. O-glycans are commonly released by reductive β-elimination, while OpeRATOR can cleave selected O-glycopeptides.",
+      },
+      {
+        type: "h3",
+        text: "Is every Asn-X-Ser/Thr site glycosylated?",
+      },
+      {
+        type: "p",
+        text: "No. The sequon identifies a potential N-glycosylation site, but occupancy depends on factors including local structure, accessibility and processing context. Measure occupancy experimentally.",
+      },
+      {
+        type: "h3",
+        text: "Why is O-glycosylation harder to map than N-glycosylation?",
+      },
+      {
+        type: "p",
+        text: "O-glycosylation lacks a single consensus sequon, and multiple Ser/Thr residues can be modified close together. There is also no universal enzyme equivalent to PNGase F for releasing O-glycans. These features, along with glycan loss during fragmentation, make site localization more challenging.",
+      },
+      {
+        type: "h3",
+        text: "Are O-GlcNAc and mucin-type O-glycosylation the same?",
+      },
+      {
+        type: "p",
+        text: "No. Both attach a sugar to the oxygen of Ser or Thr, but O-GlcNAc is usually a single, dynamically regulated GlcNAc on nuclear or cytoplasmic proteins. Mucin-type O-glycosylation typically starts with GalNAc and can be extended into larger glycans in the Golgi.",
+      },
+      {
+        type: "h3",
+        text: "Does the expression host tell me which glycans are present?",
+      },
+      {
+        type: "p",
+        text: "It can help explain which biosynthetic pathways are available, but it does not establish the glycan structures or occupancy on a specific protein preparation. Analyze the sample to determine its glycoforms.",
+      },
+      {
+        type: "p",
+        text: "Protein glycosylation analysis starts with the attachment chemistry, but reliable conclusions depend on matching the workflow to the glycan type and measuring the actual sample.",
+      },
+      {
+        type: "callout",
+        text: "GlycoDepot supplies research-grade N-glycans, sugar nucleotides and glycoenzymes, and runs glycosylation analysis and custom glycan synthesis projects with lot-specific documentation. Products and services are for research use only.",
+      },
+    ],
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
