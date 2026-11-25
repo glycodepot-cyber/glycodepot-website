@@ -106,7 +106,9 @@ const CATEGORY_SLUGS: Record<string, string> = {
 
 function hrefFor(product: Product): string {
   const cat = product.primaryCategoryId ?? product.categories[0];
-  return `/products/${CATEGORY_SLUGS[cat ?? ""] ?? "all"}/${product.slug}`;
+  // Bulk Supply categories use their slug as their id.
+  const slug = cat?.startsWith("bulk-") ? cat : CATEGORY_SLUGS[cat ?? ""];
+  return `/products/${slug ?? "all"}/${product.slug}`;
 }
 
 export function addCartItem(

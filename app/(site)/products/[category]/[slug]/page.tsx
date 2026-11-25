@@ -9,6 +9,8 @@ import { ProductPurchasePanel } from "@/components/site/catalog/ProductPurchaseP
 import { AnalyticalCarousel } from "@/components/site/catalog/AnalyticalCarousel";
 import { ProductDwellTracker } from "@/components/analytics/PageEventTrackers";
 import { ProductJsonLd } from "@/components/site/catalog/ProductJsonLd";
+import { BulkProductDetails } from "@/components/site/catalog/BulkProductDetails";
+import { bulkContentFor, bulkFaqJsonLd } from "@/lib/content/bulk-products";
 import { RecentlyViewedRail } from "@/components/site/catalog/RecentlyViewedRail";
 import { formatMoney } from "@/lib/format";
 import { canonicalSiteUrl } from "@/lib/site-url";
@@ -100,8 +102,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!product || !cat || !product.categories.includes(cat.id)) return { title: "Product not found", robots: { index: false } };
   const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
   const seo = isUdpGalnaz(product.slug) ? udpGalnazSeo : null;
-  const description = seo?.description ?? productDescription(product);
-  const title = seo?.title ?? productTitle(product);
+  const bulk = bulkContentFor(product.id);
+  const description = seo?.description ?? bulk?.seoDescription ?? productDescription(product);
+  const title = seo?.title ?? bulk?.seoTitle ?? productTitle(product);
   return {
     title,
     description,
@@ -115,7 +118,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
           "chemoenzymatic glycan labeling",
           "click chemistry",
         ]
-      : product.focusKeyword || undefined,
+      : bulk?.keywords ?? (product.focusKeyword || undefined),
     robots: { index: true, follow: true },
     alternates: { canonical },
     openGraph: {
@@ -166,6 +169,7 @@ export default async function ProductPage({ params }: PageProps) {
   const references = productReferences(product.id);
   const canonical = canonicalSiteUrl(product.canonicalUrl, `/products/${cat.slug}/${product.slug}`);
   const seo = isUdpGalnaz(product.slug) ? udpGalnazSeo : null;
+  const bulk = bulkContentFor(product.id);
   // Verified PubChem identity for the CAS in this product's own catalogue data.
   const chemistry = productChemistry(product);
 
@@ -174,6 +178,7 @@ export default async function ProductPage({ params }: PageProps) {
   // a plain supply line; never state a number we cannot source.
   const heroDescription =
     seo?.description ??
+    bulk?.summary ??
     product.shortDescription ??
     (chemistry
       ? `CAS ${chemistry.cas} · ${chemistry.formula} · MW ${chemistry.molecularWeight} g/mol. Supplied to order with lot-specific documentation on request.`
@@ -229,6 +234,7 @@ export default async function ProductPage({ params }: PageProps) {
         </Container>
       </Section>
 
+      {bulk ? <BulkProductDetails content={bulk} /> : (
       <Section tone="surface" spacing="default">
         <Container>
           <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:gap-14">
@@ -302,6 +308,7 @@ export default async function ProductPage({ params }: PageProps) {
           </div>
         </Container>
       </Section>
+      )}
 
       {references.length > 0 ? (
         <Section spacing="default">
@@ -393,6 +400,9 @@ export default async function ProductPage({ params }: PageProps) {
         product={product}
         url={canonical}
       />
+      {bulk ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(bulkFaqJsonLd(bulk)) }} />
+      ) : null}
       {seo ? (
         <script
           type="application/ld+json"

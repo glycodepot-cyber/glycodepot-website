@@ -20,6 +20,7 @@ import type { Category } from "@/lib/cart/types";
 export const GROUP_GLYCOCHEMISTRY = "glycochemistry";
 export const GROUP_GLYCOBIOLOGY = "glycobiology";
 export const GROUP_GLYCOANALYSIS = "glycoanalysis";
+export const GROUP_BULK = "bulk-supply";
 export const GROUP_OTHER = "other-products";
 
 export interface CategoryGroup {
@@ -96,6 +97,19 @@ export const categoryGroups: CategoryGroup[] = [
     name: "Glycoanalysis",
     description: "Analytical standards, diagnostic reagents and reference materials.",
     categorySlugs: ["glycoanalysis", "diagnostics"],
+  },
+  {
+    slug: GROUP_BULK,
+    name: "Bulk Supply",
+    description: "Kilogram-scale ingredients for API, cosmetic, nutraceutical, animal-nutrition and surfactant manufacturers.",
+    categorySlugs: [
+      "bulk-supply",
+      "bulk-apis",
+      "bulk-cosmetics",
+      "bulk-nutraceuticals",
+      "bulk-animal-nutrition",
+      "bulk-surfactants",
+    ],
   },
   {
     slug: GROUP_OTHER,
