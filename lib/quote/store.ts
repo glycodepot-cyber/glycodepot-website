@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import type { Product, ProductVariant } from "@/lib/cart";
-import { trackAddToCart } from "@/lib/analytics/dataLayer";
+import { trackAddToQuote } from "@/lib/analytics/dataLayer";
 import { scopedStorageKey, SCOPE_EVENT } from "@/lib/commerce/scope";
 
 const STORAGE_KEY = "gd_quote_list_v2";
@@ -128,7 +128,7 @@ export function addToQuote(
     });
   }
   writeToStorage(items);
-  trackAddToCart({
+  trackAddToQuote({
     productId: product.id,
     productName: product.name,
     variantName: variant?.name,

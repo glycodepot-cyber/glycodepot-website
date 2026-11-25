@@ -11,13 +11,21 @@
  */
 
 import { getAttribution } from "./utm";
-import { trackAdsConversion, QUOTE_CONVERSION, PURCHASE_CONVERSION } from "./googleAds";
+import {
+  trackAdsConversion,
+  newEventId,
+  QUOTE_CONVERSION,
+  PURCHASE_CONVERSION,
+  ADD_TO_CART_CONVERSION,
+  ADD_TO_QUOTE_CONVERSION,
+} from "./googleAds";
 
 export type GtmEventName =
   | "RFQ_Submit"
   | "Purchase"
   | "High_Intent_Visit"
   | "Add_To_Cart"
+  | "Add_To_Quote"
   | "Quote_Page_View";
 
 type DataLayerRecord = Record<string, unknown> & { event: GtmEventName };
@@ -94,20 +102,35 @@ export function trackHighIntentVisit(input: {
   });
 }
 
-/** §4.1 Add_To_Cart — item added to cart (GA4 micro-conversion). */
-export function trackAddToCart(input: {
+type AddItemInput = {
   productId: string;
   productName: string;
   variantName?: string;
   value?: number;
-}): void {
-  pushEvent("Add_To_Cart", {
+};
+
+function addItemPayload(input: AddItemInput) {
+  return {
     product_id: input.productId,
     product_name: input.productName,
     variant_name: input.variantName,
     value: input.value,
     currency: "USD",
-  });
+  };
+}
+
+/** Add_To_Cart — a stocked item added to the checkout cart. Also a Primary
+ * Google Ads micro-conversion ("Add to cart for GlycoDepot", fixed $5). */
+export function trackAddToCart(input: AddItemInput): void {
+  pushEvent("Add_To_Cart", addItemPayload(input));
+  trackAdsConversion(ADD_TO_CART_CONVERSION, newEventId("cart"));
+}
+
+/** Add_To_Quote — a quote-only product added to the RFQ list. Also a Primary
+ * Google Ads micro-conversion ("Add to quote list", fixed $5). */
+export function trackAddToQuote(input: AddItemInput): void {
+  pushEvent("Add_To_Quote", addItemPayload(input));
+  trackAdsConversion(ADD_TO_QUOTE_CONVERSION, newEventId("quote-item"));
 }
 
 /** §4.1 Quote_Page_View — /quote-request viewed (GA4 micro-conversion). */

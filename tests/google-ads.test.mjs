@@ -37,3 +37,21 @@ test("quote and purchase route to distinct existing actions with stable IDs and 
     assert.equal(window.dataLayer.length, 2);
   } finally { delete globalThis.window; delete globalThis.document; }
 });
+
+test("cart and quote-list adds route to their own micro-conversion actions without a value", async () => {
+  globalThis.window = { location: new URL("https://www.glycodepot.com/products/sugar-nucleotides/udp-glc"), dataLayer: [] };
+  globalThis.document = { referrer: "" };
+  try {
+    const { ADD_TO_CART_CONVERSION, ADD_TO_QUOTE_CONVERSION, newEventId } = await import("../lib/analytics/googleAds.ts");
+    const a = newEventId("cart"), b = newEventId("cart");
+    assert.notEqual(a, b);
+    trackAdsConversion(ADD_TO_CART_CONVERSION, a);
+    trackAdsConversion(ADD_TO_QUOTE_CONVERSION, newEventId("quote-item"));
+    const events = window.dataLayer.map(args => Array.from(args));
+    assert.equal(events.length, 2);
+    assert.equal(events[0][2].send_to, ADD_TO_CART_CONVERSION);
+    assert.equal(events[1][2].send_to, ADD_TO_QUOTE_CONVERSION);
+    for (const e of events) assert.equal("value" in e[2], false);
+    assert.equal(new Set([QUOTE_CONVERSION, PURCHASE_CONVERSION, ADD_TO_CART_CONVERSION, ADD_TO_QUOTE_CONVERSION]).size, 4);
+  } finally { delete globalThis.window; delete globalThis.document; }
+});
