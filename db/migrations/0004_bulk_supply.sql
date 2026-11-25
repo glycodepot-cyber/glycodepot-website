@@ -46,13 +46,13 @@ VALUES
    'N-acetyl-D-glucosamine bulk', '/products/bulk-cosmetics/n-acetyl-d-glucosamine-nag-bulk'),
   ('bulk_l_fucose', 'l-fucose-bulk', 'GD-BULK-FUC',
    'L-Fucose Bulk Powder, CAS 2438-80-4',
-   'L-Fucose (6-deoxy-L-galactose) for cosmetic, nutraceutical and pharmaceutical manufacturing. 1 kg, 10 kg and 25 kg packs, quoted with lot CoA.',
-   'L-Fucose (6-deoxy-L-galactose), CAS 2438-80-4, for cosmetic, nutraceutical and pharmaceutical manufacturers. Supplied in 1 kg, 10 kg and 25 kg packs with a certificate of analysis for every lot.',
+   'Fermentation-derived L-Fucose (6-deoxy-L-galactose), ≥99% by HPLC. 1 kg, 10 kg and 25 kg packs, quoted with lot CoA.',
+   'Fermentation-derived L-Fucose (6-deoxy-L-galactose), CAS 2438-80-4, assay ≥99% by HPLC, for cosmetic, nutraceutical and pharmaceutical manufacturers. Supplied in 1 kg, 10 kg and 25 kg packs with a certificate of analysis for every lot.',
    'bulk-nutraceuticals', 'kg', NULL, 'USD', 0, true, true, 'GlycoDepot',
    ARRAY['bulk', 'L-fucose', 'fucose'],
-   '{"CAS number": "2438-80-4", "Molecular formula": "C6H12O5", "Molecular weight": "164.16 g/mol", "Pack sizes": "1 kg, 10 kg, 25 kg"}'::jsonb,
+   '{"CAS number": "2438-80-4", "Molecular formula": "C6H12O5", "Molecular weight": "164.16 g/mol", "Assay": "≥99% (HPLC)", "Pack sizes": "1 kg, 10 kg, 25 kg"}'::jsonb,
    'L-Fucose Bulk Powder, CAS 2438-80-4 | 1 kg, 10 kg, 25 kg',
-   'Bulk L-Fucose (6-deoxy-L-galactose), CAS 2438-80-4, for cosmetic, nutraceutical and pharmaceutical manufacturing. 1 kg, 10 kg and 25 kg packs with lot CoA. Request a bulk quote.',
+   'Bulk L-Fucose (6-deoxy-L-galactose), CAS 2438-80-4, ≥99% by HPLC, fermentation-derived. 1 kg, 10 kg and 25 kg packs with lot CoA for cosmetic, nutraceutical and pharma use.',
    'L-fucose bulk', '/products/bulk-nutraceuticals/l-fucose-bulk')
 ON CONFLICT (id) DO NOTHING;
 

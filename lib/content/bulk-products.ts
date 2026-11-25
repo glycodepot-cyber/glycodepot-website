@@ -188,7 +188,7 @@ export const BULK_PRODUCTS: BulkProductContent[] = [
     productId: "bulk_l_fucose",
     seoTitle: "L-Fucose Bulk Powder, CAS 2438-80-4 | 1 kg, 10 kg, 25 kg",
     seoDescription:
-      "Bulk L-Fucose (6-deoxy-L-galactose), CAS 2438-80-4, for cosmetic, nutraceutical and pharmaceutical manufacturing. 1 kg, 10 kg and 25 kg packs with lot CoA. Request a bulk quote.",
+      "Bulk L-Fucose (6-deoxy-L-galactose), CAS 2438-80-4, ≥99% by HPLC, fermentation-derived. 1 kg, 10 kg and 25 kg packs with lot CoA for cosmetic, nutraceutical and pharma use.",
     keywords: [
       "L-fucose bulk",
       "L-fucose powder",
@@ -198,7 +198,7 @@ export const BULK_PRODUCTS: BulkProductContent[] = [
       "L-fucose 25 kg",
     ],
     summary:
-      "L-Fucose (6-deoxy-L-galactose) for cosmetic, nutraceutical and pharmaceutical manufacturers, supplied in 1 kg, 10 kg and 25 kg packs with a certificate of analysis for every lot.",
+      "Fermentation-derived L-Fucose (6-deoxy-L-galactose), ≥99% by HPLC, for cosmetic, nutraceutical and pharmaceutical manufacturers. Supplied in 1 kg, 10 kg and 25 kg packs with a certificate of analysis for every lot.",
     basicInfo: [
       { label: "Product", value: "L-Fucose" },
       { label: "Synonyms", value: "6-Deoxy-L-galactose, L-(−)-fucose, L-rhodeose" },
@@ -206,33 +206,37 @@ export const BULK_PRODUCTS: BulkProductContent[] = [
       { label: "EC number", value: "219-452-7" },
       { label: "Molecular formula", value: "C6H12O5" },
       { label: "Molecular weight", value: "164.16 g/mol" },
-      { label: "Grade", value: "Cosmetic, nutraceutical and pharmaceutical-intermediate grades on request" },
+      { label: "Grade", value: "High purity; cosmetic, nutraceutical and research use" },
+      { label: "Assay", value: "≥99% (HPLC)" },
+      { label: "Production route", value: "Microbial fermentation (not extracted from seaweed)" },
       { label: "Pack sizes", value: "1 kg · 10 kg · 25 kg (larger volumes on request)" },
       { label: "Documents", value: DOCUMENTS },
     ],
     overview: [
       "L-Fucose is a deoxyhexose sugar — galactose missing the hydroxyl group at carbon 6. Unusually for a sugar, it occurs in nature in the L-configuration. It is the fucose found in fucoidan from brown seaweed, in human milk oligosaccharides such as 2′-fucosyllactose, and at the ends of many glycoproteins and glycolipids.",
-      "Because so much of fucose's biology happens on cell surfaces, the ingredient is used in skin care, in nutrition formulations and as a starting material for fucosylated compounds. It is a white, water-soluble crystalline powder, which keeps handling and formulation simple.",
+      "Our bulk L-fucose is made by targeted microbial fermentation rather than by acid hydrolysis of seaweed, then purified to at least 99% by HPLC. The fermentation route keeps other sugars low and avoids the heavy-metal carry-over that algae extraction can bring.",
+      "Because so much of fucose's biology happens on cell surfaces, the ingredient is used in skin care, in nutrition formulations, as a building block for human milk oligosaccharide synthesis and as a starting material for fucosylated compounds. It is a white, readily water-soluble crystalline powder, which keeps handling and formulation simple.",
       "GlycoDepot also supplies L-fucose, GDP-L-fucose and fucosyltransferases at research scale. This listing is the kilogram-scale ingredient for manufacturers, with lot documentation for formulation and quality files.",
     ],
     properties: [
-      { label: "Appearance", value: "White crystalline powder" },
-      { label: "Solubility", value: "Soluble in water" },
+      { label: "Appearance", value: "White to off-white crystalline powder; odourless, slightly sweet" },
+      { label: "Solubility", value: "Freely soluble in water; slightly soluble in methanol; insoluble in ethanol and ether" },
+      { label: "Stability", value: "Stable at room temperature when kept dry" },
       { label: "Configuration", value: "L-sugar (6-deoxy-L-galactopyranose)" },
       { label: "Natural sources", value: "Seaweed fucoidan, human milk oligosaccharides, glycoproteins" },
     ],
     advantages: [
       {
-        title: "Defined identity",
-        body: "Single, well-characterised monosaccharide with CAS 2438-80-4, documented lot by lot.",
+        title: "Fermentation-derived",
+        body: "Made by targeted microbial biosynthesis, not seaweed hydrolysis, for consistent lots without algae-derived contaminants.",
+      },
+      {
+        title: "≥99% purity",
+        body: "Assay of at least 99% by HPLC with low levels of other sugars, confirmed on each lot's CoA.",
       },
       {
         title: "Versatile",
-        body: "One ingredient serving cosmetic, nutritional and synthetic-chemistry uses.",
-      },
-      {
-        title: "Easy to handle",
-        body: "Water-soluble crystalline powder that dissolves cleanly for liquid or dry formats.",
+        body: "One ingredient serving cosmetic, nutritional, HMO-synthesis and pharmaceutical-research uses.",
       },
       {
         title: "Kilogram-scale supply",
@@ -240,28 +244,27 @@ export const BULK_PRODUCTS: BulkProductContent[] = [
       },
     ],
     specifications: [
-      { parameter: "Identity", limit: "L-Fucose (6-deoxy-L-galactose)", method: "—" },
-      { parameter: "Appearance", limit: "White crystalline powder", method: "Visual" },
-      { parameter: "Assay", limit: "Stated on lot CoA", method: "HPLC" },
-      { parameter: "Specific rotation", limit: "Stated on lot CoA", method: "Polarimetry" },
+      { parameter: "Assay", limit: "≥99.0%", method: "HPLC" },
+      { parameter: "Appearance", limit: "White to off-white crystalline powder", method: "Visual" },
+      { parameter: "Solubility", limit: "Freely soluble in water", method: "—" },
     ],
     specificationNote:
-      "Assay, specific rotation, loss on drying, heavy metals and microbiological limits are stated on the lot certificate of analysis. Send us your specification and we will confirm it before you order.",
+      "Specific rotation, loss on drying, heavy metals and microbiological limits are stated on the lot certificate of analysis. Send us your specification and we will confirm it before you order.",
     applications: [
       {
         industry: "Cosmetics & personal care",
         categorySlug: "bulk-cosmetics",
         points: [
-          "Moisturising and skin-comfort formulations",
-          "Anti-ageing serums and creams",
-          "Products for sensitive or reactive skin",
+          "Anti-ageing and firming serums and creams",
+          "Formulations to support the skin barrier",
+          "Scalp and hair-care formulations",
         ],
       },
       {
         industry: "Nutraceuticals & functional food",
         categorySlug: "bulk-nutraceuticals",
         points: [
-          "Prebiotic and gut-health formulations",
+          "Gut-health and microbiome-focused formulations",
           "Products inspired by human milk oligosaccharides",
           "Powders, capsules and beverages",
         ],
@@ -270,9 +273,9 @@ export const BULK_PRODUCTS: BulkProductContent[] = [
         industry: "APIs & pharmaceutical intermediates",
         categorySlug: "bulk-apis",
         points: [
-          "Starting material for fucosylated compounds and glycans",
-          "Enzymatic production of GDP-L-fucose and fucosylated oligosaccharides",
-          "Pharmaceutical research and development",
+          "Building block for human milk oligosaccharide (HMO) synthesis",
+          "Starting material for fucosylated compounds, GDP-L-fucose and glycans",
+          "Pharmaceutical and rare-disease research on fucosylation",
         ],
       },
     ],
@@ -295,9 +298,19 @@ export const BULK_PRODUCTS: BulkProductContent[] = [
           "They are mirror-image forms. L-Fucose is the form found in human glycans and in fucoidan, and it is the form used in cosmetic, nutritional and pharmaceutical applications. GlycoDepot lists D-fucose separately for research.",
       },
       {
-        question: "What specification does your bulk L-fucose meet?",
+        question: "How is your L-fucose produced?",
         answer:
-          "Assay, specific rotation and the other limits are stated on the certificate of analysis for each lot. Send your required specification with the quote request and we will confirm it before you order.",
+          "By targeted microbial fermentation followed by purification, not by acid hydrolysis of seaweed. That gives consistent lots with low levels of other sugars.",
+      },
+      {
+        question: "What purity is your bulk L-fucose?",
+        answer:
+          "At least 99% by HPLC. Every lot ships with a certificate of analysis, and we can confirm your own specification before you order.",
+      },
+      {
+        question: "Can it be used for HMO synthesis?",
+        answer:
+          "Yes, L-fucose is a building block for fucosylated human milk oligosaccharides. Tell us your process requirements in the quote request and we will confirm suitability.",
       },
       {
         question: "Which pack sizes can I order?",
