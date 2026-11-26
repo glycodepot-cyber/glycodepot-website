@@ -170,20 +170,39 @@ export function ProductPurchasePanel({ product }: PurchasePanelProps) {
         />
       </div>
 
-      <ul className="grid gap-3 border-t border-[var(--color-border)] pt-6 text-[13px] text-[var(--color-muted-foreground)]">
-        <li className="flex items-center gap-3">
-          <ShieldCheck className="size-4 text-[var(--color-brand)]" aria-hidden />
-          ISO 9001:2015 facilities · CoA + batch tracking with every shipment
-        </li>
-        <li className="flex items-center gap-3">
-          <Truck className="size-4 text-[var(--color-brand)]" aria-hidden />
-          Worldwide shipping · dry-ice option for thermolabile reagents
-        </li>
-        <li className="flex items-center gap-3">
-          <FlaskConical className="size-4 text-[var(--color-brand)]" aria-hidden />
-          Research Use Only — not for human or veterinary clinical use
-        </li>
-      </ul>
+      {product.categories.includes("bulk-supply") ? (
+        // Bulk Supply ingredients are sold for manufacturing, so the research
+        // trust lines (and "Research Use Only") would contradict the page.
+        <ul className="grid gap-3 border-t border-[var(--color-border)] pt-6 text-[13px] text-[var(--color-muted-foreground)]">
+          <li className="flex items-center gap-3">
+            <ShieldCheck className="size-4 text-[var(--color-brand)]" aria-hidden />
+            Certificate of analysis with every lot · TDS, SDS and samples on request
+          </li>
+          <li className="flex items-center gap-3">
+            <Truck className="size-4 text-[var(--color-brand)]" aria-hidden />
+            Worldwide shipping · 1 kg, 10 kg and 25 kg packs, larger volumes on request
+          </li>
+          <li className="flex items-center gap-3">
+            <FlaskConical className="size-4 text-[var(--color-brand)]" aria-hidden />
+            Grade and intended use confirmed with your quote
+          </li>
+        </ul>
+      ) : (
+        <ul className="grid gap-3 border-t border-[var(--color-border)] pt-6 text-[13px] text-[var(--color-muted-foreground)]">
+          <li className="flex items-center gap-3">
+            <ShieldCheck className="size-4 text-[var(--color-brand)]" aria-hidden />
+            ISO 9001:2015 facilities · CoA + batch tracking with every shipment
+          </li>
+          <li className="flex items-center gap-3">
+            <Truck className="size-4 text-[var(--color-brand)]" aria-hidden />
+            Worldwide shipping · dry-ice option for thermolabile reagents
+          </li>
+          <li className="flex items-center gap-3">
+            <FlaskConical className="size-4 text-[var(--color-brand)]" aria-hidden />
+            Research Use Only — not for human or veterinary clinical use
+          </li>
+        </ul>
+      )}
     </div>
   );
 }
