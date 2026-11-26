@@ -180,6 +180,8 @@ export function clearQuote(): QuoteListItem[] {
  */
 function slugForCategory(catId: string | undefined): string {
   if (!catId) return "all";
+  // Bulk Supply categories use their slug as their id.
+  if (catId.startsWith("bulk-")) return catId;
   return (
     {
       cat_sugar_nuc: "sugar-nucleotides",

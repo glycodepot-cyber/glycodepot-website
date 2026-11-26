@@ -266,7 +266,7 @@ function MegaPanel({ categories }: { categories: Category[] }) {
 
   return (
     <div className="p-6 lg:p-7">
-      <div className="grid gap-6 lg:grid-cols-[1fr_1fr_1fr_0.8fr]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_1fr_1fr_1fr_0.8fr]">
         {groups.map(({ group, categories: groupCats }) => {
           const head = groupCats.slice(0, PER_GROUP);
           const totalCount = groupCats.reduce(

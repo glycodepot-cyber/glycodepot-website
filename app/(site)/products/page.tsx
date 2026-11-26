@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type React from "react";
 import Link from "next/link";
-import { FlaskConical, Dna, BarChart3, Package2 } from "lucide-react";
+import { FlaskConical, Dna, BarChart3, Package2, Factory } from "lucide-react";
 import { Container, Section } from "@/components/primitives";
 import { PageHero } from "@/components/site/PageHero";
 import { ProductCard } from "@/components/site/home/ProductCard";
@@ -152,6 +152,7 @@ const GROUP_ICONS: Record<string, React.FC<{ className?: string }>> = {
   glycochemistry: FlaskConical,
   glycobiology: Dna,
   glycoanalysis: BarChart3,
+  "bulk-supply": Factory,
 };
 
 function GroupPills({
